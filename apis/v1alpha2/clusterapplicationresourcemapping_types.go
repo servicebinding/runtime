@@ -40,6 +40,7 @@ type ClusterApplicationResourceMappingStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Cluster
 
 // ClusterApplicationResourceMapping is the Schema for the clusterapplicationresourcemappings API
 type ClusterApplicationResourceMapping struct {
