@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - uses: actions/setup-go@v2.1.3
+      with:
+        go-version: 1.16.x
+    - name: Test
+      run: make test
