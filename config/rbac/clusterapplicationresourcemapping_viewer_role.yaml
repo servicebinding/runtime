@@ -1,0 +1,20 @@
+# permissions for end users to view clusterapplicationresourcemappings.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterapplicationresourcemapping-viewer-role
+rules:
+- apiGroups:
+  - service.binding
+  resources:
+  - clusterapplicationresourcemappings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - service.binding
+  resources:
+  - clusterapplicationresourcemappings/status
+  verbs:
+  - get

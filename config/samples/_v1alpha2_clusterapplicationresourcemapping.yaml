@@ -1,0 +1,7 @@
+apiVersion: service.binding/v1alpha2
+kind: ClusterApplicationResourceMapping
+metadata:
+  name: clusterapplicationresourcemapping-sample
+spec:
+  # Add fields here
+  foo: bar
