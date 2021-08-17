@@ -1,0 +1,7 @@
+apiVersion: service.binding/v1alpha2
+kind: ServiceBinding
+metadata:
+  name: servicebinding-sample
+spec:
+  # Add fields here
+  foo: bar
