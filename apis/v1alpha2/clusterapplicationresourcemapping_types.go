@@ -60,3 +60,7 @@ type ClusterApplicationResourceMappingList struct {
 
 	Items []ClusterApplicationResourceMapping `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&ClusterApplicationResourceMapping{}, &ClusterApplicationResourceMappingList{})
+}

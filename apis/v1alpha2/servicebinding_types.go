@@ -125,3 +125,7 @@ type ServiceBindingList struct {
 
 	Items []ServiceBinding `json:"items"`
 }
+
+func init() {
+	SchemeBuilder.Register(&ServiceBinding{}, &ServiceBindingList{})
+}
