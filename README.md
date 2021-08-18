@@ -8,7 +8,7 @@ The Service Binding Operator project is a community lead effort.
 A bi-weekly [working group call][working-group] is open to the public.
 Discussions occur here on GitHub and on the [#bindings-discuss channel in the Kubernetes Slack][slack].
 
-If you catch an error in the implementation, please let us know by opening an issue or pull request at our
+If you catch an error in the implementation, please let us know by opening an issue at our
 [GitHub repository][repo].
 
 ### Code of conduct
