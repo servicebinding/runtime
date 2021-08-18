@@ -15,3 +15,15 @@ updates:
     update-types:
     - version-update:semver-major
     - version-update:semver-minor
+- package-ecosystem: gomod
+  directory: "/hack/controller-gen"
+  schedule:
+    interval: daily
+- package-ecosystem: gomod
+  directory: "/hack/ginkgo"
+  schedule:
+    interval: daily
+- package-ecosystem: gomod
+  directory: "/hack/kustomize"
+  schedule:
+    interval: daily

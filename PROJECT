@@ -3,7 +3,7 @@ layout:
 - go.kubebuilder.io/v3
 multigroup: true
 projectName: service-binding-operator
-repo: github.com/kubernetes-sigs/service-binding
+repo: github.com/k8s-service-bindings/implementation
 resources:
 - api:
     crdVersion: v1
@@ -11,13 +11,13 @@ resources:
   controller: true
   domain: service.binding
   kind: ServiceBinding
-  path: github.com/kubernetes-sigs/service-binding/apis/v1alpha2
+  path: github.com/k8s-service-bindings/implementation/apis/v1alpha2
   version: v1alpha2
 - api:
     crdVersion: v1
   controller: true
   domain: service.binding
   kind: ClusterApplicationResourceMapping
-  path: github.com/kubernetes-sigs/service-binding/apis/v1alpha2
+  path: github.com/k8s-service-bindings/implementation/apis/v1alpha2
   version: v1alpha2
 version: "3"

@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	servicebindingv1alpha2 "github.com/kubernetes-sigs/service-binding/apis/v1alpha2"
+	servicebindingv1alpha2 "github.com/k8s-service-bindings/implementation/apis/v1alpha2"
 )
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
