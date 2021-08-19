@@ -25,11 +25,9 @@ spec:
       securityContext:
         runAsNonRoot: true
       containers:
-      - command:
-        - /manager
-        args:
+      - args:
         - --leader-elect
-        image: controller:latest
+        image: ko://github.com/k8s-service-bindings/implementation
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
