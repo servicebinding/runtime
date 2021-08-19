@@ -22,7 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	servicebindingv1alpha2 "github.com/k8s-service-bindings/implementation/apis/v1alpha2"
 )
@@ -36,6 +38,7 @@ type ServiceBindingReconciler struct {
 //+kubebuilder:rbac:groups=service.binding,resources=servicebindings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=service.binding,resources=servicebindings/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=service.binding,resources=servicebindings/finalizers,verbs=update
+//+kubebuilder:rbac:groups=service.binding,resources=clusterapplicationresourcemappings,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -58,5 +61,6 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 func (r *ServiceBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&servicebindingv1alpha2.ServiceBinding{}).
+		Watches(&source.Kind{Type: &servicebindingv1alpha2.ClusterApplicationResourceMapping{}}, handler.Funcs{}).
 		Complete(r)
 }

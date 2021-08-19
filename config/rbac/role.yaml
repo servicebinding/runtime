@@ -11,27 +11,9 @@ rules:
   resources:
   - clusterapplicationresourcemappings
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - service.binding
-  resources:
-  - clusterapplicationresourcemappings/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - service.binding
-  resources:
-  - clusterapplicationresourcemappings/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - service.binding
   resources:
