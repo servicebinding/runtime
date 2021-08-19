@@ -1,4 +1,4 @@
-module github.com/kubernetes-sigs/service-binding
+module github.com/k8s-service-bindings/implementation
 
 go 1.16
 
