@@ -1,4 +1,4 @@
-module github.com/k8s-service-bindings/implementation/hack/ginkgo
+module github.com/k8s-service-bindings/service-binding-controller/hack/ginkgo
 
 go 1.16
 

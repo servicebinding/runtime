@@ -1,4 +1,4 @@
-module github.com/k8s-service-bindings/implementation/hack/kustomize
+module github.com/k8s-service-bindings/service-binding-controller/hack/kustomize
 
 go 1.16
 
