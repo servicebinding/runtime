@@ -1,4 +1,4 @@
-module github.com/k8s-service-bindings/implementation/hack/controller-gen
+module github.com/k8s-service-bindings/service-binding-controller/hack/controller-gen
 
 go 1.16
 

@@ -4,7 +4,7 @@ The reference implementation of the Kubernetes Service Binding Specification
 
 ## Community, discussion, contribution, and support
 
-The Service Binding Operator project is a community lead effort.
+The Service Binding Controller project is a community lead effort.
 A bi-weekly [working group call][working-group] is open to the public.
 Discussions occur here on GitHub and on the [#bindings-discuss channel in the Kubernetes Slack][slack].
 
@@ -17,5 +17,5 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 [working-group]: https://docs.google.com/document/d/1rR0qLpsjU38nRXxeich7F5QUy73RHJ90hnZiFIQ-JJ8/edit#heading=h.ar8ibc31ux6f
 [slack]: https://kubernetes.slack.com/archives/C012F2GPMTQ
-[repo]: https://github.com/k8s-service-bindings/implementation
+[repo]: https://github.com/k8s-service-bindings/service-binding-controller
 [code-of-conduct]: ./code-of-conduct.md
