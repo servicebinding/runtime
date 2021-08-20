@@ -18,5 +18,7 @@ jobs:
     - uses: actions/setup-go@v2.1.3
       with:
         go-version: 1.16.x
+    - name: Ensure generated code is committed
+      run: make generate manifests && git diff --exit-code
     - name: Test
       run: make test
