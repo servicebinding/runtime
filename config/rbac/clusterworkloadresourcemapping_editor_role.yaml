@@ -1,13 +1,13 @@
-# permissions for end users to edit clusterapplicationresourcemappings.
+# permissions for end users to edit clusterworkloadresourcemappings.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: clusterapplicationresourcemapping-editor-role
+  name: clusterworkloadresourcemapping-editor-role
 rules:
 - apiGroups:
   - service.binding
   resources:
-  - clusterapplicationresourcemappings
+  - clusterworkloadresourcemappings
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - service.binding
   resources:
-  - clusterapplicationresourcemappings/status
+  - clusterworkloadresourcemappings/status
   verbs:
   - get

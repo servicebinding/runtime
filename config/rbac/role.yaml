@@ -9,7 +9,7 @@ rules:
 - apiGroups:
   - service.binding
   resources:
-  - clusterapplicationresourcemappings
+  - clusterworkloadresourcemappings
   verbs:
   - get
   - list

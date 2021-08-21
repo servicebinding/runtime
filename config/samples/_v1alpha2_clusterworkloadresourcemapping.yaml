@@ -1,0 +1,7 @@
+apiVersion: service.binding/v1alpha2
+kind: ClusterWorkloadResourceMapping
+metadata:
+  name: clusterworkloadresourcemapping-sample
+spec:
+  # Add fields here
+  foo: bar
