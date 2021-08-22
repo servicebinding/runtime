@@ -76,3 +76,9 @@ deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/c
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | $(KO) delete -f -
+
+##@ Publish
+
+publish:
+	echo "${AUTH_TOKEN}" | $(KO) login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
+	$(KO) publish -B --tags ${RELEASE_TAG} ./

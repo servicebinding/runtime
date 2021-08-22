@@ -22,3 +22,14 @@ jobs:
       run: make generate manifests && git diff --exit-code
     - name: Test
       run: make test
+    - name: Get version from tags
+      id: version
+      run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+    - name: Publish
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
+        AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPOSITORY_OWNER: ${{ github.repository_owner }}
+        RELEASE_TAG: ${{ steps.version.outputs.tag }}
+      run: make publish
