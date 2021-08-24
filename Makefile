@@ -6,11 +6,11 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+VERSION ?= dev
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
 GINKGO ?= go run -modfile hack/ginkgo/go.mod github.com/onsi/ginkgo/ginkgo
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
 KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
-
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -79,6 +79,5 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 
 ##@ Publish
 
-publish:
-	echo "${AUTH_TOKEN}" | $(KO) login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
-	$(KO) publish -B --tags ${RELEASE_TAG} ./
+publish: ## Publish OCI image and prepare Kubernetes resources for release
+	$(KUSTOMIZE) build config/default | $(KO) resolve -B --tags ${VERSION} -f - > release.yaml

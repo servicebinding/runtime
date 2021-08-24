@@ -31,5 +31,12 @@ jobs:
         KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
         AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         REPOSITORY_OWNER: ${{ github.repository_owner }}
-        RELEASE_TAG: ${{ steps.version.outputs.tag }}
-      run: make publish
+        VERSION: ${{ steps.version.outputs.tag }}
+      run: |
+        echo "${AUTH_TOKEN}" | go run -modfile hack/ko/go.mod github.com/google/ko login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
+        make publish
+    - name: Release
+      uses: softprops/action-gh-release@v0.1.12
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: release.yaml
