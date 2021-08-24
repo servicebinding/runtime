@@ -27,7 +27,7 @@ spec:
       containers:
       - args:
         - --leader-elect
-        image: ko://github.com/k8s-service-bindings/implementation
+        image: ko://github.com/k8s-service-bindings/service-binding-controller
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
