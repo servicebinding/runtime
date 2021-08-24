@@ -33,7 +33,7 @@ jobs:
         REPOSITORY_OWNER: ${{ github.repository_owner }}
         VERSION: ${{ steps.version.outputs.tag }}
       run: |
-        echo "${AUTH_TOKEN}" | go run -modfile hack/ko/go.mod github.com/google/ko login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
+        echo "${AUTH_TOKEN}" | docker login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
         make publish
     - name: Update the release with Kubernetes resources
       uses: softprops/action-gh-release@v0.1.12
