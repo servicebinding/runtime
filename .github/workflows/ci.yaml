@@ -34,7 +34,7 @@ jobs:
         VERSION: ${{ steps.version.outputs.tag }}
       run: |
         echo "${AUTH_TOKEN}" | docker login ghcr.io --username ${REPOSITORY_OWNER} --password-stdin
-        make publish
+        go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3 build config/default | go run -modfile hack/ko/go.mod github.com/google/ko resolve -B --tags ${VERSION} -f - > release.yaml
     - name: Update the release with Kubernetes resources
       uses: softprops/action-gh-release@v0.1.12
       if: startsWith(github.ref, 'refs/tags/')

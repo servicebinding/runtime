@@ -6,7 +6,6 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-VERSION ?= dev
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
 GINKGO ?= go run -modfile hack/ginkgo/go.mod github.com/onsi/ginkgo/ginkgo
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
@@ -77,8 +76,3 @@ deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/c
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | $(KO) delete -f -
-
-##@ Publish
-
-publish: ## Publish OCI image and prepare Kubernetes resources for release
-	$(KUSTOMIZE) build config/default | $(KO) resolve -B --tags ${VERSION} -f - > release.yaml
