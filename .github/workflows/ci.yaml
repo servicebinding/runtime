@@ -22,3 +22,23 @@ jobs:
       run: make generate manifests && git diff --exit-code
     - name: Test
       run: make test
+    - name: Get version from tags
+      id: version
+      run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
+    - name: Publish OCI image and prepare Kubernetes resources
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        KO: go run -modfile hack/ko/go.mod github.com/google/ko
+        KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
+        KUSTOMIZE: go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
+        VERSION: ${{ steps.version.outputs.tag }}
+      run: |
+        echo "${GITHUB_TOKEN}" | docker login ghcr.io --username ${{ github.repository_owner }} --password-stdin
+        ${KUSTOMIZE} build config/default | ${KO} resolve -B --tags "${VERSION}" -f - > release.yaml
+    - name: Update the release with Kubernetes resources
+      uses: softprops/action-gh-release@v0.1.12
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        draft: true
+        files: release.yaml
