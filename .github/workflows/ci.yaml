@@ -30,7 +30,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         KO: go run -modfile hack/ko/go.mod github.com/google/ko
-        KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
+        KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
         KUSTOMIZE: go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
         VERSION: ${{ steps.version.outputs.tag }}
       run: |
