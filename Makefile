@@ -72,7 +72,7 @@ uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube
 	$(KUSTOMIZE) build config/crd | $(KO) delete -f -
 
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | $(KO) apply --local -f -
+	$(KUSTOMIZE) build config/default | $(KO) apply -f -
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | $(KO) delete -f -
