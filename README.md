@@ -1,6 +1,11 @@
-# implementation
+# Service Binding Controller
+> **The reference implementation of the Kubernetes Service Binding Specification**
 
-The reference implementation of the Kubernetes Service Binding Specification
+[![CI](https://github.com/k8s-service-bindings/service-binding-controller/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/k8s-service-bindings/service-binding-controller/actions/workflows/ci.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/k8s-service-bindings/service-binding-controller)](https://goreportcard.com/report/github.com/k8s-service-bindings/service-binding-controller)
+[![Go Reference](https://pkg.go.dev/badge/github.com/k8s-service-bindings/service-binding-controller.svg)](https://pkg.go.dev/github.com/k8s-service-bindings/service-binding-controller)
+[![codecov](https://codecov.io/gh/k8s-service-bindings/service-binding-controller/branch/main/graph/badge.svg?token=D2Hs4MIXBZ)](https://codecov.io/gh/k8s-service-bindings/service-binding-controller)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Community, discussion, contribution, and support
 

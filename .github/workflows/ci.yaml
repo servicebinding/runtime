@@ -22,6 +22,10 @@ jobs:
       run: make generate manifests && git diff --exit-code
     - name: Test
       run: make test
+    - name: Upload coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash)
+      env:
+        CODECOV_TOKEN: e8edfc9c-0348-4590-be59-4063c46382ce
     - name: Get version from tags
       id: version
       run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
