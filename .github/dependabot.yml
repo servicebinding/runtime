@@ -24,6 +24,10 @@ updates:
   schedule:
     interval: daily
 - package-ecosystem: gomod
+  directory: "/hack/ko"
+  schedule:
+    interval: daily
+- package-ecosystem: gomod
   directory: "/hack/kustomize"
   schedule:
     interval: daily
