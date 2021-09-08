@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
-  name: clusterworkloadresourcemappings.service.binding
+  name: clusterworkloadresourcemappings.servicebinding.io
 spec:
-  group: service.binding
+  group: servicebinding.io
   names:
     kind: ClusterWorkloadResourceMapping
     listKind: ClusterWorkloadResourceMappingList
@@ -20,7 +20,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    name: v1alpha2
+    name: v1alpha3
     schema:
       openAPIV3Schema:
         description: ClusterWorkloadResourceMapping is the Schema for the clusterworkloadresourcemappings

@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	servicebindingv1alpha2 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha2"
+	servicebindingv1alpha3 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha3"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -62,10 +62,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = servicebindingv1alpha2.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
-
-	err = servicebindingv1alpha2.AddToScheme(scheme.Scheme)
+	err = servicebindingv1alpha3.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
