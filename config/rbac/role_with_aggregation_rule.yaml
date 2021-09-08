@@ -6,5 +6,8 @@ metadata:
 aggregationRule:
   clusterRoleSelectors:
   - matchLabels:
+      servicebinding.io/controller: "true"
+  # legacy support
+  - matchLabels:
       service.binding/controller: "true"
 rules: []

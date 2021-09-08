@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: clusterworkloadresourcemappings.service.binding
+  name: clusterworkloadresourcemappings.servicebinding.io
 spec:
   conversion:
     strategy: Webhook

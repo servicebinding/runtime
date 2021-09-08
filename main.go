@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	servicebindingv1alpha2 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha2"
+	servicebindingv1alpha3 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha3"
 	"github.com/k8s-service-bindings/service-binding-controller/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(servicebindingv1alpha2.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1alpha3.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -71,7 +71,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "74b357db.service.binding",
+		LeaderElectionID:       "74b357db.servicebinding.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

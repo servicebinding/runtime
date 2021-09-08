@@ -1,4 +1,4 @@
-domain: service.binding
+domain: servicebinding.io
 layout:
 - go.kubebuilder.io/v3
 multigroup: true
@@ -9,14 +9,14 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: service.binding
+  domain: servicebinding.io
   kind: ServiceBinding
-  path: github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha2
-  version: v1alpha2
+  path: github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha3
+  version: v1alpha3
 - api:
     crdVersion: v1
-  domain: service.binding
+  domain: servicebinding.io
   kind: ClusterWorkloadResourceMapping
-  path: github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha2
-  version: v1alpha2
+  path: github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha3
+  version: v1alpha3
 version: "3"

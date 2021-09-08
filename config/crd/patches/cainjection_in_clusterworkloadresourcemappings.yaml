@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
-  name: clusterworkloadresourcemappings.service.binding
+  name: clusterworkloadresourcemappings.servicebinding.io

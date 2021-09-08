@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	servicebindingv1alpha2 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha2"
+	servicebindingv1alpha3 "github.com/k8s-service-bindings/service-binding-controller/apis/v1alpha3"
 )
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
@@ -35,10 +35,10 @@ type ServiceBindingReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=service.binding,resources=servicebindings,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=service.binding,resources=servicebindings/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=service.binding,resources=servicebindings/finalizers,verbs=update
-//+kubebuilder:rbac:groups=service.binding,resources=clusterworkloadresourcemappings,verbs=get;list;watch
+//+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings/finalizers,verbs=update
+//+kubebuilder:rbac:groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -60,7 +60,7 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&servicebindingv1alpha2.ServiceBinding{}).
-		Watches(&source.Kind{Type: &servicebindingv1alpha2.ClusterWorkloadResourceMapping{}}, handler.Funcs{}).
+		For(&servicebindingv1alpha3.ServiceBinding{}).
+		Watches(&source.Kind{Type: &servicebindingv1alpha3.ClusterWorkloadResourceMapping{}}, handler.Funcs{}).
 		Complete(r)
 }

@@ -8,4 +8,4 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: 74b357db.service.binding
+  resourceName: 74b357db.servicebinding.io
