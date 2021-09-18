@@ -1,4 +1,4 @@
-module github.com/k8s-service-bindings/service-binding-controller
+module github.com/servicebinding/service-binding-controller
 
 go 1.17
 
