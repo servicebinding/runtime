@@ -1,4 +1,4 @@
-module github.com/k8s-service-bindings/service-binding-controller/hack/ko
+module github.com/servicebinding/service-binding-controller/hack/ko
 
 go 1.17
 
