@@ -33,31 +33,31 @@ func DefaultWorkloadMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResou
 	mapping = mapping.DeepCopy()
 
 	if mapping.Annotations == "" {
-		mapping.Annotations = "/spec/template/metadata/annotations"
+		mapping.Annotations = ".spec.template.metadata.annotations"
 	}
 	if len(mapping.Containers) == 0 {
 		mapping.Containers = []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 			{
 				Path: ".spec.template.spec.initContainers[*]",
-				Name: "/name",
+				Name: ".name",
 			},
 			{
 				Path: ".spec.template.spec.containers[*]",
-				Name: "/name",
+				Name: ".name",
 			},
 		}
 	}
 	for i := range mapping.Containers {
 		c := &mapping.Containers[i]
 		if c.Env == "" {
-			c.Env = "/env"
+			c.Env = ".env"
 		}
 		if c.VolumeMounts == "" {
-			c.VolumeMounts = "/volumeMounts"
+			c.VolumeMounts = ".volumeMounts"
 		}
 	}
 	if mapping.Volumes == "" {
-		mapping.Volumes = "/spec/template/spec/volumes"
+		mapping.Volumes = ".spec.template.spec.volumes"
 	}
 
 	return mapping

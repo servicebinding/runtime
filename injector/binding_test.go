@@ -134,18 +134,18 @@ func TestBinding(t *testing.T) {
 		{
 			name: "almost podspecable",
 			mapping: NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
-				Annotations: "/spec/jobTemplate/spec/template/metadata/annotations",
+				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 				},
-				Volumes: "/spec/jobTemplate/spec/template/spec/volumes",
+				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 			}, nil),
 			binding: &servicebindingv1alpha3.ServiceBinding{},
 			workload: &batchv1.CronJob{

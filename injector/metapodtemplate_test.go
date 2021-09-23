@@ -121,18 +121,18 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		{
 			name: "almost podspecable",
 			mapping: DefaultWorkloadMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
-				Annotations: "/spec/jobTemplate/spec/template/metadata/annotations",
+				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 				},
-				Volumes: "/spec/jobTemplate/spec/template/spec/volumes",
+				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 			}),
 			workload: &batchv1.CronJob{
 				Spec: batchv1.CronJobSpec{
@@ -276,16 +276,16 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		{
 			name: "misaligned pointers",
 			mapping: DefaultWorkloadMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
-				Annotations: "/foo/nar",
+				Annotations: ".foo/nar",
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.template.spec.containers[*]",
-						Name:         "/foo/bar",
-						Env:          "/foo/bar",
-						VolumeMounts: "/foo/bar",
+						Name:         ".foo.bar",
+						Env:          ".foo.bar",
+						VolumeMounts: ".foo.bar",
 					},
 				},
-				Volumes: "/foo/bar",
+				Volumes: ".foo.bar",
 			}),
 			workload: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
@@ -476,18 +476,18 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 		{
 			name: "almost podspecable",
 			mapping: DefaultWorkloadMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
-				Annotations: "/spec/jobTemplate/spec/template/metadata/annotations",
+				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name: "/name",
+						Name: ".name",
 					},
 				},
-				Volumes: "/spec/jobTemplate/spec/template/spec/volumes",
+				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 			}),
 			metadata: MetaPodTemplate{
 				Annotations: testAnnotations,

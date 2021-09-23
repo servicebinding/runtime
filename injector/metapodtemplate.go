@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/servicebinding/service-binding-controller/apis/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
@@ -159,7 +158,11 @@ func (mpt *MetaPodTemplate) WriteToWorkload(ctx context.Context) error {
 func (mpt *MetaPodTemplate) getAt(ptr string, source reflect.Value, target interface{}) error {
 	parent := reflect.ValueOf(nil)
 	createIfNil := false
-	v, _, _, err := mpt.find(source, parent, mpt.keys(ptr), "", createIfNil)
+	keys, err := mpt.keys(ptr)
+	if err != nil {
+		return err
+	}
+	v, _, _, err := mpt.find(source, parent, keys, "", createIfNil)
 	if err != nil {
 		return err
 	}
@@ -174,7 +177,10 @@ func (mpt *MetaPodTemplate) getAt(ptr string, source reflect.Value, target inter
 }
 
 func (mpt *MetaPodTemplate) setAt(ptr string, value interface{}, target reflect.Value) error {
-	keys := mpt.keys(ptr)
+	keys, err := mpt.keys(ptr)
+	if err != nil {
+		return err
+	}
 	parent := reflect.ValueOf(nil)
 	createIfNil := true
 	_, vp, lk, err := mpt.find(target, parent, keys, "", createIfNil)
@@ -203,10 +209,33 @@ func (mpt *MetaPodTemplate) setAt(ptr string, value interface{}, target reflect.
 	return nil
 }
 
-func (mpt *MetaPodTemplate) keys(ptr string) []string {
-	// TODO use a real json pointer parser, this does not support escaped sequences
-	ptr = strings.TrimPrefix(ptr, "/")
-	return strings.Split(ptr, "/")
+func (mpt *MetaPodTemplate) keys(ptr string) ([]string, error) {
+	p, err := jsonpath.Parse("", fmt.Sprintf("{%s}", ptr))
+	if err != nil {
+		return nil, err
+	}
+	return mpt.fieldKeys(p.Root)
+}
+
+func (mpt *MetaPodTemplate) fieldKeys(node jsonpath.Node) ([]string, error) {
+	switch node.Type() {
+	case jsonpath.NodeList:
+		list := node.(*jsonpath.ListNode)
+		paths := []string{}
+		for i := range list.Nodes {
+			nestedpaths, err := mpt.fieldKeys(list.Nodes[i])
+			if err != nil {
+				return nil, err
+			}
+			paths = append(paths, nestedpaths...)
+		}
+		return paths, nil
+	case jsonpath.NodeField:
+		field := node.(*jsonpath.FieldNode)
+		return []string{field.Value}, nil
+	default:
+		return nil, fmt.Errorf("unsupported node type %q found", node.Type())
+	}
 }
 
 func (mpt *MetaPodTemplate) find(value, parent reflect.Value, keys []string, lastKey string, createIfNil bool) (reflect.Value, reflect.Value, string, error) {
