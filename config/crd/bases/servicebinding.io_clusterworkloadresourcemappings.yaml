@@ -51,10 +51,10 @@ spec:
                     PodTemplateSpec-like structure.
                   properties:
                     annotations:
-                      description: Annotations is a JSON Pointer that references the
-                        annotations map within the workload resource. These annotations
+                      description: Annotations is a Restricted JSONPath that references
+                        the annotations map within the workload resource. These annotations
                         must end up in the resulting Pod, and are generally not the
-                        workload resource's annotations. Defaults to `/spec/template/metadata/annotations`.
+                        workload resource's annotations. Defaults to `.spec.template.metadata.annotations`.
                       type: string
                     containers:
                       description: Containers is the collection of mappings to container-like
@@ -66,19 +66,19 @@ spec:
                           to a Container-like structure. \n Each mapping defines exactly
                           one path that may match multiple container-like fragments
                           within the workload resource. For each object matching the
-                          path the name, env and volumeMounts pointers are resolved
+                          path the name, env and volumeMounts expressions are resolved
                           to find those structures."
                         properties:
                           env:
-                            description: Env is a JSON Pointer that references the
-                              slice of environment variables for the container with
-                              the container-like workload resource fragment. The referenced
-                              location is created if it does not exist. Defaults to
-                              `/envs`.
+                            description: Env is a Restricted JSONPath that references
+                              the slice of environment variables for the container
+                              with the container-like workload resource fragment.
+                              The referenced location is created if it does not exist.
+                              Defaults to `.envs`.
                             type: string
                           name:
-                            description: Name is a JSON Pointer that references the
-                              name of the container with the container-like workload
+                            description: Name is a Restricted JSONPath that references
+                              the name of the container with the container-like workload
                               resource fragment. If not defined, container name filtering
                               is ignored.
                             type: string
@@ -87,11 +87,11 @@ spec:
                               resource that matches an existing fragment that is container-like.
                             type: string
                           volumeMounts:
-                            description: VolumeMounts is a JSON Pointer that references
-                              the slice of volume mounts for the container with the
-                              container-like workload resource fragment. The referenced
-                              location is created if it does not exist. Defaults to
-                              `/volumeMounts`.
+                            description: VolumeMounts is a Restricted JSONPath that
+                              references the slice of volume mounts for the container
+                              with the container-like workload resource fragment.
+                              The referenced location is created if it does not exist.
+                              Defaults to `.volumeMounts`.
                             type: string
                         required:
                         - path
@@ -102,8 +102,9 @@ spec:
                         that this mapping is for.
                       type: string
                     volumes:
-                      description: Volumes is a JSON Pointer that references the slice
-                        of volumes within the workload resource. Defaults to `/spec/template/spec/volumes`.
+                      description: Volumes is a Restricted JSONPath that references
+                        the slice of volumes within the workload resource. Defaults
+                        to `.spec.template.spec.volumes`.
                       type: string
                   required:
                   - annotations
