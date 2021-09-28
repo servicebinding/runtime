@@ -1,11 +1,4 @@
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
 GINKGO ?= go run -modfile hack/ginkgo/go.mod github.com/onsi/ginkgo/ginkgo
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
