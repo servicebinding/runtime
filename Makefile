@@ -8,6 +8,7 @@ endif
 
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
 GINKGO ?= go run -modfile hack/ginkgo/go.mod github.com/onsi/ginkgo/ginkgo
+KAPP ?= go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
 KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
 
@@ -65,14 +66,18 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 ##@ Deployment
 
-install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KO) apply -f -
+KO_ARGS ?= --platform linux/amd64
+KAPP_ARGS ?= --yes=false
+KAPP_NS ?= kube-system
 
-uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KO) delete -f -
+install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+	$(KAPP) deploy -a service-binding -n $(KAPP_NS) $(KAPP_ARGS) -f <($(KUSTOMIZE) build config/crd)
+
+uninstall: ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
+	$(KAPP) delete -a service-binding -n $(KAPP_NS) $(KAPP_ARGS)
 
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | $(KO) apply -f -
+	$(KAPP) deploy -a service-binding -n $(KAPP_NS) $(KAPP_ARGS) -f <($(KUSTOMIZE) build config/default | $(KO) resolve $(KO_ARGS) -f -)
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | $(KO) delete -f -
+	$(KAPP) delete -a service-binding -n $(KAPP_NS) $(KAPP_ARGS)
