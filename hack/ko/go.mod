@@ -2,7 +2,7 @@ module github.com/servicebinding/service-binding-controller/hack/ko
 
 go 1.17
 
-require github.com/google/ko v0.9.2
+require github.com/google/ko v0.9.3
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
