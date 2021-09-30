@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package injector
+package projector
 
 import (
 	"context"
@@ -24,21 +24,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var _ ServiceBindingInjector = (*serviceBindingInjector)(nil)
+var _ ServiceBindingProjector = (*serviceBindingProjector)(nil)
 
-type serviceBindingInjector struct {
+type serviceBindingProjector struct {
 	mappingSource MappingSource
 }
 
-// New creates a service binding injector configured for the mapping source. The binding injector is typically created
+// New creates a service binding projector configured for the mapping source. The binding projector is typically created
 // once and applied to multiple workloads.
-func New(mappingSource MappingSource) ServiceBindingInjector {
-	return &serviceBindingInjector{
+func New(mappingSource MappingSource) ServiceBindingProjector {
+	return &serviceBindingProjector{
 		mappingSource: mappingSource,
 	}
 }
 
-func (i *serviceBindingInjector) Bind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
+func (i *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
 	mapping, err := i.mappingSource.Lookup(ctx, workload)
 	if err != nil {
 		return err
@@ -47,13 +47,13 @@ func (i *serviceBindingInjector) Bind(ctx context.Context, binding *servicebindi
 	if err != nil {
 		return err
 	}
-	if err := i.bind(ctx, binding, mpt); err != nil {
+	if err := i.project(ctx, binding, mpt); err != nil {
 		return err
 	}
 	return mpt.WriteToWorkload(ctx)
 }
 
-func (i *serviceBindingInjector) Unbind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
+func (i *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
 	mapping, err := i.mappingSource.Lookup(ctx, workload)
 	if err != nil {
 		return err
@@ -62,15 +62,15 @@ func (i *serviceBindingInjector) Unbind(ctx context.Context, binding *servicebin
 	if err != nil {
 		return err
 	}
-	if err := i.unbind(ctx, binding, mpt); err != nil {
+	if err := i.unproject(ctx, binding, mpt); err != nil {
 		return err
 	}
 	return mpt.WriteToWorkload(ctx)
 }
 
-func (i *serviceBindingInjector) bind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
-	// rather than attempt to merge an existing binding, unbind it
-	if err := i.unbind(ctx, binding, mpt); err != nil {
+func (i *serviceBindingProjector) project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
+	// rather than attempt to merge an existing binding, unproject it
+	if err := i.unproject(ctx, binding, mpt); err != nil {
 		return err
 	}
 
@@ -93,14 +93,14 @@ func (i *serviceBindingInjector) bind(ctx context.Context, binding *servicebindi
 			})
 		}
 
-		// TODO do remaining binding
+		// TODO do remaining projection
 	}
 
 	return nil
 }
 
-func (i *serviceBindingInjector) unbind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
-	// TODO undo binding
+func (i *serviceBindingProjector) unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
+	// TODO undo projection
 
 	return nil
 }

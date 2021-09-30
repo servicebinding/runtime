@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package injector
+package projector
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func TestBinding(t *testing.T) {
 	}{
 		{
 			name:    "podspecable",
-			mapping: NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}, nil),
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			binding: &servicebindingv1alpha3.ServiceBinding{},
 			workload: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
@@ -133,7 +133,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "almost podspecable",
-			mapping: NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
 				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
@@ -146,7 +146,7 @@ func TestBinding(t *testing.T) {
 					},
 				},
 				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-			}, nil),
+			}),
 			binding: &servicebindingv1alpha3.ServiceBinding{},
 			workload: &batchv1.CronJob{
 				Spec: batchv1.CronJobSpec{
@@ -245,7 +245,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:     "no containers",
-			mapping:  NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}, nil),
+			mapping:  NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			binding:  &servicebindingv1alpha3.ServiceBinding{},
 			workload: &appsv1.Deployment{},
 			expected: &appsv1.Deployment{
@@ -263,20 +263,20 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "invalid container jsonpath",
-			mapping: NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
 				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: "[",
 					},
 				},
-			}, nil),
+			}),
 			binding:     &servicebindingv1alpha3.ServiceBinding{},
 			workload:    &appsv1.Deployment{},
 			expectedErr: true,
 		},
 		{
 			name:        "conversion error",
-			mapping:     NewStubMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}, nil),
+			mapping:     NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			workload:    &BadMarshalJSON{},
 			expectedErr: true,
 		},
@@ -287,7 +287,7 @@ func TestBinding(t *testing.T) {
 			ctx := context.TODO()
 
 			actual := c.workload.DeepCopyObject().(client.Object)
-			err := New(c.mapping).Bind(ctx, c.binding, actual)
+			err := New(c.mapping).Project(ctx, c.binding, actual)
 
 			if (err != nil) != c.expectedErr {
 				t.Errorf("Bind() expected err: %v", err)

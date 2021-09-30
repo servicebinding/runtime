@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package injector
+package projector
 
 import (
 	"context"
@@ -123,21 +123,16 @@ var _ MappingSource = (*staticMapping)(nil)
 
 type staticMapping struct {
 	mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
-	err     error
 }
 
-// NewStubMapping returns a single ClusterWorkloadResourceMappingTemplate or error for each lookup. It is useful for
+// NewStaticMapping returns a single ClusterWorkloadResourceMappingTemplate for each lookup. It is useful for
 // testing.
-func NewStubMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, err error) MappingSource {
+func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate) MappingSource {
 	return &staticMapping{
-		mapping: mapping,
-		err:     err,
+		mapping: DefaultWorkloadMapping(mapping),
 	}
 }
 
 func (m *staticMapping) Lookup(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return DefaultWorkloadMapping(m.mapping), nil
+	return m.mapping, nil
 }

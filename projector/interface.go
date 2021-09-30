@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package injector
+package projector
 
 import (
 	"context"
@@ -23,11 +23,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ServiceBindingInjector interface {
-	// Bind the service into the workload as defined by the ServiceBinding.
-	Bind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
-	// Unbind the serice from the workload as defined by the ServiceBinding.
-	Unbind(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
+type ServiceBindingProjector interface {
+	// Project the service into the workload as defined by the ServiceBinding.
+	Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
+	// Unproject the serice from the workload as defined by the ServiceBinding.
+	Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
 }
 
 type MappingSource interface {
