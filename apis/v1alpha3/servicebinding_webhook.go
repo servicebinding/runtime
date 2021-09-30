@@ -20,12 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
-
-// log is for logging in this package.
-var servicebindinglog = logf.Log.WithName("servicebinding-resource")
 
 func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -37,8 +33,6 @@ var _ webhook.Defaulter = &ServiceBinding{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *ServiceBinding) Default() {
-	servicebindinglog.Info("default", "namespace", r.Namespace, "name", r.Name)
-
 	if r.Spec.Name == "" {
 		r.Spec.Name = r.Name
 	}
@@ -50,21 +44,18 @@ var _ webhook.Validator = &ServiceBinding{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateCreate() error {
-	servicebindinglog.Info("validate create", "namespace", r.Namespace, "name", r.Name)
 	return r.validate().ToAggregate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateUpdate(old runtime.Object) error {
-	servicebindinglog.Info("validate update", "namespace", r.Namespace, "name", r.Name)
 	// TODO(user): check for immutable fields, if any
 	return r.validate().ToAggregate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateDelete() error {
-	servicebindinglog.Info("validate delete", "namespace", r.Namespace, "name", r.Name)
-	return r.validate().ToAggregate()
+	return nil
 }
 
 func (r *ServiceBinding) validate() field.ErrorList {
