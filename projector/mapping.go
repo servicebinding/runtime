@@ -27,42 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-// DefaultWorkloadMapping applies default values to a workload mapping. The default values are appropriate for a
-// PodSpecable resource. A deep copy of the workload mapping is made before applying the defaults.
-func DefaultWorkloadMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate) *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate {
-	mapping = mapping.DeepCopy()
-
-	if mapping.Annotations == "" {
-		mapping.Annotations = ".spec.template.metadata.annotations"
-	}
-	if len(mapping.Containers) == 0 {
-		mapping.Containers = []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
-			{
-				Path: ".spec.template.spec.initContainers[*]",
-				Name: ".name",
-			},
-			{
-				Path: ".spec.template.spec.containers[*]",
-				Name: ".name",
-			},
-		}
-	}
-	for i := range mapping.Containers {
-		c := &mapping.Containers[i]
-		if c.Env == "" {
-			c.Env = ".env"
-		}
-		if c.VolumeMounts == "" {
-			c.VolumeMounts = ".volumeMounts"
-		}
-	}
-	if mapping.Volumes == "" {
-		mapping.Volumes = ".spec.template.spec.volumes"
-	}
-
-	return mapping
-}
-
 var _ MappingSource = (*mappingSource)(nil)
 
 type mappingSource struct {
@@ -116,7 +80,10 @@ func (m *mappingSource) Lookup(ctx context.Context, workload client.Object) (*se
 		return nil, fmt.Errorf("no matching version found for %q", gvk)
 	}
 
-	return DefaultWorkloadMapping(mapping), nil
+	mapping = mapping.DeepCopy()
+	mapping.Default()
+
+	return mapping, nil
 }
 
 var _ MappingSource = (*staticMapping)(nil)
@@ -128,8 +95,11 @@ type staticMapping struct {
 // NewStaticMapping returns a single ClusterWorkloadResourceMappingTemplate for each lookup. It is useful for
 // testing.
 func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate) MappingSource {
+	mapping = mapping.DeepCopy()
+	mapping.Default()
+
 	return &staticMapping{
-		mapping: DefaultWorkloadMapping(mapping),
+		mapping: mapping,
 	}
 }
 
