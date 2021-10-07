@@ -230,12 +230,12 @@ func TestClusterWorkloadResourceMappingValidate(t *testing.T) {
 		expected field.ErrorList
 	}{
 		{
-			name:     "emtpy",
+			name:     "empty is valid",
 			seed:     &ClusterWorkloadResourceMapping{},
 			expected: field.ErrorList{},
 		},
 		{
-			name: "emtpy version",
+			name: "wildcard version is valid",
 			seed: &ClusterWorkloadResourceMapping{
 				Spec: ClusterWorkloadResourceMappingSpec{
 					Versions: []ClusterWorkloadResourceMappingTemplate{
@@ -248,7 +248,7 @@ func TestClusterWorkloadResourceMappingValidate(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
-			name: "duplicate version",
+			name: "duplicate version is invalid",
 			seed: &ClusterWorkloadResourceMapping{
 				Spec: ClusterWorkloadResourceMappingSpec{
 					Versions: []ClusterWorkloadResourceMappingTemplate{
@@ -266,7 +266,7 @@ func TestClusterWorkloadResourceMappingValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "missing version",
+			name: "missing version is invalid",
 			seed: &ClusterWorkloadResourceMapping{
 				Spec: ClusterWorkloadResourceMappingSpec{
 					Versions: []ClusterWorkloadResourceMappingTemplate{

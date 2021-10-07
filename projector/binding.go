@@ -24,6 +24,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	ServiceBindingRootEnv = "SERVICE_BINDING_ROOT"
+)
+
 var _ ServiceBindingProjector = (*serviceBindingProjector)(nil)
 
 type serviceBindingProjector struct {
@@ -68,7 +72,7 @@ func (i *serviceBindingProjector) Unproject(ctx context.Context, binding *servic
 	return mpt.WriteToWorkload(ctx)
 }
 
-func (i *serviceBindingProjector) project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
+func (i *serviceBindingProjector) project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *metaPodTemplate) error {
 	// rather than attempt to merge an existing binding, unproject it
 	if err := i.unproject(ctx, binding, mpt); err != nil {
 		return err
@@ -80,7 +84,7 @@ func (i *serviceBindingProjector) project(ctx context.Context, binding *serviceb
 
 		serviceBindingRoot := ""
 		for _, e := range c.Env {
-			if e.Name == "SERVICE_BINDING_ROOT" {
+			if e.Name == ServiceBindingRootEnv {
 				serviceBindingRoot = e.Value
 				break
 			}
@@ -88,7 +92,7 @@ func (i *serviceBindingProjector) project(ctx context.Context, binding *serviceb
 		if serviceBindingRoot == "" {
 			serviceBindingRoot = "/bindings"
 			c.Env = append(c.Env, corev1.EnvVar{
-				Name:  "SERVICE_BINDING_ROOT",
+				Name:  ServiceBindingRootEnv,
 				Value: serviceBindingRoot,
 			})
 		}
@@ -99,7 +103,7 @@ func (i *serviceBindingProjector) project(ctx context.Context, binding *serviceb
 	return nil
 }
 
-func (i *serviceBindingProjector) unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *MetaPodTemplate) error {
+func (i *serviceBindingProjector) unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, mpt *metaPodTemplate) error {
 	// TODO undo projection
 
 	return nil

@@ -28,18 +28,18 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 )
 
-// MetaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.
-type MetaPodTemplate struct {
+// metaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.
+type metaPodTemplate struct {
 	workload runtime.Object
 	mapping  *v1alpha3.ClusterWorkloadResourceMappingTemplate
 
 	Annotations map[string]string
-	Containers  []MetaContainer
+	Containers  []metaContainer
 	Volumes     []corev1.Volume
 }
 
-// MetaContainer contains the aspects of a Container that are appropriate for service binding.
-type MetaContainer struct {
+// metaContainer contains the aspects of a Container that are appropriate for service binding.
+type metaContainer struct {
 	Name         string
 	Env          []corev1.EnvVar
 	VolumeMounts []corev1.VolumeMount
@@ -48,13 +48,13 @@ type MetaContainer struct {
 // NewMetaPodTemplate coerces the workload object into a MetaPodTemplate following the mapping definition. The
 // resulting MetaPodTemplate may have one or more service bindings applied to it at a time, but should not be reused.
 // The workload must be JSON marshalable.
-func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v1alpha3.ClusterWorkloadResourceMappingTemplate) (*MetaPodTemplate, error) {
-	mpt := &MetaPodTemplate{
+func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v1alpha3.ClusterWorkloadResourceMappingTemplate) (*metaPodTemplate, error) {
+	mpt := &metaPodTemplate{
 		workload: workload,
 		mapping:  mapping,
 
 		Annotations: map[string]string{},
-		Containers:  []MetaContainer{},
+		Containers:  []metaContainer{},
 		Volumes:     []corev1.Volume{},
 	}
 
@@ -78,7 +78,7 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v
 			continue
 		}
 		for _, cv := range cr[0] {
-			mc := MetaContainer{
+			mc := metaContainer{
 				Name:         "",
 				Env:          []corev1.EnvVar{},
 				VolumeMounts: []corev1.VolumeMount{},
@@ -109,7 +109,7 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v
 
 // WriteToWorkload applies mutation defined on the MetaPodTemplate since it was created to the workload resource the
 // MetaPodTemplate was created from. This method should generally be called once per instance.
-func (mpt *MetaPodTemplate) WriteToWorkload(ctx context.Context) error {
+func (mpt *metaPodTemplate) WriteToWorkload(ctx context.Context) error {
 	// convert structured workload to unstructured
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(mpt.workload)
 	if err != nil {
@@ -155,7 +155,7 @@ func (mpt *MetaPodTemplate) WriteToWorkload(ctx context.Context) error {
 	return runtime.DefaultUnstructuredConverter.FromUnstructured(u, mpt.workload)
 }
 
-func (mpt *MetaPodTemplate) getAt(ptr string, source reflect.Value, target interface{}) error {
+func (mpt *metaPodTemplate) getAt(ptr string, source reflect.Value, target interface{}) error {
 	parent := reflect.ValueOf(nil)
 	createIfNil := false
 	keys, err := mpt.keys(ptr)
@@ -176,7 +176,7 @@ func (mpt *MetaPodTemplate) getAt(ptr string, source reflect.Value, target inter
 	return json.Unmarshal(b, target)
 }
 
-func (mpt *MetaPodTemplate) setAt(ptr string, value interface{}, target reflect.Value) error {
+func (mpt *metaPodTemplate) setAt(ptr string, value interface{}, target reflect.Value) error {
 	keys, err := mpt.keys(ptr)
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func (mpt *MetaPodTemplate) setAt(ptr string, value interface{}, target reflect.
 	return nil
 }
 
-func (mpt *MetaPodTemplate) keys(ptr string) ([]string, error) {
+func (mpt *metaPodTemplate) keys(ptr string) ([]string, error) {
 	p, err := jsonpath.Parse("", fmt.Sprintf("{%s}", ptr))
 	if err != nil {
 		return nil, err
@@ -217,7 +217,7 @@ func (mpt *MetaPodTemplate) keys(ptr string) ([]string, error) {
 	return mpt.fieldKeys(p.Root)
 }
 
-func (mpt *MetaPodTemplate) fieldKeys(node jsonpath.Node) ([]string, error) {
+func (mpt *metaPodTemplate) fieldKeys(node jsonpath.Node) ([]string, error) {
 	switch node.Type() {
 	case jsonpath.NodeList:
 		list := node.(*jsonpath.ListNode)
@@ -238,7 +238,7 @@ func (mpt *MetaPodTemplate) fieldKeys(node jsonpath.Node) ([]string, error) {
 	}
 }
 
-func (mpt *MetaPodTemplate) find(value, parent reflect.Value, keys []string, lastKey string, createIfNil bool) (reflect.Value, reflect.Value, string, error) {
+func (mpt *metaPodTemplate) find(value, parent reflect.Value, keys []string, lastKey string, createIfNil bool) (reflect.Value, reflect.Value, string, error) {
 	if !value.IsValid() || value.IsNil() {
 		if !createIfNil {
 			return reflect.ValueOf(nil), reflect.ValueOf(nil), "", nil
