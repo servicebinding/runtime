@@ -85,7 +85,7 @@ func TestServiceBindingValidate(t *testing.T) {
 		expected field.ErrorList
 	}{
 		{
-			name: "empty",
+			name: "empty is not valid",
 			seed: &ServiceBinding{},
 			expected: field.ErrorList{
 				field.Required(field.NewPath("spec", "name"), ""),
@@ -98,7 +98,7 @@ func TestServiceBindingValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "valid",
+			name: "workload valid",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
 					Name: "my-binding",
@@ -117,7 +117,7 @@ func TestServiceBindingValidate(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
-			name: "workload selector",
+			name: "workload valid selector",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
 					Name: "my-binding",
@@ -136,7 +136,7 @@ func TestServiceBindingValidate(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
-			name: "workload overspeced",
+			name: "workload invalid overspeced",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
 					Name: "my-binding",
@@ -158,7 +158,7 @@ func TestServiceBindingValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "workload env",
+			name: "workload valid env",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
 					Name: "my-binding",
@@ -183,7 +183,7 @@ func TestServiceBindingValidate(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
-			name: "workload env",
+			name: "workload invalid env",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
 					Name: "my-binding",
