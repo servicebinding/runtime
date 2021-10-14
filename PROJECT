@@ -19,4 +19,7 @@ resources:
   kind: ClusterWorkloadResourceMapping
   path: github.com/servicebinding/service-binding-controller/apis/v1alpha3
   version: v1alpha3
+  webhooks:
+    validation: true
+    webhookVersion: v1
 version: "3"
