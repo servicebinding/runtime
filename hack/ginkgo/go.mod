@@ -2,7 +2,7 @@ module github.com/servicebinding/service-binding-controller/hack/ginkgo
 
 go 1.17
 
-require github.com/onsi/ginkgo v1.16.4
+require github.com/onsi/ginkgo v1.16.5
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
