@@ -408,6 +408,119 @@ func TestBinding(t *testing.T) {
 			},
 		},
 		{
+			name:    "rotate binding secret",
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
+			binding: &servicebindingv1alpha3.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Spec: servicebindingv1alpha3.ServiceBindingSpec{
+					Name: bindingName,
+				},
+				Status: servicebindingv1alpha3.ServiceBindingStatus{
+					Binding: &servicebindingv1alpha3.ServiceBindingSecretReference{
+						Name: secretName + "-updated",
+					},
+				},
+			},
+			workload: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": secretName,
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: secretName,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings/my-binding",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": secretName + "-updated",
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: secretName + "-updated",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings/my-binding",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "project service binding env",
 			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			binding: &servicebindingv1alpha3.ServiceBinding{
@@ -967,7 +1080,6 @@ func TestBinding(t *testing.T) {
 				},
 			},
 		},
-
 		{
 			name:    "no binding if missing secret",
 			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
