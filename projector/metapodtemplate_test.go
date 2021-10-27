@@ -95,24 +95,28 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "init-hello",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "init-hello-2",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
-						Env:          []corev1.EnvVar{testEnv},
-						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
+						nameWasMapped: true,
+						Name:          "hello",
+						Env:           []corev1.EnvVar{testEnv},
+						VolumeMounts:  []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "hello-2",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 				},
 				Volumes: []corev1.Volume{testVolume},
@@ -172,24 +176,28 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "init-hello",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "init-hello-2",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
-						Env:          []corev1.EnvVar{testEnv},
-						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
+						nameWasMapped: true,
+						Name:          "hello",
+						Env:           []corev1.EnvVar{testEnv},
+						VolumeMounts:  []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "hello-2",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 				},
 				Volumes: []corev1.Volume{testVolume},
@@ -223,9 +231,48 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: map[string]string{},
 				Containers: []metaContainer{
 					{
-						Name:         "",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
+					},
+				},
+				Volumes: []corev1.Volume{},
+			},
+		},
+		{
+			name: "unmapped container name",
+			mapping: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+				Annotations: ".spec.template.metadata.annotations",
+				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+					{
+						Path: ".spec.template.spec.initContainers[*]",
+					},
+					{
+						Path: ".spec.template.spec.containers[*]",
+					},
+				},
+				Volumes: ".spec.template.spec.volumes",
+			},
+			workload: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{},
+							},
+						},
+					},
+				},
+			},
+			expected: &metaPodTemplate{
+				Annotations: map[string]string{},
+				Containers: []metaContainer{
+					{
+						nameWasMapped: false,
+						Name:          "",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 				},
 				Volumes: []corev1.Volume{},
@@ -312,9 +359,10 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: map[string]string{},
 				Containers: []metaContainer{
 					{
-						Name:         "",
-						Env:          []corev1.EnvVar{},
-						VolumeMounts: []corev1.VolumeMount{},
+						nameWasMapped: true,
+						Name:          "",
+						Env:           []corev1.EnvVar{},
+						VolumeMounts:  []corev1.VolumeMount{},
 					},
 				},
 				Volumes: []corev1.Volume{},
@@ -356,7 +404,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 			if c.expectedErr {
 				return
 			}
-			if diff := cmp.Diff(c.expected, actual, cmpopts.IgnoreUnexported(metaPodTemplate{})); diff != "" {
+			if diff := cmp.Diff(c.expected, actual, cmpopts.IgnoreUnexported(metaPodTemplate{}), cmp.AllowUnexported(metaContainer{})); diff != "" {
 				t.Errorf("NewMetaPodTemplate() (-expected, +actual): %s", diff)
 			}
 		})

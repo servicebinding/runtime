@@ -32,7 +32,7 @@ import (
 const (
 	ServiceBindingRootEnv    = "SERVICE_BINDING_ROOT"
 	Group                    = "projector.servicebinding.io"
-	VolumePrefix             = Group + "/volume-"
+	VolumePrefix             = "servicebinding-"
 	SecretAnnotationPrefix   = Group + "/secret-"
 	TypeAnnotationPrefix     = Group + "/type-"
 	ProviderAnnotationPrefix = Group + "/provider-"
@@ -270,9 +270,6 @@ func (p *serviceBindingProjector) projectEnv(binding *servicebindingv1alpha3.Ser
 }
 
 func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1alpha3.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
-	if mpt.Annotations == nil {
-		return
-	}
 	env := []corev1.EnvVar{}
 	secret := mpt.Annotations[p.secretAnnotationName(binding)]
 	typeFieldPath := fmt.Sprintf("metadata.annotations['%s']", p.typeAnnotationName(binding))
@@ -302,7 +299,7 @@ func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1alpha3.S
 }
 
 func (p *serviceBindingProjector) isContainerBindable(binding *servicebindingv1alpha3.ServiceBinding, mc *metaContainer) bool {
-	if len(binding.Spec.Workload.Containers) == 0 || mc.Name == "" {
+	if len(binding.Spec.Workload.Containers) == 0 || !mc.NameWasMapped() {
 		return true
 	}
 	for _, name := range binding.Spec.Workload.Containers {
@@ -363,9 +360,6 @@ func (p *serviceBindingProjector) secretAnnotation(binding *servicebindingv1alph
 	if secret == "" {
 		return ""
 	}
-	if mpt.Annotations == nil {
-		mpt.Annotations = map[string]string{}
-	}
 	mpt.Annotations[key] = secret
 	return secret
 }
@@ -380,9 +374,6 @@ func (p *serviceBindingProjector) volumeName(binding *servicebindingv1alpha3.Ser
 
 func (p *serviceBindingProjector) typeAnnotation(binding *servicebindingv1alpha3.ServiceBinding, mpt *metaPodTemplate) string {
 	key := p.typeAnnotationName(binding)
-	if mpt.Annotations == nil {
-		mpt.Annotations = map[string]string{}
-	}
 	mpt.Annotations[key] = binding.Spec.Type
 	return key
 }
@@ -393,9 +384,6 @@ func (p *serviceBindingProjector) typeAnnotationName(binding *servicebindingv1al
 
 func (p *serviceBindingProjector) providerAnnotation(binding *servicebindingv1alpha3.ServiceBinding, mpt *metaPodTemplate) string {
 	key := p.providerAnnotationName(binding)
-	if mpt.Annotations == nil {
-		mpt.Annotations = map[string]string{}
-	}
 	mpt.Annotations[key] = binding.Spec.Provider
 	return key
 }

@@ -102,7 +102,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -129,7 +129,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -145,7 +145,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -163,7 +163,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/custom/path/my-binding",
 										},
@@ -179,7 +179,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -267,7 +267,7 @@ func TestBinding(t *testing.T) {
 								Spec: corev1.PodSpec{
 									Volumes: []corev1.Volume{
 										{
-											Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											VolumeSource: corev1.VolumeSource{
 												Projected: &corev1.ProjectedVolumeSource{
 													Sources: []corev1.VolumeProjection{
@@ -294,7 +294,7 @@ func TestBinding(t *testing.T) {
 											},
 											VolumeMounts: []corev1.VolumeMount{
 												{
-													Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 													ReadOnly:  true,
 													MountPath: "/bindings/my-binding",
 												},
@@ -310,7 +310,7 @@ func TestBinding(t *testing.T) {
 											},
 											VolumeMounts: []corev1.VolumeMount{
 												{
-													Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 													ReadOnly:  true,
 													MountPath: "/bindings/my-binding",
 												},
@@ -328,7 +328,7 @@ func TestBinding(t *testing.T) {
 											},
 											VolumeMounts: []corev1.VolumeMount{
 												{
-													Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 													ReadOnly:  true,
 													MountPath: "/custom/path/my-binding",
 												},
@@ -344,7 +344,7 @@ func TestBinding(t *testing.T) {
 											},
 											VolumeMounts: []corev1.VolumeMount{
 												{
-													Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 													ReadOnly:  true,
 													MountPath: "/bindings/my-binding",
 												},
@@ -386,7 +386,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -434,7 +434,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -460,7 +460,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -482,7 +482,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -508,7 +508,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -568,7 +568,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -616,7 +616,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -629,7 +629,7 @@ func TestBinding(t *testing.T) {
 			},
 		},
 		{
-			name:    "update service binding env",
+			name:    "remove service binding env",
 			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			binding: &servicebindingv1alpha3.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -655,7 +655,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -703,7 +703,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -725,7 +725,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -751,7 +751,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -764,7 +764,174 @@ func TestBinding(t *testing.T) {
 			},
 		},
 		{
-			name:    "project service binding type and provider",
+			name:    "update service binding env",
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
+			binding: &servicebindingv1alpha3.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Spec: servicebindingv1alpha3.ServiceBindingSpec{
+					Name: bindingName,
+					Env: []servicebindingv1alpha3.EnvMapping{
+						{
+							Name: "BLEEP",
+							Key:  "bleep",
+						},
+						{
+							Name: "BLOOP",
+							Key:  "bloop",
+						},
+					},
+				},
+				Status: servicebindingv1alpha3.ServiceBindingStatus{
+					Binding: &servicebindingv1alpha3.ServiceBindingSecretReference{
+						Name: secretName,
+					},
+				},
+			},
+			workload: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": secretName,
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: secretName,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+										{
+											Name: "BAR",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{
+													Key: "bar",
+													LocalObjectReference: corev1.LocalObjectReference{
+														Name: secretName,
+													},
+												},
+											},
+										},
+										{
+											Name: "FOO",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{
+													Key: "foo",
+													LocalObjectReference: corev1.LocalObjectReference{
+														Name: secretName,
+													},
+												},
+											},
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings/my-binding",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": secretName,
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: secretName,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+										{
+											Name: "BLEEP",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{
+													Key: "bleep",
+													LocalObjectReference: corev1.LocalObjectReference{
+														Name: secretName,
+													},
+												},
+											},
+										},
+										{
+											Name: "BLOOP",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{
+													Key: "bloop",
+													LocalObjectReference: corev1.LocalObjectReference{
+														Name: secretName,
+													},
+												},
+											},
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings/my-binding",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "project service binding type and provider for env and volume",
 			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
 			binding: &servicebindingv1alpha3.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
@@ -815,7 +982,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -881,7 +1048,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -932,7 +1099,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -998,7 +1165,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -1020,7 +1187,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1068,7 +1235,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -1151,6 +1318,9 @@ func TestBinding(t *testing.T) {
 								{
 									Name: "skip",
 								},
+								{
+									Name: "",
+								},
 							},
 						},
 					},
@@ -1167,7 +1337,7 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1194,7 +1364,7 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
@@ -1202,6 +1372,11 @@ func TestBinding(t *testing.T) {
 								},
 								{
 									Name:         "skip",
+									Env:          []corev1.EnvVar{},
+									VolumeMounts: []corev1.VolumeMount{},
+								},
+								{
+									Name:         "",
 									Env:          []corev1.EnvVar{},
 									VolumeMounts: []corev1.VolumeMount{},
 								},
@@ -1246,7 +1421,13 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-33333333-3333-3333-3333-333333333333",
+									Name: "preexisting",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "servicebinding-33333333-3333-3333-3333-333333333333",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1262,7 +1443,7 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
-									Name: "projector.servicebinding.io/volume-22222222-2222-2222-2222-222222222222",
+									Name: "servicebinding-22222222-2222-2222-2222-222222222222",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1278,7 +1459,7 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
-									Name: "projector.servicebinding.io/volume-11111111-1111-1111-1111-111111111111",
+									Name: "servicebinding-11111111-1111-1111-1111-111111111111",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1322,6 +1503,10 @@ func TestBinding(t *testing.T) {
 								{
 									Env: []corev1.EnvVar{
 										{
+											Name:  "PREEXISTING",
+											Value: "env",
+										},
+										{
 											Name:  "SERVICE_BINDING_ROOT",
 											Value: "/bindings",
 										},
@@ -1344,17 +1529,21 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-33333333-3333-3333-3333-333333333333",
+											Name:      "preexisting",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "servicebinding-33333333-3333-3333-3333-333333333333",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-3",
 										},
 										{
-											Name:      "projector.servicebinding.io/volume-22222222-2222-2222-2222-222222222222",
+											Name:      "servicebinding-22222222-2222-2222-2222-222222222222",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-2",
 										},
 										{
-											Name:      "projector.servicebinding.io/volume-11111111-1111-1111-1111-111111111111",
+											Name:      "servicebinding-11111111-1111-1111-1111-111111111111",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-1",
 										},
@@ -1379,7 +1568,13 @@ func TestBinding(t *testing.T) {
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
-									Name: "projector.servicebinding.io/volume-11111111-1111-1111-1111-111111111111",
+									Name: "preexisting",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "servicebinding-11111111-1111-1111-1111-111111111111",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1419,7 +1614,7 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
-									Name: "projector.servicebinding.io/volume-22222222-2222-2222-2222-222222222222",
+									Name: "servicebinding-22222222-2222-2222-2222-222222222222",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1435,7 +1630,7 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
-									Name: "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1451,7 +1646,7 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
-									Name: "projector.servicebinding.io/volume-33333333-3333-3333-3333-333333333333",
+									Name: "servicebinding-33333333-3333-3333-3333-333333333333",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
 											Sources: []corev1.VolumeProjection{
@@ -1471,6 +1666,10 @@ func TestBinding(t *testing.T) {
 							Containers: []corev1.Container{
 								{
 									Env: []corev1.EnvVar{
+										{
+											Name:  "PREEXISTING",
+											Value: "env",
+										},
 										{
 											Name:  "SERVICE_BINDING_ROOT",
 											Value: "/bindings",
@@ -1505,22 +1704,26 @@ func TestBinding(t *testing.T) {
 									},
 									VolumeMounts: []corev1.VolumeMount{
 										{
-											Name:      "projector.servicebinding.io/volume-11111111-1111-1111-1111-111111111111",
+											Name:      "preexisting",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "servicebinding-11111111-1111-1111-1111-111111111111",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-1",
 										},
 										{
-											Name:      "projector.servicebinding.io/volume-22222222-2222-2222-2222-222222222222",
+											Name:      "servicebinding-22222222-2222-2222-2222-222222222222",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-2",
 										},
 										{
-											Name:      "projector.servicebinding.io/volume-26894874-4719-4802-8f43-8ceed127b4c2",
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
 											ReadOnly:  true,
 											MountPath: "/bindings/my-binding",
 										},
 										{
-											Name:      "projector.servicebinding.io/volume-33333333-3333-3333-3333-333333333333",
+											Name:      "servicebinding-33333333-3333-3333-3333-333333333333",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-3",
 										},

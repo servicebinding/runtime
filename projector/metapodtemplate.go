@@ -40,9 +40,17 @@ type metaPodTemplate struct {
 
 // metaContainer contains the aspects of a Container that are appropriate for service binding.
 type metaContainer struct {
+	nameWasMapped bool
+
 	Name         string
 	Env          []corev1.EnvVar
 	VolumeMounts []corev1.VolumeMount
+}
+
+// NameWasMapped indicates that the mapping defined a JSON Path for the container name. If true and the name is empty
+// the source container was not named.
+func (mc *metaContainer) NameWasMapped() bool {
+	return mc.nameWasMapped
 }
 
 // NewMetaPodTemplate coerces the workload object into a MetaPodTemplate following the mapping definition. The
@@ -86,6 +94,7 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v
 
 			if mpt.mapping.Containers[i].Name != "" {
 				// name is optional
+				mc.nameWasMapped = true
 				if err := mpt.getAt(mpt.mapping.Containers[i].Name, cv, &mc.Name); err != nil {
 					return nil, err
 				}
