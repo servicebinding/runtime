@@ -1427,6 +1427,12 @@ func TestBinding(t *testing.T) {
 									},
 								},
 								{
+									Name: "z_existing",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
 									Name: "servicebinding-33333333-3333-3333-3333-333333333333",
 									VolumeSource: corev1.VolumeSource{
 										Projected: &corev1.ProjectedVolumeSource{
@@ -1507,6 +1513,10 @@ func TestBinding(t *testing.T) {
 											Value: "env",
 										},
 										{
+											Name:  "Z_EXISTING",
+											Value: "env",
+										},
+										{
 											Name:  "SERVICE_BINDING_ROOT",
 											Value: "/bindings",
 										},
@@ -1530,6 +1540,10 @@ func TestBinding(t *testing.T) {
 									VolumeMounts: []corev1.VolumeMount{
 										{
 											Name:      "preexisting",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "z_existing",
 											MountPath: "/var/mount",
 										},
 										{
@@ -1561,14 +1575,20 @@ func TestBinding(t *testing.T) {
 							Annotations: map[string]string{
 								"projector.servicebinding.io/secret-11111111-1111-1111-1111-111111111111": "secret-1",
 								"projector.servicebinding.io/secret-22222222-2222-2222-2222-222222222222": "secret-2",
-								"projector.servicebinding.io/secret-33333333-3333-3333-3333-333333333333": "secret-3",
 								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": secretName,
+								"projector.servicebinding.io/secret-33333333-3333-3333-3333-333333333333": "secret-3",
 							},
 						},
 						Spec: corev1.PodSpec{
 							Volumes: []corev1.Volume{
 								{
 									Name: "preexisting",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "z_existing",
 									VolumeSource: corev1.VolumeSource{
 										EmptyDir: &corev1.EmptyDirVolumeSource{},
 									},
@@ -1671,6 +1691,10 @@ func TestBinding(t *testing.T) {
 											Value: "env",
 										},
 										{
+											Name:  "Z_EXISTING",
+											Value: "env",
+										},
+										{
 											Name:  "SERVICE_BINDING_ROOT",
 											Value: "/bindings",
 										},
@@ -1708,6 +1732,10 @@ func TestBinding(t *testing.T) {
 											MountPath: "/var/mount",
 										},
 										{
+											Name:      "z_existing",
+											MountPath: "/var/mount",
+										},
+										{
 											Name:      "servicebinding-11111111-1111-1111-1111-111111111111",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-1",
@@ -1726,6 +1754,208 @@ func TestBinding(t *testing.T) {
 											Name:      "servicebinding-33333333-3333-3333-3333-333333333333",
 											ReadOnly:  true,
 											MountPath: "/bindings/binding-3",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "apply binding should be idempotent",
+			mapping: NewStaticMapping(&servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{}),
+			binding: &servicebindingv1alpha3.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Status: servicebindingv1alpha3.ServiceBindingStatus{
+					Binding: &servicebindingv1alpha3.ServiceBindingSecretReference{
+						Name: secretName,
+					},
+				},
+			},
+			workload: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-11111111-1111-1111-1111-111111111111": "secret-1",
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "preexisting",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "servicebinding-11111111-1111-1111-1111-111111111111",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: "secret-1",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: "my-secret",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Name: "preexisting2",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "PREEXISTING",
+											Value: "env",
+										},
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "preexisting",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "servicebinding-11111111-1111-1111-1111-111111111111",
+											ReadOnly:  true,
+											MountPath: "/bindings/binding-1",
+										},
+										{
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings/my-binding",
+										},
+										{
+											Name:      "preexisting2",
+											MountPath: "/var/mount",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Annotations: map[string]string{
+								"projector.servicebinding.io/secret-11111111-1111-1111-1111-111111111111": "secret-1",
+								"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+							},
+						},
+						Spec: corev1.PodSpec{
+							Volumes: []corev1.Volume{
+								{
+									Name: "preexisting",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "preexisting2",
+									VolumeSource: corev1.VolumeSource{
+										EmptyDir: &corev1.EmptyDirVolumeSource{},
+									},
+								},
+								{
+									Name: "servicebinding-11111111-1111-1111-1111-111111111111",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: "secret-1",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+									VolumeSource: corev1.VolumeSource{
+										Projected: &corev1.ProjectedVolumeSource{
+											Sources: []corev1.VolumeProjection{
+												{
+													Secret: &corev1.SecretProjection{
+														LocalObjectReference: corev1.LocalObjectReference{
+															Name: "my-secret",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{
+											Name:  "PREEXISTING",
+											Value: "env",
+										},
+										{
+											Name:  "SERVICE_BINDING_ROOT",
+											Value: "/bindings",
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "preexisting",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "preexisting2",
+											MountPath: "/var/mount",
+										},
+										{
+											Name:      "servicebinding-11111111-1111-1111-1111-111111111111",
+											ReadOnly:  true,
+											MountPath: "/bindings/binding-1",
+										},
+										{
+											Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											ReadOnly:  true,
+											MountPath: "/bindings",
 										},
 									},
 								},

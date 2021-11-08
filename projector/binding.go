@@ -156,14 +156,22 @@ func (p *serviceBindingProjector) projectVolume(binding *servicebindingv1alpha3.
 
 	mpt.Volumes = append(mpt.Volumes, volume)
 
-	// sort all injected volumes
+	// sort projected volumes
 	sort.SliceStable(mpt.Volumes, func(i, j int) bool {
-		in := mpt.Volumes[i].Name
-		jn := mpt.Volumes[j].Name
-		if !strings.HasPrefix(in, VolumePrefix) || !strings.HasPrefix(jn, VolumePrefix) {
-			return false
+		ii := mpt.Volumes[i]
+		jj := mpt.Volumes[j]
+		ip := strings.HasPrefix(ii.Name, VolumePrefix)
+		jp := strings.HasPrefix(jj.Name, VolumePrefix)
+		if ip && jp {
+			// sort projected items by name
+			return ii.Name < jj.Name
 		}
-		return in < jn
+		if jp {
+			// keep projected items after non-projected items
+			return !ip
+		}
+		// preserve order of non-projected items
+		return false
 	})
 }
 
@@ -198,14 +206,22 @@ func (p *serviceBindingProjector) projectVolumeMount(binding *servicebindingv1al
 		MountPath: path.Join(p.serviceBindingRoot(mc), binding.Spec.Name),
 	})
 
-	// sort all injected volume mounts
+	// sort projected volume mounts
 	sort.SliceStable(mc.VolumeMounts, func(i, j int) bool {
-		in := mc.VolumeMounts[i].Name
-		jn := mc.VolumeMounts[j].Name
-		if !strings.HasPrefix(in, VolumePrefix) || !strings.HasPrefix(jn, VolumePrefix) {
-			return false
+		ii := mc.VolumeMounts[i]
+		jj := mc.VolumeMounts[j]
+		ip := strings.HasPrefix(ii.Name, VolumePrefix)
+		jp := strings.HasPrefix(jj.Name, VolumePrefix)
+		if ip && jp {
+			// sort projected items by name
+			return ii.Name < jj.Name
 		}
-		return in < jn
+		if jp {
+			// keep projected items after non-projected items
+			return !ip
+		}
+		// preserve order of non-projected items
+		return false
 	})
 }
 
@@ -257,15 +273,23 @@ func (p *serviceBindingProjector) projectEnv(binding *servicebindingv1alpha3.Ser
 		})
 	}
 
-	// sort all injected env vars
+	// sort projected env vars
 	secrets := p.knownProjectedSecrets(mpt)
 	sort.SliceStable(mc.Env, func(i, j int) bool {
-		ie := mc.Env[i]
-		je := mc.Env[j]
-		if !p.isProjectedEnv(ie, secrets) || !p.isProjectedEnv(je, secrets) {
-			return false
+		ii := mc.Env[i]
+		jj := mc.Env[j]
+		ip := p.isProjectedEnv(ii, secrets)
+		jp := p.isProjectedEnv(jj, secrets)
+		if ip && jp {
+			// sort projected items by name
+			return ii.Name < jj.Name
 		}
-		return ie.Name < je.Name
+		if jp {
+			// keep projected items after non-projected items
+			return !ip
+		}
+		// preserve order of non-projected items
+		return false
 	})
 }
 
