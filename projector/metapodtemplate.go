@@ -26,6 +26,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/jsonpath"
+	"k8s.io/utils/pointer"
 )
 
 // metaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.
@@ -40,17 +41,9 @@ type metaPodTemplate struct {
 
 // metaContainer contains the aspects of a Container that are appropriate for service binding.
 type metaContainer struct {
-	nameWasMapped bool
-
-	Name         string
+	Name         *string
 	Env          []corev1.EnvVar
 	VolumeMounts []corev1.VolumeMount
-}
-
-// NameWasMapped indicates that the mapping defined a JSON Path for the container name. If true and the name is empty
-// the source container was not named.
-func (mc *metaContainer) NameWasMapped() bool {
-	return mc.nameWasMapped
 }
 
 // NewMetaPodTemplate coerces the workload object into a MetaPodTemplate following the mapping definition. The
@@ -87,15 +80,15 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v
 		}
 		for _, cv := range cr[0] {
 			mc := metaContainer{
-				Name:         "",
+				Name:         nil,
 				Env:          []corev1.EnvVar{},
 				VolumeMounts: []corev1.VolumeMount{},
 			}
 
 			if mpt.mapping.Containers[i].Name != "" {
 				// name is optional
-				mc.nameWasMapped = true
-				if err := mpt.getAt(mpt.mapping.Containers[i].Name, cv, &mc.Name); err != nil {
+				mc.Name = pointer.String("")
+				if err := mpt.getAt(mpt.mapping.Containers[i].Name, cv, mc.Name); err != nil {
 					return nil, err
 				}
 			}
@@ -141,8 +134,8 @@ func (mpt *metaPodTemplate) WriteToWorkload(ctx context.Context) error {
 			continue
 		}
 		for _, cv := range cr[0] {
-			if mpt.mapping.Containers[i].Name != "" {
-				if err := mpt.setAt(mpt.mapping.Containers[i].Name, &mpt.Containers[ci].Name, cv); err != nil {
+			if mpt.mapping.Containers[i].Name != "" && mpt.Containers[ci].Name != nil {
+				if err := mpt.setAt(mpt.mapping.Containers[i].Name, mpt.Containers[ci].Name, cv); err != nil {
 					return err
 				}
 			}

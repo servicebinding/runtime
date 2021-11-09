@@ -323,11 +323,11 @@ func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1alpha3.S
 }
 
 func (p *serviceBindingProjector) isContainerBindable(binding *servicebindingv1alpha3.ServiceBinding, mc *metaContainer) bool {
-	if len(binding.Spec.Workload.Containers) == 0 || !mc.NameWasMapped() {
+	if len(binding.Spec.Workload.Containers) == 0 || mc.Name == nil {
 		return true
 	}
 	for _, name := range binding.Spec.Workload.Containers {
-		if name == mc.Name {
+		if name == *mc.Name {
 			return true
 		}
 	}
