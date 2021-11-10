@@ -28,6 +28,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 func TestNewMetaPodTemplate(t *testing.T) {
@@ -95,22 +96,22 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
+						Name:         pointer.String("init-hello"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
+						Name:         pointer.String("init-hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
+						Name:         pointer.String("hello"),
 						Env:          []corev1.EnvVar{testEnv},
 						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
+						Name:         pointer.String("hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -172,22 +173,22 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
+						Name:         pointer.String("init-hello"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
+						Name:         pointer.String("init-hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
+						Name:         pointer.String("hello"),
 						Env:          []corev1.EnvVar{testEnv},
 						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
+						Name:         pointer.String("hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -223,7 +224,44 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: map[string]string{},
 				Containers: []metaContainer{
 					{
-						Name:         "",
+						Name:         pointer.String(""),
+						Env:          []corev1.EnvVar{},
+						VolumeMounts: []corev1.VolumeMount{},
+					},
+				},
+				Volumes: []corev1.Volume{},
+			},
+		},
+		{
+			name: "unmapped container name",
+			mapping: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+				Annotations: ".spec.template.metadata.annotations",
+				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+					{
+						Path: ".spec.template.spec.initContainers[*]",
+					},
+					{
+						Path: ".spec.template.spec.containers[*]",
+					},
+				},
+				Volumes: ".spec.template.spec.volumes",
+			},
+			workload: &appsv1.Deployment{
+				Spec: appsv1.DeploymentSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{},
+							},
+						},
+					},
+				},
+			},
+			expected: &metaPodTemplate{
+				Annotations: map[string]string{},
+				Containers: []metaContainer{
+					{
+						Name:         nil,
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -312,7 +350,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Annotations: map[string]string{},
 				Containers: []metaContainer{
 					{
-						Name:         "",
+						Name:         pointer.String(""),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -399,22 +437,22 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
+						Name:         pointer.String("init-hello"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
+						Name:         pointer.String("init-hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
+						Name:         pointer.String("hello"),
 						Env:          []corev1.EnvVar{testEnv},
 						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
+						Name:         pointer.String("hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -494,22 +532,22 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				Annotations: testAnnotations,
 				Containers: []metaContainer{
 					{
-						Name:         "init-hello",
+						Name:         pointer.String("init-hello"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "init-hello-2",
+						Name:         pointer.String("init-hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
 					{
-						Name:         "hello",
+						Name:         pointer.String("hello"),
 						Env:          []corev1.EnvVar{testEnv},
 						VolumeMounts: []corev1.VolumeMount{testVolumeMount},
 					},
 					{
-						Name:         "hello-2",
+						Name:         pointer.String("hello-2"),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
@@ -607,7 +645,7 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				Annotations: map[string]string{},
 				Containers: []metaContainer{
 					{
-						Name:         "",
+						Name:         pointer.String(""),
 						Env:          []corev1.EnvVar{},
 						VolumeMounts: []corev1.VolumeMount{},
 					},
