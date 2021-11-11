@@ -23,9 +23,7 @@ jobs:
     - name: Test
       run: make test
     - name: Upload coverage to Codecov
-      run: bash <(curl -s https://codecov.io/bash)
-      env:
-        CODECOV_TOKEN: 0e521354-90f7-4a17-a876-73ca69b59cb5
+      uses: codecov/codecov-action@v2
     - name: Get version from tags
       id: version
       run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
