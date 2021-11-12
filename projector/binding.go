@@ -53,7 +53,7 @@ func New(mappingSource MappingSource) ServiceBindingProjector {
 }
 
 func (p *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
-	mapping, err := p.mappingSource.Lookup(ctx, workload)
+	mapping, err := p.mappingSource.LookupMapping(ctx, workload)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 }
 
 func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
-	mapping, err := p.mappingSource.Lookup(ctx, workload)
+	mapping, err := p.mappingSource.LookupMapping(ctx, workload)
 	if err != nil {
 		return err
 	}

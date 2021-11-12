@@ -18,73 +18,10 @@ package projector
 
 import (
 	"context"
-	"fmt"
 
 	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
-
-var _ MappingSource = (*mappingSource)(nil)
-
-type mappingSource struct {
-	client client.Client
-}
-
-// NewMappingSource creates a MappingSource confired to lookup a ClusterWorkloadResourceMapping against a cluster. The
-// client should typically be backed by an informer for the ClusterWorkloadResourceMapping kind.
-func NewMappingSource(client client.Client) MappingSource {
-	return &mappingSource{
-		client: client,
-	}
-}
-
-func (m *mappingSource) Lookup(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
-	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
-	if err != nil {
-		return nil, err
-	}
-	rm, err := m.client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
-	if err != nil {
-		return nil, err
-	}
-	wrm := &servicebindingv1alpha3.ClusterWorkloadResourceMapping{}
-	err = m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
-	if err != nil {
-		if !apierrs.IsNotFound(err) {
-			return nil, err
-		}
-		// use wildcard version default
-		wrm.Spec.Versions = []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
-			{Version: "*"},
-		}
-	}
-
-	// find version mapping
-	var wildcardMapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
-	var mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
-	for _, v := range wrm.Spec.Versions {
-		switch v.Version {
-		case gvk.Version:
-			mapping = &v
-		case "*":
-			wildcardMapping = &v
-		}
-	}
-	if mapping == nil {
-		mapping = wildcardMapping
-	}
-	if mapping == nil {
-		return nil, fmt.Errorf("no matching version found for %q", gvk)
-	}
-
-	mapping = mapping.DeepCopy()
-	mapping.Default()
-
-	return mapping, nil
-}
 
 var _ MappingSource = (*staticMapping)(nil)
 
@@ -103,6 +40,6 @@ func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMap
 	}
 }
 
-func (m *staticMapping) Lookup(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
+func (m *staticMapping) LookupMapping(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
 	return m.mapping, nil
 }
