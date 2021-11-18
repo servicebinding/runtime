@@ -24,13 +24,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-// NewClusterResolver creates a new resolver backed by a controller-runtime client
-func NewClusterResolver(client client.Client) Resolver {
+// New creates a new resolver backed by a controller-runtime client
+func New(client client.Client) Resolver {
 	return &clusterResolver{
 		client: client,
 	}
@@ -40,7 +41,7 @@ type clusterResolver struct {
 	client client.Client
 }
 
-func (m *clusterResolver) LookupMapping(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
+func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
 	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
 	if err != nil {
 		return nil, err
@@ -96,7 +97,7 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	return secretName, err
 }
 
-func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (client.Object, error) {
+func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
 	workload := &unstructured.Unstructured{}
 	workload.SetAPIVersion(workloadRef.APIVersion)
 	workload.SetKind(workloadRef.Kind)

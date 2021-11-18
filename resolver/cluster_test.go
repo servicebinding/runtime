@@ -282,7 +282,7 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 				WithRESTMapper(restMapper).
 				WithObjects(c.givenObjects...).
 				Build()
-			resolver := resolver.NewClusterResolver(client)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupMapping(ctx, c.workload)
 
@@ -392,7 +392,7 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 				WithScheme(scheme).
 				WithObjects(c.givenObjects...).
 				Build()
-			resolver := resolver.NewClusterResolver(client)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupBindingSecret(ctx, c.serviceRef)
 
@@ -515,7 +515,7 @@ func TestClusterResolver_LookupWorkload(t *testing.T) {
 				WithScheme(scheme).
 				WithObjects(c.givenObjects...).
 				Build()
-			resolver := resolver.NewClusterResolver(client)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupWorkload(ctx, c.serviceRef)
 

@@ -20,7 +20,7 @@ import (
 	"context"
 
 	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ MappingSource = (*staticMapping)(nil)
@@ -40,6 +40,6 @@ func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMap
 	}
 }
 
-func (m *staticMapping) LookupMapping(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
+func (m *staticMapping) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
 	return m.mapping, nil
 }

@@ -21,14 +21,14 @@ import (
 
 	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type Resolver interface {
 	// LookupMapping returns the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the workload's
 	// fully qualified resource `{resource}.{group}`. The workload's version is either directly matched, or the wildcard version `*`
 	// mapping template is returned. If no explicit mapping is found, a mapping appropriate for a PodSpecable resource may be used.
-	LookupMapping(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error)
+	LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error)
 
 	// LookupBindingSecret returns the binding secret name exposed by the service following the Provisioned Service duck-type
 	// (`.status.binding.name`). If a direction binding is used (where the referenced service is itself a Secret) the referenced Secret is
@@ -37,5 +37,5 @@ type Resolver interface {
 
 	// LookupWorkload returns the referenced object. Often a unstructured Object is used to sidestep issues with schemes and registered
 	// types.
-	LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (client.Object, error)
+	LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error)
 }

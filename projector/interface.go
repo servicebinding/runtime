@@ -20,19 +20,19 @@ import (
 	"context"
 
 	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type ServiceBindingProjector interface {
 	// Project the service into the workload as defined by the ServiceBinding.
-	Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
+	Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload runtime.Object) error
 	// Unproject the serice from the workload as defined by the ServiceBinding.
-	Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error
+	Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload runtime.Object) error
 }
 
 type MappingSource interface {
 	// LookupMapping the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the workload's
 	// fully qualified resource `{resource}.{group}`. The workload's version is either directly matched, or the wildcard version `*`
 	// mapping template is returned. If no explicit mapping is found, a mapping appropriate for a PodSpecable resource may be used.
-	LookupMapping(ctx context.Context, workload client.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error)
+	LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error)
 }

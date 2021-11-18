@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestBinding(t *testing.T) {
@@ -1990,7 +1989,7 @@ func TestBinding(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			actual := c.workload.DeepCopyObject().(client.Object)
+			actual := c.workload.DeepCopyObject()
 			err := New(c.mapping).Project(ctx, c.binding, actual)
 
 			if (err != nil) != c.expectedErr {
