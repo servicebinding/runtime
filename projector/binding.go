@@ -25,8 +25,8 @@ import (
 
 	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -52,8 +52,8 @@ func New(mappingSource MappingSource) ServiceBindingProjector {
 	}
 }
 
-func (p *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
-	mapping, err := p.mappingSource.Lookup(ctx, workload)
+func (p *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload runtime.Object) error {
+	mapping, err := p.mappingSource.LookupMapping(ctx, workload)
 	if err != nil {
 		return err
 	}
@@ -65,8 +65,8 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 	return mpt.WriteToWorkload(ctx)
 }
 
-func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload client.Object) error {
-	mapping, err := p.mappingSource.Lookup(ctx, workload)
+func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1alpha3.ServiceBinding, workload runtime.Object) error {
+	mapping, err := p.mappingSource.LookupMapping(ctx, workload)
 	if err != nil {
 		return err
 	}
