@@ -3,7 +3,7 @@ module github.com/servicebinding/service-binding-controller
 go 1.17
 
 require (
-	github.com/google/go-cmp v0.5.6
+	github.com/google/go-cmp v0.5.7
 	k8s.io/api v0.23.2
 	k8s.io/apimachinery v0.23.2
 	k8s.io/client-go v0.23.2
