@@ -5,9 +5,9 @@ go 1.17
 require (
 	github.com/google/go-cmp v0.5.7
 	k8s.io/api v0.23.2
-	k8s.io/apimachinery v0.23.2
+	k8s.io/apimachinery v0.23.3
 	k8s.io/client-go v0.23.2
-	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
+	k8s.io/utils v0.0.0-20211116205334-6203023598ed
 	sigs.k8s.io/controller-runtime v0.11.0
 )
 
