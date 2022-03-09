@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha3
+package v1beta1
 
 import (
 	"fmt"
@@ -72,7 +72,7 @@ func (r *ClusterWorkloadResourceMappingTemplate) Default() {
 	}
 }
 
-//+kubebuilder:webhook:path=/validate-servicebinding-io-v1alpha3-clusterworkloadresourcemapping,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=create;update,versions=v1alpha3,name=vclusterworkloadresourcemapping.kb.io,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-servicebinding-io-v1beta1-clusterworkloadresourcemapping,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=create;update,versions={v1alpha3,v1beta1},name=vclusterworkloadresourcemapping.kb.io,admissionReviewVersions={v1,v1beta1}
 
 var _ webhook.Validator = &ClusterWorkloadResourceMapping{}
 

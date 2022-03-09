@@ -19,19 +19,19 @@ package projector
 import (
 	"context"
 
-	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ MappingSource = (*staticMapping)(nil)
 
 type staticMapping struct {
-	mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
+	mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
 }
 
 // NewStaticMapping returns a single ClusterWorkloadResourceMappingTemplate for each lookup. It is useful for
 // testing.
-func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate) MappingSource {
+func NewStaticMapping(mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate) MappingSource {
 	mapping = mapping.DeepCopy()
 	mapping.Default()
 
@@ -40,6 +40,6 @@ func NewStaticMapping(mapping *servicebindingv1alpha3.ClusterWorkloadResourceMap
 	}
 }
 
-func (m *staticMapping) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
+func (m *staticMapping) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error) {
 	return m.mapping, nil
 }

@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	"github.com/servicebinding/service-binding-controller/resolver"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -42,7 +42,7 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(appsv1.AddToScheme(scheme))
 	utilruntime.Must(batchv1.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1alpha3.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
 	restMapper := meta.NewDefaultRESTMapper([]schema.GroupVersion{})
 	restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, nil)
 	restMapper.Add(schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "CronJob"}, nil)
@@ -51,17 +51,17 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		name         string
 		givenObjects []client.Object
 		workload     client.Object
-		expected     *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
+		expected     *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
 		expectedErr  bool
 	}{
 		{
 			name:         "default mapping",
 			givenObjects: []client.Object{},
 			workload:     &appsv1.Deployment{},
-			expected: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 				Version:     "*",
 				Annotations: ".spec.template.metadata.annotations",
-				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.template.spec.initContainers[*]",
 						Name:         ".name",
@@ -81,16 +81,16 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		{
 			name: "custom mapping",
 			givenObjects: []client.Object{
-				&servicebindingv1alpha3.ClusterWorkloadResourceMapping{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cronjobs.batch",
 					},
-					Spec: servicebindingv1alpha3.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version:     "v1",
 								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 									{
 										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 										Name: ".name",
@@ -107,10 +107,10 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 				},
 			},
 			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 				Version:     "v1",
 				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 						Name:         ".name",
@@ -130,16 +130,16 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		{
 			name: "custom mapping with wildcard",
 			givenObjects: []client.Object{
-				&servicebindingv1alpha3.ClusterWorkloadResourceMapping{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cronjobs.batch",
 					},
-					Spec: servicebindingv1alpha3.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version:     "*",
 								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 									{
 										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 										Name: ".name",
@@ -156,10 +156,10 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 				},
 			},
 			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 				Version:     "*",
 				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 						Name:         ".name",
@@ -179,16 +179,16 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		{
 			name: "default mapping is used when resource version is not defined, and no wildcard is defined",
 			givenObjects: []client.Object{
-				&servicebindingv1alpha3.ClusterWorkloadResourceMapping{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cronjobs.batch",
 					},
-					Spec: servicebindingv1alpha3.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version:     "v1beta1", // the workload is version v1
 								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 									{
 										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 										Name: ".name",
@@ -205,12 +205,12 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 				},
 			},
 			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 				Version: "*",
 				// default PodSpecable mapping, it won't actually work for a CronJob,
 				// but absent an explicit mapping, this is what's required.
 				Annotations: ".spec.template.metadata.annotations",
-				Containers: []servicebindingv1alpha3.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.template.spec.initContainers[*]",
 						Name:         ".name",
@@ -230,12 +230,12 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		{
 			name: "error if workload type not found in scheme",
 			givenObjects: []client.Object{
-				&servicebindingv1alpha3.ClusterWorkloadResourceMapping{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "myworkloads.workload.local",
 					},
-					Spec: servicebindingv1alpha3.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version: "*",
 							},
@@ -250,12 +250,12 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		{
 			name: "error if workload type not found in restmapper",
 			givenObjects: []client.Object{
-				&servicebindingv1alpha3.ClusterWorkloadResourceMapping{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "myworkloads.workload.local",
 					},
-					Spec: servicebindingv1alpha3.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version: "*",
 							},
