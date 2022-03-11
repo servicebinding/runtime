@@ -25,6 +25,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    deprecated: true
+    deprecationWarning: servicebinding.io/v1alpha3 is deprecated and will be removed
+      in a future release, use v1beta1 instead
     name: v1alpha3
     schema:
       openAPIV3Schema:

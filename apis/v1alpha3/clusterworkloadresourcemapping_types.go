@@ -63,6 +63,7 @@ type ClusterWorkloadResourceMappingSpec struct {
 	Versions []ClusterWorkloadResourceMappingTemplate `json:"versions,omitempty"`
 }
 
+// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1beta1 instead"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
