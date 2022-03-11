@@ -13,6 +13,14 @@ resources:
   kind: ServiceBinding
   path: github.com/servicebinding/service-binding-controller/apis/v1alpha3
   version: v1alpha3
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: servicebinding.io
+  kind: ServiceBinding
+  path: github.com/servicebinding/service-binding-controller/apis/v1beta1
+  version: v1beta1
   webhooks:
     validation: true
     webhookVersion: v1
@@ -22,6 +30,12 @@ resources:
   kind: ClusterWorkloadResourceMapping
   path: github.com/servicebinding/service-binding-controller/apis/v1alpha3
   version: v1alpha3
+- api:
+    crdVersion: v1
+  domain: servicebinding.io
+  kind: ClusterWorkloadResourceMapping
+  path: github.com/servicebinding/service-binding-controller/apis/v1beta1
+  version: v1beta1
   webhooks:
     validation: true
     webhookVersion: v1

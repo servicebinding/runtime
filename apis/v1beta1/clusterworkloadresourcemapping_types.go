@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 The Kubernetes Authors.
+ * Copyright 2021 Original Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package v1alpha3
+package v1beta1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -63,9 +63,9 @@ type ClusterWorkloadResourceMappingSpec struct {
 	Versions []ClusterWorkloadResourceMappingTemplate `json:"versions,omitempty"`
 }
 
-// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1beta1 instead"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // ClusterWorkloadResourceMapping is the Schema for the clusterworkloadresourcemappings API

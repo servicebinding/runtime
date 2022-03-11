@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -41,7 +41,7 @@ type clusterResolver struct {
 	client client.Client
 }
 
-func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate, error) {
+func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error) {
 	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Ob
 	if err != nil {
 		return nil, err
 	}
-	wrm := &servicebindingv1alpha3.ClusterWorkloadResourceMapping{}
+	wrm := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
 	err = m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
 	if err != nil {
 		if !apierrs.IsNotFound(err) {
@@ -59,8 +59,8 @@ func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Ob
 	}
 
 	// find version mapping
-	wildcardMapping := servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate{Version: "*"}
-	var mapping *servicebindingv1alpha3.ClusterWorkloadResourceMappingTemplate
+	wildcardMapping := servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{Version: "*"}
+	var mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
 	for _, v := range wrm.Spec.Versions {
 		switch v.Version {
 		case gvk.Version:

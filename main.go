@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	"github.com/servicebinding/service-binding-controller/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(servicebindingv1alpha3.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -85,11 +85,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceBinding")
 		os.Exit(1)
 	}
-	if err = (&servicebindingv1alpha3.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&servicebindingv1beta1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping")
 		os.Exit(1)
 	}
-	if err = (&servicebindingv1alpha3.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&servicebindingv1beta1.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding")
 		os.Exit(1)
 	}

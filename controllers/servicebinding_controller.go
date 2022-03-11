@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	servicebindingv1alpha3 "github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 )
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
@@ -60,7 +60,7 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&servicebindingv1alpha3.ServiceBinding{}).
-		Watches(&source.Kind{Type: &servicebindingv1alpha3.ClusterWorkloadResourceMapping{}}, handler.Funcs{}).
+		For(&servicebindingv1beta1.ServiceBinding{}).
+		Watches(&source.Kind{Type: &servicebindingv1beta1.ClusterWorkloadResourceMapping{}}, handler.Funcs{}).
 		Complete(r)
 }

@@ -12,7 +12,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-servicebinding-io-v1alpha3-clusterworkloadresourcemapping
+      path: /validate-servicebinding-io-v1beta1-clusterworkloadresourcemapping
   failurePolicy: Fail
   name: vclusterworkloadresourcemapping.kb.io
   rules:
@@ -20,6 +20,7 @@ webhooks:
     - servicebinding.io
     apiVersions:
     - v1alpha3
+    - v1beta1
     operations:
     - CREATE
     - UPDATE
@@ -33,7 +34,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-servicebinding-io-v1alpha3-servicebinding
+      path: /validate-servicebinding-io-v1beta1-servicebinding
   failurePolicy: Fail
   name: vservicebinding.kb.io
   rules:
@@ -41,6 +42,7 @@ webhooks:
     - servicebinding.io
     apiVersions:
     - v1alpha3
+    - v1beta1
     operations:
     - CREATE
     - UPDATE

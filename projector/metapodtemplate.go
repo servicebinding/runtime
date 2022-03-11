@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/servicebinding/service-binding-controller/apis/v1alpha3"
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/jsonpath"
@@ -32,7 +32,7 @@ import (
 // metaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.
 type metaPodTemplate struct {
 	workload runtime.Object
-	mapping  *v1alpha3.ClusterWorkloadResourceMappingTemplate
+	mapping  *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
 
 	Annotations map[string]string
 	Containers  []metaContainer
@@ -49,7 +49,7 @@ type metaContainer struct {
 // NewMetaPodTemplate coerces the workload object into a MetaPodTemplate following the mapping definition. The
 // resulting MetaPodTemplate may have one or more service bindings applied to it at a time, but should not be reused.
 // The workload must be JSON marshalable.
-func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *v1alpha3.ClusterWorkloadResourceMappingTemplate) (*metaPodTemplate, error) {
+func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate) (*metaPodTemplate, error) {
 	mpt := &metaPodTemplate{
 		workload: workload,
 		mapping:  mapping,
