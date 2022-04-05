@@ -23,7 +23,7 @@ jobs:
     - name: Test
       run: make test
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
     - name: Get version from tags
       id: version
       run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
