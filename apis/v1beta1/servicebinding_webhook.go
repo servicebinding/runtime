@@ -44,12 +44,14 @@ var _ webhook.Validator = &ServiceBinding{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateCreate() error {
+	r.Default()
 	return r.validate().ToAggregate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateUpdate(old runtime.Object) error {
 	// TODO(user): check for immutable fields, if any
+	r.Default()
 	return r.validate().ToAggregate()
 }
 
