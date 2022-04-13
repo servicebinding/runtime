@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/controllers"
+	"github.com/servicebinding/service-binding-controller/internal/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
