@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -37,8 +38,10 @@ import (
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme        = runtime.NewScheme()
+	setupLog      = ctrl.Log.WithName("setup")
+	leaseDuration = 90 * time.Second
+	renewDeadline = 60 * time.Second
 )
 
 func init() {
@@ -70,8 +73,10 @@ func main() {
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
+		LeaderElection:         false,
 		LeaderElectionID:       "74b357db.servicebinding.io",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -97,7 +97,7 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	return secretName, err
 }
 
-func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
+func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (client.Object, error) {
 	workload := &unstructured.Unstructured{}
 	workload.SetAPIVersion(workloadRef.APIVersion)
 	workload.SetKind(workloadRef.Kind)

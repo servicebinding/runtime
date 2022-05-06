@@ -6,6 +6,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+- apiGroups:
   - servicebinding.io
   resources:
   - clusterworkloadresourcemappings

@@ -22,6 +22,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Resolver interface {
@@ -37,5 +38,5 @@ type Resolver interface {
 
 	// LookupWorkload returns the referenced object. Often a unstructured Object is used to sidestep issues with schemes and registered
 	// types.
-	LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error)
+	LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (client.Object, error)
 }
