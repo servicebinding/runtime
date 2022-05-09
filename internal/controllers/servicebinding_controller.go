@@ -97,21 +97,6 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			"service binding", servicebinding)
 		return ctrl.Result{Requeue: true}, nil
 	}
-	// log.Info("Retrieved workload", "workload", workload, "workloadRef", workloadRef)
-
-	// workloadUnstructured, err := runtime.DefaultUnstructuredConverter.ToUnstructured(workload)
-	// if err != nil {
-	// 	updateStatus(servicebinding, err)
-	// 	log.Error(err, "Unable to fetch binding information", "workload", workload)
-	// 	return ctrl.Result{Requeue: true}, nil
-	// }
-	// secret, found, err := unstructured.NestedString(workloadUnstructured, "status", "binding", "name")
-	// if !found || err != nil {
-	// 	updateStatus(servicebinding, err)
-	// 	log.Error(err, "Unable to fetch binding information", "workload", workload)
-	// 	return ctrl.Result{Requeue: true}, nil
-	// }
-	// servicebinding.Status.Binding.Name = secret
 
 	projector := projector.New(resolver)
 	if servicebinding.DeletionTimestamp.IsZero() {
@@ -153,25 +138,19 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	updateStatus(servicebinding, err)
-	err = r.Status().Update(ctx, servicebinding, &client.UpdateOptions{})
+	log.Info("Writing service binding", "service binding", servicebinding)
+	err = r.Status().Update(ctx, servicebinding)
 	if err != nil {
 		log.Error(err, "Unable to update status of servicebinding", "service binding", servicebinding, "err", err)
 		requeue = true
 	}
 
-	if requeue {
-		log.Error(
-			err,
-			"Failed to resolve service binding",
-			"service binding", servicebinding,
-			"err", err,
-		)
-	} else {
-		log.Info(
-			"Resolved service binding",
-			"service binding", servicebinding,
-		)
-	}
+	log.Info(
+		"Resolved service binding",
+		"service binding", servicebinding,
+		"requeue", requeue,
+		"err", err,
+	)
 	return ctrl.Result{Requeue: requeue}, nil
 }
 

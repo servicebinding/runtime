@@ -431,7 +431,7 @@ func (p *serviceBindingProjector) bindingSecrets(binding *servicebindingv1beta1.
 		return "", err
 	}
 	secret := corev1.Secret{}
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(data, &secret);
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(data, &secret)
 	if err == nil {
 		return secret.Name, nil
 	}
