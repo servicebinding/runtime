@@ -58,16 +58,16 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 	if err != nil {
 		return err
 	}
-	secret, err := p.bindingSecrets(binding, workload)
-	if err != nil {
-		return err
-	}
-	binding.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secret}
 	mpt, err := NewMetaPodTemplate(ctx, workload, mapping)
 	if err != nil {
 		return err
 	}
 	p.project(binding, mpt)
+	secret, err := p.bindingSecrets(binding, workload)
+	if err != nil {
+		return err
+	}
+	binding.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secret}
 	return mpt.WriteToWorkload(ctx)
 }
 
