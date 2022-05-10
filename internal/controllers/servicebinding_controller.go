@@ -71,7 +71,7 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			log.Info("Service Binding not found; ignoring.", "name", req.NamespacedName, "err", err)
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Unable to retrieve service binding", "name", req.NamespacedName, "err", err)
+		log.Error(err, "Unable to retrieve service binding", "name", req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
 	// log.Info("Retrieved Service Binding", "service binding", servicebinding)
@@ -134,14 +134,14 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	data, err := json.Marshal(workload)
 	if err != nil {
-		log.Error(err, "Error marshalling workload", "workload", workload, "err", err)
+		log.Error(err, "Error marshalling workload", "workload", workload)
 	}
 	log.Info("Projected service bindings", "service binding", servicebinding, "workload", data)
 
 	err = r.Update(ctx, workload, &client.UpdateOptions{})
 	requeue = requeue || (err != nil)
 	if err != nil {
-		log.Error(err, "Unable to update workload", "workload", workload, "err", err)
+		log.Error(err, "Unable to update workload", "workload", workload)
 	} else {
 		err = projectorErr
 	}
@@ -150,7 +150,7 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	log.Info("Writing service binding", "service binding", servicebinding)
 	err = r.Status().Update(ctx, servicebinding)
 	if err != nil {
-		log.Error(err, "Unable to update status of servicebinding", "service binding", servicebinding, "err", err)
+		log.Error(err, "Unable to update status of servicebinding", "service binding", servicebinding)
 		requeue = true
 	}
 
