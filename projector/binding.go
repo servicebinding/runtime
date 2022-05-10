@@ -25,7 +25,6 @@ import (
 
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
@@ -63,11 +62,6 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 		return err
 	}
 	p.project(binding, mpt)
-	secret, err := p.bindingSecrets(binding, workload)
-	if err != nil {
-		return err
-	}
-	binding.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secret}
 	return mpt.WriteToWorkload(ctx)
 }
 
@@ -420,24 +414,4 @@ func (p *serviceBindingProjector) providerAnnotation(binding *servicebindingv1be
 
 func (p *serviceBindingProjector) providerAnnotationName(binding *servicebindingv1beta1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", ProviderAnnotationPrefix, binding.UID)
-}
-
-func (p *serviceBindingProjector) bindingSecrets(binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) (string, error) {
-	if secret := p.secretName(binding); secret != "" {
-		return secret, nil
-	}
-	data, err := runtime.DefaultUnstructuredConverter.ToUnstructured(workload)
-	if err != nil {
-		return "", err
-	}
-	secret := corev1.Secret{}
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(data, &secret)
-	if err == nil {
-		return secret.Name, nil
-	}
-	status, found, err := unstructured.NestedString(data, "status", "binding", "name")
-	if found && err != nil {
-		return "", err
-	}
-	return status, nil
 }

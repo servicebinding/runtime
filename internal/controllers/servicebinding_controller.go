@@ -98,6 +98,15 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{Requeue: true}, nil
 	}
 
+	serviceRef := v1.ObjectReference{
+		APIVersion: servicebinding.Spec.Service.APIVersion,
+		Kind:       servicebinding.Spec.Service.Kind,
+		Name:       servicebinding.Spec.Service.Name,
+		Namespace:  servicebinding.Namespace,
+	}
+	secret, err := resolver.LookupBindingSecret(ctx, serviceRef)
+	servicebinding.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secret}
+
 	projector := projector.New(resolver)
 	if servicebinding.DeletionTimestamp.IsZero() {
 		err = projector.Project(ctx, servicebinding, workload)
