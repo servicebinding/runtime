@@ -18,12 +18,8 @@ package controllers
 
 import (
 	"context"
-	"encoding/json"
-	"time"
 
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,8 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/projector"
-	"github.com/servicebinding/service-binding-controller/resolver"
 )
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
@@ -47,8 +41,6 @@ type ServiceBindingReconciler struct {
 //+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings/finalizers,verbs=update
 //+kubebuilder:rbac:groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apps,resources=deployments;daemonsets;replicasets;statefulsets,verbs=get;list;update;patch
-
-// tag::reconcile-func[]
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -74,79 +66,13 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		log.Error(err, "Unable to retrieve service binding", "name", req.NamespacedName)
 		return ctrl.Result{}, nil
 	}
-	// log.Info("Retrieved Service Binding", "service binding", servicebinding)
 
-	resolver := resolver.New(r.Client)
-	workloadData := servicebinding.Spec.Workload
-	workloadRef := v1.ObjectReference{
-		APIVersion: workloadData.APIVersion,
-		Kind:       workloadData.Kind,
-		Name:       workloadData.Name,
-		Namespace:  servicebinding.Namespace,
-	}
-
-	log.Info("Attempting to retrieve workload", "workloadRef", workloadRef)
-	workload, err := resolver.LookupWorkload(ctx, workloadRef)
-	if err != nil {
-		updateStatus(servicebinding, err)
-		r.Status().Update(ctx, servicebinding, &client.UpdateOptions{})
-
-		log.Error(err,
-			"Unable to retrieve workload",
-			"workload", workloadRef,
-			"service binding", servicebinding)
-		return ctrl.Result{Requeue: true}, nil
-	}
-
-	serviceRef := v1.ObjectReference{
-		APIVersion: servicebinding.Spec.Service.APIVersion,
-		Kind:       servicebinding.Spec.Service.Kind,
-		Name:       servicebinding.Spec.Service.Name,
-		Namespace:  servicebinding.Namespace,
-	}
-	secret, err := resolver.LookupBindingSecret(ctx, serviceRef)
-	servicebinding.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secret}
-
-	projector := projector.New(resolver)
-	if servicebinding.DeletionTimestamp.IsZero() {
-		err = projector.Project(ctx, servicebinding, workload)
-		if err != nil {
-			log.Error(
-				err,
-				"Failed to project bindings into workload",
-				"workload", workload,
-				"service binding", servicebinding,
-				"err", err)
-		}
-	} else {
-		err = projector.Unproject(ctx, servicebinding, workload)
-		if err != nil {
-			log.Error(
-				err,
-				"Failed to unproject bindings into workload",
-				"workload", workload,
-				"service binding", servicebinding,
-				"err", err)
-		}
-	}
-	requeue := err != nil
-	projectorErr := err
-
-	data, err := json.Marshal(workload)
-	if err != nil {
-		log.Error(err, "Error marshalling workload", "workload", workload)
-	}
-	log.Info("Projected service bindings", "service binding", servicebinding, "workload", data)
-
-	err = r.Update(ctx, workload, &client.UpdateOptions{})
-	requeue = requeue || (err != nil)
-	if err != nil {
-		log.Error(err, "Unable to update workload", "workload", workload)
-	} else {
-		err = projectorErr
-	}
-
+	requeue, err := ResolveServiceBinding(ctx, servicebinding, r.Client)
 	updateStatus(servicebinding, err)
+	if err != nil {
+		return ctrl.Result{Requeue: requeue}, err
+	}
+
 	log.Info("Writing service binding", "service binding", servicebinding)
 	err = r.Status().Update(ctx, servicebinding)
 	if err != nil {
@@ -163,29 +89,10 @@ func (r *ServiceBindingReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{Requeue: requeue}, nil
 }
 
-// end::reconcile-func[]
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceBindingReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&servicebindingv1beta1.ServiceBinding{}).
 		Watches(&source.Kind{Type: &servicebindingv1beta1.ClusterWorkloadResourceMapping{}}, handler.Funcs{}).
 		Complete(r)
-}
-
-func updateStatus(binding *servicebindingv1beta1.ServiceBinding, err error) {
-	condition := metav1.Condition{
-		Type:               servicebindingv1beta1.ServiceBindingConditionReady,
-		Reason:             "Projected",
-		LastTransitionTime: metav1.Time{Time: time.Now()},
-	}
-	if err != nil {
-		condition.Status = metav1.ConditionFalse
-		condition.Message = err.Error()
-	} else {
-		condition.Status = metav1.ConditionTrue
-	}
-
-	binding.Status.Conditions = []metav1.Condition{condition}
-	binding.Status.ObservedGeneration = binding.Generation
 }
