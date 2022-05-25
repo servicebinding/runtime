@@ -21,6 +21,7 @@ import (
 
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -35,7 +36,7 @@ type Resolver interface {
 	// returned without a lookup.
 	LookupBindingSecret(ctx context.Context, serviceRef corev1.ObjectReference) (string, error)
 
-	// LookupWorkload returns the referenced object. Often a unstructured Object is used to sidestep issues with schemes and registered
-	// types.
-	LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error)
+	// LookupWorkloads returns the referenced objects. Often a unstructured Object is used to sidestep issues with schemes and registered
+	// types. The selector is mutually exclusive with the reference name.
+	LookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error)
 }

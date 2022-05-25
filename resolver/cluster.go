@@ -23,6 +23,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -97,7 +98,18 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	return secretName, err
 }
 
-func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
+func (r *clusterResolver) LookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
+	if workloadRef.Name != "" {
+		workload, err := r.lookupWorkload(ctx, workloadRef)
+		if err != nil {
+			return nil, err
+		}
+		return []runtime.Object{workload}, nil
+	}
+	return r.lookupWorkloads(ctx, workloadRef, selector)
+}
+
+func (r *clusterResolver) lookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
 	workload := &unstructured.Unstructured{}
 	workload.SetAPIVersion(workloadRef.APIVersion)
 	workload.SetKind(workloadRef.Kind)
@@ -105,4 +117,24 @@ func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1
 		return nil, err
 	}
 	return workload, nil
+}
+
+func (r *clusterResolver) lookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
+	workloads := &unstructured.UnstructuredList{}
+	workloads.SetAPIVersion(workloadRef.APIVersion)
+	workloads.SetKind(fmt.Sprintf("%sList", workloadRef.Kind))
+	ls, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.client.List(ctx, workloads, client.InNamespace(workloadRef.Namespace), client.MatchingLabelsSelector{Selector: ls}); err != nil {
+		return nil, err
+	}
+
+	// coerce to []runtime.Object
+	result := make([]runtime.Object, len(workloads.Items))
+	for i := range workloads.Items {
+		result[i] = &workloads.Items[i]
+	}
+	return result, nil
 }

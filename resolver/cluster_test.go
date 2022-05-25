@@ -409,7 +409,7 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 	}
 }
 
-func TestClusterResolver_LookupWorkload(t *testing.T) {
+func TestClusterResolver_LookupWorkloads(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -417,7 +417,8 @@ func TestClusterResolver_LookupWorkload(t *testing.T) {
 		name         string
 		givenObjects []client.Object
 		serviceRef   corev1.ObjectReference
-		expected     client.Object
+		selector     *metav1.LabelSelector
+		expected     []runtime.Object
 		expectedErr  bool
 	}{
 		{
@@ -447,29 +448,31 @@ func TestClusterResolver_LookupWorkload(t *testing.T) {
 				Namespace:  "my-namespace",
 				Name:       "my-workload",
 			},
-			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "apps/v1",
-					"kind":       "Deployment",
-					"metadata": map[string]interface{}{
-						"creationTimestamp": nil,
-						"name":              "my-workload",
-						"namespace":         "my-namespace",
-						"resourceVersion":   "999",
-					},
-					"spec": map[string]interface{}{
-						"selector": nil,
-						"strategy": map[string]interface{}{},
-						"template": map[string]interface{}{
-							"metadata": map[string]interface{}{
-								"creationTimestamp": nil,
-							},
-							"spec": map[string]interface{}{
-								"containers": nil,
+			expected: []runtime.Object{
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "apps/v1",
+						"kind":       "Deployment",
+						"metadata": map[string]interface{}{
+							"creationTimestamp": nil,
+							"name":              "my-workload",
+							"namespace":         "my-namespace",
+							"resourceVersion":   "999",
+						},
+						"spec": map[string]interface{}{
+							"selector": nil,
+							"strategy": map[string]interface{}{},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{
+									"containers": nil,
+								},
 							},
 						},
+						"status": map[string]interface{}{},
 					},
-					"status": map[string]interface{}{},
 				},
 			},
 		},
@@ -493,14 +496,200 @@ func TestClusterResolver_LookupWorkload(t *testing.T) {
 				Namespace:  "my-namespace",
 				Name:       "my-workload",
 			},
-			expected: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": "workload.local/v1",
-					"kind":       "MyWorkload",
-					"metadata": map[string]interface{}{
-						"name":            "my-workload",
-						"namespace":       "my-namespace",
-						"resourceVersion": "999",
+			expected: []runtime.Object{
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":            "my-workload",
+							"namespace":       "my-namespace",
+							"resourceVersion": "999",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "list workloads from scheme",
+			givenObjects: []client.Object{
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-namespace",
+						Name:      "my-workload-1",
+						Labels: map[string]string{
+							"app": "my",
+						},
+					},
+				},
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-namespace",
+						Name:      "my-workload-2",
+						Labels: map[string]string{
+							"app": "my",
+						},
+					},
+				},
+				&appsv1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "my-namespace",
+						Name:      "not-my-workload",
+						Labels: map[string]string{
+							"app": "not",
+						},
+					},
+				},
+			},
+			serviceRef: corev1.ObjectReference{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+				Namespace:  "my-namespace",
+			},
+			selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "my",
+				},
+			},
+			expected: []runtime.Object{
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "apps/v1",
+						"kind":       "Deployment",
+						"metadata": map[string]interface{}{
+							"creationTimestamp": nil,
+							"name":              "my-workload-1",
+							"namespace":         "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+							"resourceVersion": "999",
+						},
+						"spec": map[string]interface{}{
+							"selector": nil,
+							"strategy": map[string]interface{}{},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{
+									"containers": nil,
+								},
+							},
+						},
+						"status": map[string]interface{}{},
+					},
+				},
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "apps/v1",
+						"kind":       "Deployment",
+						"metadata": map[string]interface{}{
+							"creationTimestamp": nil,
+							"name":              "my-workload-2",
+							"namespace":         "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+							"resourceVersion": "999",
+						},
+						"spec": map[string]interface{}{
+							"selector": nil,
+							"strategy": map[string]interface{}{},
+							"template": map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"creationTimestamp": nil,
+								},
+								"spec": map[string]interface{}{
+									"containers": nil,
+								},
+							},
+						},
+						"status": map[string]interface{}{},
+					},
+				},
+			},
+		},
+		{
+			name: "list workloads not from scheme",
+			givenObjects: []client.Object{
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":      "my-workload-1",
+							"namespace": "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+						},
+					},
+				},
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":      "my-workload-2",
+							"namespace": "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+						},
+					},
+				},
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":      "not-my-workload",
+							"namespace": "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "not",
+							},
+						},
+					},
+				},
+			},
+			serviceRef: corev1.ObjectReference{
+				APIVersion: "workload.local/v1",
+				Kind:       "MyWorkload",
+				Namespace:  "my-namespace",
+			},
+			selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": "my",
+				},
+			},
+			expected: []runtime.Object{
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":      "my-workload-1",
+							"namespace": "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+							"resourceVersion": "999",
+						},
+					},
+				},
+				&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": "workload.local/v1",
+						"kind":       "MyWorkload",
+						"metadata": map[string]interface{}{
+							"name":      "my-workload-2",
+							"namespace": "my-namespace",
+							"labels": map[string]interface{}{
+								"app": "my",
+							},
+							"resourceVersion": "999",
+						},
 					},
 				},
 			},
@@ -517,16 +706,16 @@ func TestClusterResolver_LookupWorkload(t *testing.T) {
 				Build()
 			resolver := resolver.New(client)
 
-			actual, err := resolver.LookupWorkload(ctx, c.serviceRef)
+			actual, err := resolver.LookupWorkloads(ctx, c.serviceRef, c.selector)
 
 			if (err != nil) != c.expectedErr {
-				t.Errorf("LookupWorkload() expected err: %v", err)
+				t.Errorf("LookupWorkloads() expected err: %v", err)
 			}
 			if c.expectedErr {
 				return
 			}
 			if diff := cmp.Diff(c.expected, actual); diff != "" {
-				t.Errorf("LookupWorkload() (-expected, +actual): %s", diff)
+				t.Errorf("LookupWorkloads() (-expected, +actual): %s", diff)
 			}
 		})
 	}
