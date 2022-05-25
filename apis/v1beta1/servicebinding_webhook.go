@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -113,6 +114,11 @@ func (r *ServiceBindingWorkloadReference) validate(fldPath *field.Path) field.Er
 	}
 	if r.Name != "" && r.Selector != nil {
 		errs = append(errs, field.Required(fldPath.Child("[name, selector]"), "expected exactly one, got both"))
+	}
+	if r.Selector != nil {
+		if _, err := metav1.LabelSelectorAsSelector(r.Selector); err != nil {
+			errs = append(errs, field.Invalid(fldPath.Child("selector"), r.Selector, err.Error()))
+		}
 	}
 
 	return errs
