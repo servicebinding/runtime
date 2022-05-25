@@ -136,6 +136,39 @@ func TestServiceBindingValidate(t *testing.T) {
 			expected: field.ErrorList{},
 		},
 		{
+			name: "workload invalid selector",
+			seed: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Selector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      "foo",
+								Operator: "NotAnOperator",
+								Values:   []string{"bar"},
+							}},
+						},
+					},
+				},
+			},
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "workload", "selector"), &metav1.LabelSelector{
+					MatchExpressions: []metav1.LabelSelectorRequirement{{
+						Key:      "foo",
+						Operator: "NotAnOperator",
+						Values:   []string{"bar"},
+					}},
+				}, `"NotAnOperator" is not a valid pod selector operator`),
+			},
+		},
+		{
 			name: "workload invalid overspeced",
 			seed: &ServiceBinding{
 				Spec: ServiceBindingSpec{
