@@ -260,6 +260,9 @@ spec:
     subresources:
       status: {}
   - additionalPrinterColumns:
+    - jsonPath: .status.binding.name
+      name: Secret
+      type: string
     - jsonPath: .status.conditions[?(@.type=="Ready")].status
       name: Ready
       type: string
