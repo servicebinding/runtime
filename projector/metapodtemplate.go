@@ -22,11 +22,12 @@ import (
 	"fmt"
 	"reflect"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/jsonpath"
 	"k8s.io/utils/pointer"
+
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 )
 
 // metaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.

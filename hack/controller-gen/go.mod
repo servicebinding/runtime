@@ -1,6 +1,6 @@
 module github.com/servicebinding/service-binding-controller/hack/controller-gen
 
-go 1.17
+go 1.18
 
 require sigs.k8s.io/controller-tools v0.9.0
 

@@ -20,38 +20,41 @@ import (
 	"context"
 	"fmt"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+
+	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
 )
 
-// New creates a new resolver backed by a controller-runtime client
-func New(client client.Client) Resolver {
+// New creates a new resolver backed by a reconciler-runtime config
+func New(config reconcilers.Config) Resolver {
 	return &clusterResolver{
-		client: client,
+		config: config,
 	}
 }
 
 type clusterResolver struct {
-	client client.Client
+	config reconcilers.Config
 }
 
 func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error) {
-	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
+	gvk, err := apiutil.GVKForObject(workload, m.config.Scheme())
 	if err != nil {
 		return nil, err
 	}
-	rm, err := m.client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
+	rm, err := m.config.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
 	}
 	wrm := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
-	err = m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
+	err = m.config.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
 	if err != nil {
 		if !apierrs.IsNotFound(err) {
 			return nil, err
@@ -88,7 +91,7 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	service := &unstructured.Unstructured{}
 	service.SetAPIVersion(serviceRef.APIVersion)
 	service.SetKind(serviceRef.Kind)
-	if err := r.client.Get(ctx, client.ObjectKey{Namespace: serviceRef.Namespace, Name: serviceRef.Name}, service); err != nil {
+	if err := r.config.TrackAndGet(ctx, client.ObjectKey{Namespace: serviceRef.Namespace, Name: serviceRef.Name}, service); err != nil {
 		return "", err
 	}
 	secretName, exists, err := unstructured.NestedString(service.UnstructuredContent(), "status", "binding", "name")
@@ -97,12 +100,43 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	return secretName, err
 }
 
-func (r *clusterResolver) LookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
+func (r *clusterResolver) LookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
+	if workloadRef.Name != "" {
+		workload, err := r.lookupWorkload(ctx, workloadRef)
+		if err != nil {
+			return nil, err
+		}
+		return []runtime.Object{workload}, nil
+	}
+	return r.lookupWorkloads(ctx, workloadRef, selector)
+}
+
+func (r *clusterResolver) lookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
 	workload := &unstructured.Unstructured{}
 	workload.SetAPIVersion(workloadRef.APIVersion)
 	workload.SetKind(workloadRef.Kind)
-	if err := r.client.Get(ctx, client.ObjectKey{Namespace: workloadRef.Namespace, Name: workloadRef.Name}, workload); err != nil {
+	if err := r.config.TrackAndGet(ctx, client.ObjectKey{Namespace: workloadRef.Namespace, Name: workloadRef.Name}, workload); err != nil {
 		return nil, err
 	}
 	return workload, nil
+}
+
+func (r *clusterResolver) lookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
+	workloads := &unstructured.UnstructuredList{}
+	workloads.SetAPIVersion(workloadRef.APIVersion)
+	workloads.SetKind(fmt.Sprintf("%sList", workloadRef.Kind))
+	ls, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return nil, err
+	}
+	if err := r.config.List(ctx, workloads, client.InNamespace(workloadRef.Namespace), client.MatchingLabelsSelector{Selector: ls}); err != nil {
+		return nil, err
+	}
+
+	// coerce to []runtime.Object
+	result := make([]runtime.Object, len(workloads.Items))
+	for i := range workloads.Items {
+		result[i] = &workloads.Items[i]
+	}
+	return result, nil
 }

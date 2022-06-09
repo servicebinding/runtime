@@ -7,8 +7,8 @@ resources:
 - service_account.yaml
 - role.yaml
 - role_binding.yaml
-- role_with_aggregation_rule.yaml
-- role_binding_with_aggregation_rule.yaml
+- aggregated_role.yaml
+- aggregated_role_binding.yaml
 - leader_election_role.yaml
 - leader_election_role_binding.yaml
 # Comment the following 4 lines if you want to disable

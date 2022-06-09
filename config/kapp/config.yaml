@@ -1,0 +1,31 @@
+apiVersion: kapp.k14s.io/v1alpha1
+kind: Config
+rebaseRules:
+- path: [rules]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRole}
+      - notMatcher:
+          matcher:
+            emptyFieldMatcher:
+              path: [aggregationRule]
+
+- path: [webhooks, {index: 0}, rules]
+  type: copy
+  sources: [existing]
+  resourceMatchers:
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1, kind: MutatingWebhookConfiguration}
+      - hasAnnotationMatcher:
+          keys:
+          - webhook.servicebinding.io/dynamic-rules
+  - andMatcher:
+      matchers:
+      - apiVersionKindMatcher: {apiVersion: admissionregistration.k8s.io/v1, kind: ValidatingWebhookConfiguration}
+      - hasAnnotationMatcher:
+          keys:
+          - webhook.servicebinding.io/dynamic-rules

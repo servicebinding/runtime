@@ -1,6 +1,9 @@
 resources:
 - manager.yaml
 
+configurations:
+- kustomizeconfig.yaml
+
 generatorOptions:
   disableNameSuffixHash: true
 

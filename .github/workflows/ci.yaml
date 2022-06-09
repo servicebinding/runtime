@@ -6,41 +6,439 @@ on:
     - '**'
     - '!dependabot/**'
     tags:
-    - '**'
+    # semver tags
+    - 'v[0-9]+\.[0-9]+\.[0-9]+-?**'
   pull_request: {}
+
+env:
+  IMGPKG: go run -modfile hack/imgpkg/go.mod github.com/vmware-tanzu/carvel-imgpkg/cmd/imgpkg
+  KAPP: go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
+  KBLD: go run -modfile hack/kbld/go.mod github.com/vmware-tanzu/carvel-kbld/cmd/kbld
+  KO: go run -modfile hack/ko/go.mod github.com/google/ko
 
 jobs:
 
+  unit:
+    name: Unit Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.18.x
+    - uses: actions/checkout@v3
+    - name: Test
+      run: make test
+    - name: Report coverage
+      uses: codecov/codecov-action@v3
+    - name: Disallow generated drift
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        git diff --exit-code .
+
+  stage:
+    name: Stage
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY_NAME: registry.local
+      KO_DOCKER_REPO: registry.local/servicebinding
+      BUNDLE: registry.local/servicebinding/bundle
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.18.x
+    - name: Generate certs
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        CERT_DIR=$(mktemp -d -t certs.XXXX)
+        echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
+
+        echo "##[group]Install cfssl"
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl_1.6.1_linux_amd64 -o cfssl
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssljson_1.6.1_linux_amd64 -o cfssljson
+          chmod +x cfssl*
+          sudo mv cfssl* /usr/local/bin
+        echo "##[endgroup]"
+
+        echo "##[group]Generate CA"
+          cfssl gencert -initca .github/tls/root-csr.json \
+            | cfssljson -bare ${CERT_DIR}/root-ca
+          cfssl gencert -ca ${CERT_DIR}/root-ca.pem -ca-key ${CERT_DIR}/root-ca-key.pem \
+            -config=".github/tls/config.json" \
+            -profile="intermediate" .github/tls/intermediate-csr.json \
+            | cfssljson -bare ${CERT_DIR}/signing-ca
+          cat ${CERT_DIR}/signing-ca.pem ${CERT_DIR}/root-ca.pem > ${CERT_DIR}/ca.pem
+        echo "##[endgroup]"
+        echo "##[group]Install CA"
+          # https://ubuntu.com/server/docs/security-trust-store
+          sudo apt-get install -y ca-certificates
+          sudo cp ${CERT_DIR}/ca.pem /usr/local/share/ca-certificates/ca.crt
+          sudo update-ca-certificates
+        echo "##[endgroup]"
+
+        echo "##[group]Generate cert"
+          cfssl gencert -ca ${CERT_DIR}/signing-ca.pem -ca-key ${CERT_DIR}/signing-ca-key.pem \
+            -config=".github/tls/config.json" \
+            -profile="server" \
+            -hostname="${REGISTRY_NAME},local-registry" \
+            .github/tls/server-csr.json \
+            | cfssljson -bare ${CERT_DIR}/server
+        echo "##[endgroup]"
+
+    - name: Setup local registry
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        # Run a registry.
+        docker run -d \
+          --restart=always \
+          --name local-registry \
+          -v ${CERT_DIR}:/certs \
+          -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+          -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem \
+          -e REGISTRY_HTTP_TLS_KEY=/certs/server-key.pem \
+          -p "443:443" \
+          registry:2
+
+        # Make the $REGISTRY_NAME -> local-registry
+        echo "$(hostname -I | cut -d' ' -f1) $REGISTRY_NAME" | sudo tee -a /etc/hosts
+    - name: Build
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        scratch=$(mktemp -d -t bundle.XXXX)
+        mkdir -p "${scratch}/.imgpkg"
+        mkdir -p "${scratch}/config"
+
+        cp LICENSE "${scratch}/LICENSE"
+
+        echo "##[group]Build"
+          cat hack/boilerplate.yaml.txt > "${scratch}/config/service-binding-controller.yaml"
+          ${KO} resolve -f config/service-binding-controller.yaml >> "${scratch}/config/service-binding-controller.yaml"
+          ${KBLD} -f "${scratch}/config/service-binding-controller.yaml" --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" > /dev/null
+        echo "##[endgroup]"
+
+        echo "##[group]Create bundle"
+          ${IMGPKG} push -f "${scratch}" -b "${BUNDLE}"
+          ${IMGPKG} copy -b "${BUNDLE}" --to-tar service-binding-controller-bundle.tar
+        echo "##[endgroup]"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: service-binding-controller-bundle.tar
+        path: service-binding-controller-bundle.tar
+        retention-days: 7
+
+  acceptance:
+    name: Acceptance Test
+    needs: stage
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s:
+        - 1.17.17
+        - 1.18.20
+        - 1.19.16
+        - 1.20.15
+        - 1.21.12
+        - 1.22.9
+        - 1.23.6
+        - 1.24.0
+    env:
+      REGISTRY_NAME: registry.local
+      BUNDLE: registry.local/bundle
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.18.x
+    - name: Install kind
+      run: |
+        cd $(mktemp -d -t kind.XXXX)
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin
+        cd -
+    - name: Generate certs
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        CERT_DIR=$(mktemp -d -t certs.XXXX)
+        echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
+
+        echo "##[group]Install cfssl"
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl_1.6.1_linux_amd64 -o cfssl
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssljson_1.6.1_linux_amd64 -o cfssljson
+          chmod +x cfssl*
+          sudo mv cfssl* /usr/local/bin
+        echo "##[endgroup]"
+
+        echo "##[group]Generate CA"
+          cfssl gencert -initca .github/tls/root-csr.json \
+            | cfssljson -bare ${CERT_DIR}/root-ca
+          cfssl gencert -ca ${CERT_DIR}/root-ca.pem -ca-key ${CERT_DIR}/root-ca-key.pem \
+            -config=".github/tls/config.json" \
+            -profile="intermediate" .github/tls/intermediate-csr.json \
+            | cfssljson -bare ${CERT_DIR}/signing-ca
+          cat ${CERT_DIR}/signing-ca.pem ${CERT_DIR}/root-ca.pem > ${CERT_DIR}/ca.pem
+        echo "##[endgroup]"
+        echo "##[group]Install CA"
+          # https://ubuntu.com/server/docs/security-trust-store
+          sudo apt-get install -y ca-certificates
+          sudo cp ${CERT_DIR}/ca.pem /usr/local/share/ca-certificates/ca.crt
+          sudo update-ca-certificates
+        echo "##[endgroup]"
+
+        echo "##[group]Generate cert"
+          cfssl gencert -ca ${CERT_DIR}/signing-ca.pem -ca-key ${CERT_DIR}/signing-ca-key.pem \
+            -config=".github/tls/config.json" \
+            -profile="server" \
+            -hostname="${REGISTRY_NAME},local-registry" \
+            .github/tls/server-csr.json \
+            | cfssljson -bare ${CERT_DIR}/server
+        echo "##[endgroup]"
+    - name: Setup local registry
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        # Run a registry.
+        docker run -d \
+          --restart=always \
+          --name local-registry \
+          -v ${CERT_DIR}:/certs \
+          -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
+          -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem \
+          -e REGISTRY_HTTP_TLS_KEY=/certs/server-key.pem \
+          -p "443:443" \
+          registry:2
+
+        # Make the $REGISTRY_NAME -> local-registry
+        echo "$(hostname -I | cut -d' ' -f1) $REGISTRY_NAME" | sudo tee -a /etc/hosts
+    - name: Create Cluster
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        # create a cluster with the local registry enabled in containerd
+        cat <<EOF | kind create cluster --config=-
+        kind: Cluster
+        apiVersion: kind.x-k8s.io/v1alpha4
+        containerdConfigPatches:
+        - |-
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."${REGISTRY_NAME}"]
+            endpoint = ["https://local-registry"]
+        - |-
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."local-registry".tls]
+            ca_file  = "/etc/docker/certs.d/local-registry/ca.pem"
+        nodes:
+        - role: control-plane
+          image: kindest/node:v${{ matrix.k8s }}
+          extraMounts:
+          - containerPath: /etc/docker/certs.d/local-registry
+            hostPath: ${CERT_DIR}
+        EOF
+
+        # connect the registry to the cluster network
+        docker network connect kind local-registry
+
+        # Document the local registry
+        # https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: local-registry-hosting
+          namespace: kube-public
+        data:
+          localRegistryHosting.v1: |
+            host: "localhost"
+            help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
+        EOF
+    - name: Download staged bundle
+      uses: actions/download-artifact@v3
+      with:
+        name: service-binding-controller-bundle.tar
+    - name: Relocate bundle
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        ${IMGPKG} copy --tar service-binding-controller-bundle.tar --to-repo "${BUNDLE}"
+        mkdir -p bundle
+        ${IMGPKG} pull -b "${BUNDLE}" -o bundle
+    - name: Deploy
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        echo "##[group]Create namespace"
+          kubectl create ns apps
+        echo "##[endgroup]"
+        echo "##[group]Deploy cert-manager"
+          ${KAPP} deploy -a cert-manager -n apps --wait-timeout 5m -y \
+            -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+        echo "##[endgroup]"
+        echo "##[group]Deploy service-binding-controller"
+          ${KAPP} deploy -a service-binding-controller -n apps --wait-timeout 5m -y \
+            -f <(${KBLD} -f bundle/.imgpkg/images.yml -f bundle/config)
+        echo "##[endgroup]"
+
+    # TODO add acceptance tests
+    
+    - name: Collect diagnostics
+      run: |
+        set +o errexit
+        set -o nounset
+        set +o pipefail
+
+        echo "##[group]kubectl get clusterworkloadresourcemappings.servicebinding.io"
+          kubectl get clusterworkloadresourcemappings.servicebinding.io
+        echo "##[endgroup]"
+        echo "##[group]kubectl get servicebindings.servicebinding.io"
+          kubectl get servicebindings.servicebinding.io
+        echo "##[endgroup]"
+        echo "##[group]kubectl describe servicebindings.servicebinding.io"
+          kubectl describe servicebindings.servicebinding.io
+        echo "##[endgroup]"
+        echo "##[group]kapp list -A"
+          ${KAPP} list -A
+        echo "##[endgroup]"
+        echo "##[group]kubectl get all -n servicebinding-system"
+          kubectl get all -n servicebinding-system
+        echo "##[endgroup]"
+        echo "##[group]kubectl describe deployments.apps -n servicebinding-system"
+          kubectl describe deployments.apps -n servicebinding-system
+        echo "##[endgroup]"
+        echo "##[group]kubectl describe mutatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-admission-projector"
+          kubectl describe mutatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-admission-projector
+        echo "##[endgroup]"
+        echo "##[group]kubectl describe validatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-trigger"
+          kubectl describe validatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-trigger
+        echo "##[endgroup]"
+        echo "##[group]kubectl logs -n servicebinding-system -l control-plane=controller-manager --tail 10000"
+          kubectl logs -n servicebinding-system -l control-plane=controller-manager --tail 10000
+        echo "##[endgroup]"
+      if: always()
+      continue-on-error: true
+    - name: Delete Gracefully
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        echo "##[group]Delete service-binding-controller"
+          ${KAPP} delete -a service-binding-controller -n apps --wait-timeout 5m -y
+        echo "##[endgroup]"
+        echo "##[group]Delete cert-manager"
+          ${KAPP} delete -a cert-manager -n apps --wait-timeout 5m -y
+        echo "##[endgroup]"
+      if: always()
+    - name: Cleanup cluster
+      run: kind delete cluster
+      if: always()
+
+  # aggregate the unit and acceptance results into a single job
   test:
+    name: Test
+    needs:
+    - unit
+    - acceptance
+    runs-on: ubuntu-latest
+    steps:
+    - run: echo "it passed"
+
+  release:
+    name: Release
+    needs:
+    - test
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
       with:
-        go-version: 1.17.x
-    - name: Ensure generated code is committed
-      run: make generate manifests && git diff --exit-code
-    - name: Test
-      run: make test
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-    - name: Get version from tags
-      id: version
-      run: echo ::set-output name=tag::${GITHUB_REF/refs\/tags\//}
-    - name: Publish OCI image and prepare Kubernetes resources
-      if: startsWith(github.ref, 'refs/tags/')
+        go-version: 1.18.x
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+    - name: Draft release
+      id: create_release
+      uses: actions/create-release@v1.1.4
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        KO: go run -modfile hack/ko/go.mod github.com/google/ko
-        KO_DOCKER_REPO: ghcr.io/${{ github.repository_owner }}
-        KUSTOMIZE: go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
-        VERSION: ${{ steps.version.outputs.tag }}
-      run: |
-        echo "${GITHUB_TOKEN}" | docker login ghcr.io --username ${{ github.repository_owner }} --password-stdin
-        ${KUSTOMIZE} build config/default | ${KO} resolve -B --tags "${VERSION}" -f - > release.yaml
-    - name: Update the release with Kubernetes resources
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.get_version.outputs.VERSION }}
         draft: true
-        files: release.yaml
+    - name: Download staged bundle
+      uses: actions/download-artifact@v3
+      with:
+        name: service-binding-controller-bundle.tar
+    - name: Upload service-binding-controller-bundle.tar
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: service-binding-controller-bundle.tar
+        asset_name: service-binding-controller-bundle-${{ steps.get_version.outputs.VERSION }}.tar
+        asset_content_type: application/x-tar
+    - name: Install crane
+      run: |
+        cd $(mktemp -d -t kind.XXXX)
+        curl -L https://github.com/google/go-containerregistry/releases/download/v0.9.0/go-containerregistry_Linux_x86_64.tar.gz | tar -xz
+        chmod +x ./crane
+        sudo mv ./crane /usr/local/bin
+        cd -
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Relocate bundle to public registry
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        version=${{ steps.get_version.outputs.VERSION }}
+
+        ${IMGPKG} copy --tar service-binding-controller-bundle.tar --to-repo "ghcr.io/${{ github.repository }}/bundle"
+        crane tag "ghcr.io/${{ github.repository }}/bundle" "${version}"
+        digest=$(crane digest "ghcr.io/${{ github.repository }}/bundle:${version}")
+
+        scratch=$(mktemp -d -t bundle.XXXX)
+        mkdir -p ${scratch}
+        ${IMGPKG} pull -b "ghcr.io/${{ github.repository }}/bundle:${version}@${digest}" -o ${scratch}
+
+        cp hack/boilerplate.yaml.txt service-binding-controller.yaml
+        ${KBLD} -f ${scratch}/config/ -f ${scratch}/.imgpkg/images.yml \
+          >> service-binding-controller.yaml
+
+    - name: Upload service-binding-controller.yaml
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: service-binding-controller.yaml
+        asset_name: service-binding-controller-${{ steps.get_version.outputs.VERSION }}.yaml
+        asset_content_type: application/x-yaml

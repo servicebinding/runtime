@@ -79,14 +79,6 @@ type ServiceBindingSpec struct {
 	Env []EnvMapping `json:"env,omitempty"`
 }
 
-// These are valid conditions of ServiceBinding.
-const (
-	// ServiceBindingReady means the ServiceBinding has projected the ProvisionedService
-	// secret and the Workload is ready to start. It does not indicate the condition
-	// of either the Service or the Workload resources referenced.
-	ServiceBindingConditionReady = "Ready"
-)
-
 // ServiceBindingStatus defines the observed state of ServiceBinding
 type ServiceBindingStatus struct {
 	// ObservedGeneration is the 'Generation' of the ServiceBinding that
