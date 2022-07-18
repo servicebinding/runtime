@@ -2,7 +2,7 @@ module github.com/servicebinding/service-binding-controller/hack/kapp
 
 go 1.18
 
-require github.com/k14s/kapp v0.48.0
+require github.com/k14s/kapp v0.49.0
 
 require (
 	cloud.google.com/go v0.65.0 // indirect
