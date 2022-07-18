@@ -1,16 +1,29 @@
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
 
+# Tools
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
-GINKGO ?= go run -modfile hack/ginkgo/go.mod github.com/onsi/ginkgo/ginkgo
+DIEGEN ?= go run -modfile hack/diegen/go.mod dies.dev/diegen
+GOIMPORTS ?= go run -modfile hack/goimports/go.mod golang.org/x/tools/cmd/goimports
+KAPP ?= go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
-KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v3
+KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v4
+YTT ?= go run -modfile hack/ytt/go.mod github.com/vmware-tanzu/carvel-ytt/cmd/ytt
+
+KAPP_APP ?= service-binding-controller
+KAPP_APP_NAMESPACE ?= default
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
-all: build
+.PHONY: all
+all: test
 
 ##@ General
 
@@ -25,44 +38,43 @@ all: build
 # More info on the awk command:
 # http://linuxcommand.org/lc3_adv_awk.php
 
+.PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
 
+.PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	cat hack/boilerplate.yaml.txt > config/service-binding-controller.yaml
+	$(KUSTOMIZE) build config/default | \
+	  $(YTT) -f - -f config/default/revert-clusterworkloadresourcemapping-metadata.yaml \
+	  >> config/service-binding-controller.yaml
 
+.PHONY: generate
 generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(DIEGEN) die:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+.PHONY: fmt
 fmt: ## Run go fmt against code.
-	go fmt ./...
+	$(GOIMPORTS) --local github.com/servicebinding/service-binding-controller -w .
 
+.PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: test
 test: manifests generate fmt vet ## Run tests.
-	$(GINKGO) -v -cover -coverpkg=./... -coverprofile=cover.out ./...
-
-##@ Build
-
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
-
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+	go test ./... -coverprofile cover.out
 
 ##@ Deployment
 
-install: manifests ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KO) apply -f -
-
-uninstall: manifests ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | $(KO) delete -f -
-
+.PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | $(KO) apply -f -
+	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve -f config/service-binding-controller.yaml)
 
+.PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/default | $(KO) delete -f -
+	$(KAPP) delete -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE)

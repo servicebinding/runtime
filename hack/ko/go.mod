@@ -1,6 +1,6 @@
 module github.com/servicebinding/service-binding-controller/hack/ko
 
-go 1.17
+go 1.18
 
 require github.com/google/ko v0.11.2
 

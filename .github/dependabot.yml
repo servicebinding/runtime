@@ -5,29 +5,68 @@ updates:
   schedule:
     interval: daily
   open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
 - package-ecosystem: gomod
   directory: "/"
   schedule:
     interval: daily
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: k8s.io/*
-    update-types:
-    - version-update:semver-major
-    - version-update:semver-minor
+  reviewers:
+  - servicebinding/reference-implementation
 - package-ecosystem: gomod
   directory: "/hack/controller-gen"
   schedule:
     interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
 - package-ecosystem: gomod
-  directory: "/hack/ginkgo"
+  directory: "/hack/diegen"
   schedule:
     interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
+- package-ecosystem: gomod
+  directory: "/hack/goimports"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
+- package-ecosystem: gomod
+  directory: "/hack/imgpkg"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
+- package-ecosystem: gomod
+  directory: "/hack/kapp"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
+- package-ecosystem: gomod
+  directory: "/hack/kbld"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
 - package-ecosystem: gomod
   directory: "/hack/ko"
   schedule:
     interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
 - package-ecosystem: gomod
   directory: "/hack/kustomize"
   schedule:
     interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation

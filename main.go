@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Kubernetes Authors.
+Copyright 2022 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ package main
 import (
 	"flag"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,13 +34,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/internal/controllers"
+	"github.com/servicebinding/service-binding-controller/controllers"
+	"github.com/servicebinding/service-binding-controller/rbac"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme     = runtime.NewScheme()
+	setupLog   = ctrl.Log.WithName("setup")
+	syncPeriod = 10 * time.Hour
 )
 
 func init() {
@@ -71,28 +75,56 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "74b357db.servicebinding.io",
+		LeaderElectionID:       "a359ffaf.servicebinding.io",
+		SyncPeriod:             &syncPeriod,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&controllers.ServiceBindingReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	ctx := ctrl.SetupSignalHandler()
+	config := reconcilers.NewConfig(mgr, &servicebindingv1beta1.ServiceBinding{}, syncPeriod)
+	accessChecker := rbac.NewAccessChecker(config, 5*time.Minute)
+
+	serviceBindingController, err := controllers.ServiceBindingReconciler(
+		config,
+	).SetupWithManagerYieldingController(ctx, mgr)
+	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceBinding")
-		os.Exit(1)
-	}
-	if err = (&servicebindingv1beta1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping")
 		os.Exit(1)
 	}
 	if err = (&servicebindingv1beta1.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding")
 		os.Exit(1)
 	}
+	if err = (&servicebindingv1beta1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping")
+		os.Exit(1)
+	}
+
+	if err = controllers.AdmissionProjectorReconciler(
+		config,
+		// TODO inject from env
+		"servicebinding-admission-projector",
+		accessChecker.WithVerb("update"),
+	).SetupWithManager(ctx, mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AdmissionProjector")
+		os.Exit(1)
+	}
+	mgr.GetWebhookServer().Register("/interceptor", controllers.AdmissionProjectorWebhook(config).Build())
+
+	if err = controllers.TriggerReconciler(
+		config,
+		// TODO inject from env
+		"servicebinding-trigger",
+		accessChecker.WithVerb("get"),
+	).SetupWithManager(ctx, mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Trigger")
+		os.Exit(1)
+	}
+	mgr.GetWebhookServer().Register("/trigger", controllers.TriggerWebhook(config, serviceBindingController).Build())
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -105,7 +137,7 @@ func main() {
 	}
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
