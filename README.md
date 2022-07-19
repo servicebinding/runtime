@@ -1,3 +1,5 @@
+<img src="https://avatars.githubusercontent.com/u/64096231" align="right" />
+
 # Service Binding Controller <!-- omit in toc -->
 
 [![CI](https://github.com/servicebinding/service-binding-controller/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/servicebinding/service-binding-controller/actions/workflows/ci.yaml)
