@@ -14,7 +14,7 @@ KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
 KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v4
 YTT ?= go run -modfile hack/ytt/go.mod github.com/vmware-tanzu/carvel-ytt/cmd/ytt
 
-KAPP_APP ?= service-binding-controller
+KAPP_APP ?= servicebinding-runtime
 KAPP_APP_NAMESPACE ?= default
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
@@ -47,10 +47,10 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	cat hack/boilerplate.yaml.txt > config/service-binding-controller.yaml
+	cat hack/boilerplate.yaml.txt > config/servicebinding-runtime.yaml
 	$(KUSTOMIZE) build config/default | \
 	  $(YTT) -f - -f config/default/revert-clusterworkloadresourcemapping-metadata.yaml \
-	  >> config/service-binding-controller.yaml
+	  >> config/servicebinding-runtime.yaml
 
 .PHONY: generate
 generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -59,7 +59,7 @@ generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
-	$(GOIMPORTS) --local github.com/servicebinding/service-binding-controller -w .
+	$(GOIMPORTS) --local github.com/servicebinding/runtime -w .
 
 .PHONY: vet
 vet: ## Run go vet against code.
@@ -73,7 +73,7 @@ test: manifests generate fmt vet ## Run tests.
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve -f config/service-binding-controller.yaml)
+	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve -f config/servicebinding-runtime.yaml)
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.

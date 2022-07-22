@@ -27,7 +27,7 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 	"k8s.io/utils/pointer"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 // metaPodTemplate contains the subset of a PodTemplateSpec that is appropriate for service binding.

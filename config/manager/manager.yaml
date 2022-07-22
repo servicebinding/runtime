@@ -29,7 +29,7 @@ spec:
       containers:
       - args:
         - --leader-elect
-        image: ko://github.com/servicebinding/service-binding-controller
+        image: ko://github.com/servicebinding/runtime
         name: manager
         securityContext:
           allowPrivilegeEscalation: false

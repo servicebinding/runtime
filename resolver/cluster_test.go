@@ -37,8 +37,8 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/resolver"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	"github.com/servicebinding/runtime/resolver"
 )
 
 func TestClusterResolver_LookupMapping(t *testing.T) {

@@ -33,9 +33,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/controllers"
-	"github.com/servicebinding/service-binding-controller/rbac"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	"github.com/servicebinding/runtime/controllers"
+	"github.com/servicebinding/runtime/rbac"
 	//+kubebuilder:scaffold:imports
 )
 

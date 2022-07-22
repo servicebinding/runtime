@@ -896,7 +896,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        image: ko://github.com/servicebinding/service-binding-controller
+        image: ko://github.com/servicebinding/runtime
         livenessProbe:
           httpGet:
             path: /healthz

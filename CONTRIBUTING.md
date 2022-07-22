@@ -34,4 +34,4 @@ Discussions occur here on GitHub and on the [#bindings-discuss channel in the Ku
 If you catch an error in the implementation, please let us know by opening an issue or pull request at our
 [GitHub repository][repo].
 
-[repo]: https://github.com/servicebinding/service-binding-controller
+[repo]: https://github.com/servicebinding/runtime

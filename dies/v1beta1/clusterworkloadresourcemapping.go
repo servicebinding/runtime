@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 // +die:object=true

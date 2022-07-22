@@ -31,7 +31,7 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 
-	apisv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	apisv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 var ClusterWorkloadResourceMappingBlank = (&ClusterWorkloadResourceMappingDie{}).DieFeed(apisv1beta1.ClusterWorkloadResourceMapping{})

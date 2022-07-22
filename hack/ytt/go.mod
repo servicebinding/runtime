@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/ytt
+module github.com/servicebinding/runtime/hack/ytt
 
 go 1.18
 

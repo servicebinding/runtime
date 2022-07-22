@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/imgpkg
+module github.com/servicebinding/runtime/hack/imgpkg
 
 go 1.18
 

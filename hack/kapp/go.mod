@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/kapp
+module github.com/servicebinding/runtime/hack/kapp
 
 go 1.18
 
