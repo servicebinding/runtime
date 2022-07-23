@@ -1,6 +1,6 @@
 <img src="https://avatars.githubusercontent.com/u/64096231" align="right" />
 
-# Service Binding Controller <!-- omit in toc -->
+# Service Binding Runtime <!-- omit in toc -->
 
 [![CI](https://github.com/servicebinding/runtime/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/servicebinding/runtime/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/servicebinding/runtime)](https://goreportcard.com/report/github.com/servicebinding/runtime)
