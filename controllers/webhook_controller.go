@@ -40,10 +40,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/projector"
-	"github.com/servicebinding/service-binding-controller/rbac"
-	"github.com/servicebinding/service-binding-controller/resolver"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	"github.com/servicebinding/runtime/projector"
+	"github.com/servicebinding/runtime/rbac"
+	"github.com/servicebinding/runtime/resolver"
 )
 
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update;patch

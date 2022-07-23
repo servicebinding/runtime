@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/kustomize
+module github.com/servicebinding/runtime/hack/kustomize
 
 go 1.18
 

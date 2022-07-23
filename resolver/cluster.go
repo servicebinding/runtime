@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 // New creates a new resolver backed by a reconciler-runtime config

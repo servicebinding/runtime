@@ -2,8 +2,8 @@ domain: servicebinding.io
 layout:
 - go.kubebuilder.io/v3
 multigroup: true
-projectName: service-binding-controller
-repo: github.com/servicebinding/service-binding-controller
+projectName: servicebinding-runtime
+repo: github.com/servicebinding/runtime
 resources:
 - api:
     crdVersion: v1
@@ -11,7 +11,7 @@ resources:
   controller: true
   domain: servicebinding.io
   kind: ServiceBinding
-  path: github.com/servicebinding/service-binding-controller/apis/v1alpha3
+  path: github.com/servicebinding/runtime/apis/v1alpha3
   version: v1alpha3
 - api:
     crdVersion: v1
@@ -19,7 +19,7 @@ resources:
   controller: true
   domain: servicebinding.io
   kind: ServiceBinding
-  path: github.com/servicebinding/service-binding-controller/apis/v1beta1
+  path: github.com/servicebinding/runtime/apis/v1beta1
   version: v1beta1
   webhooks:
     validation: true
@@ -28,13 +28,13 @@ resources:
     crdVersion: v1
   domain: servicebinding.io
   kind: ClusterWorkloadResourceMapping
-  path: github.com/servicebinding/service-binding-controller/apis/v1alpha3
+  path: github.com/servicebinding/runtime/apis/v1alpha3
   version: v1alpha3
 - api:
     crdVersion: v1
   domain: servicebinding.io
   kind: ClusterWorkloadResourceMapping
-  path: github.com/servicebinding/service-binding-controller/apis/v1beta1
+  path: github.com/servicebinding/runtime/apis/v1beta1
   version: v1beta1
   webhooks:
     validation: true

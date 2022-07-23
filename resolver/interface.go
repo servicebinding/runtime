@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 type Resolver interface {

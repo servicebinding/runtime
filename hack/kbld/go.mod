@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/kbld
+module github.com/servicebinding/runtime/hack/kbld
 
 go 1.18
 

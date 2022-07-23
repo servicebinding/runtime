@@ -123,19 +123,19 @@ jobs:
         cp LICENSE "${scratch}/LICENSE"
 
         echo "##[group]Build"
-          cat hack/boilerplate.yaml.txt > "${scratch}/config/service-binding-controller.yaml"
-          ${KO} resolve -f config/service-binding-controller.yaml >> "${scratch}/config/service-binding-controller.yaml"
-          ${KBLD} -f "${scratch}/config/service-binding-controller.yaml" --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" > /dev/null
+          cat hack/boilerplate.yaml.txt > "${scratch}/config/servicebinding-runtime.yaml"
+          ${KO} resolve -f config/servicebinding-runtime.yaml >> "${scratch}/config/servicebinding-runtime.yaml"
+          ${KBLD} -f "${scratch}/config/servicebinding-runtime.yaml" --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" > /dev/null
         echo "##[endgroup]"
 
         echo "##[group]Create bundle"
           ${IMGPKG} push -f "${scratch}" -b "${BUNDLE}"
-          ${IMGPKG} copy -b "${BUNDLE}" --to-tar service-binding-controller-bundle.tar
+          ${IMGPKG} copy -b "${BUNDLE}" --to-tar servicebinding-runtime-bundle.tar
         echo "##[endgroup]"
     - uses: actions/upload-artifact@v3
       with:
-        name: service-binding-controller-bundle.tar
-        path: service-binding-controller-bundle.tar
+        name: servicebinding-runtime-bundle.tar
+        path: servicebinding-runtime-bundle.tar
         retention-days: 7
 
   acceptance:
@@ -272,14 +272,14 @@ jobs:
     - name: Download staged bundle
       uses: actions/download-artifact@v3
       with:
-        name: service-binding-controller-bundle.tar
+        name: servicebinding-runtime-bundle.tar
     - name: Relocate bundle
       run: |
         set -o errexit
         set -o nounset
         set -o pipefail
 
-        ${IMGPKG} copy --tar service-binding-controller-bundle.tar --to-repo "${BUNDLE}"
+        ${IMGPKG} copy --tar servicebinding-runtime-bundle.tar --to-repo "${BUNDLE}"
         mkdir -p bundle
         ${IMGPKG} pull -b "${BUNDLE}" -o bundle
     - name: Deploy
@@ -295,8 +295,8 @@ jobs:
           ${KAPP} deploy -a cert-manager -n apps --wait-timeout 5m -y \
             -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
         echo "##[endgroup]"
-        echo "##[group]Deploy service-binding-controller"
-          ${KAPP} deploy -a service-binding-controller -n apps --wait-timeout 5m -y \
+        echo "##[group]Deploy servicebinding-runtime"
+          ${KAPP} deploy -a servicebinding-runtime -n apps --wait-timeout 5m -y \
             -f <(${KBLD} -f bundle/.imgpkg/images.yml -f bundle/config)
         echo "##[endgroup]"
 
@@ -343,8 +343,8 @@ jobs:
         set -o nounset
         set -o pipefail
 
-        echo "##[group]Delete service-binding-controller"
-          ${KAPP} delete -a service-binding-controller -n apps --wait-timeout 5m -y
+        echo "##[group]Delete servicebinding-runtime"
+          ${KAPP} delete -a servicebinding-runtime -n apps --wait-timeout 5m -y
         echo "##[endgroup]"
         echo "##[group]Delete cert-manager"
           ${KAPP} delete -a cert-manager -n apps --wait-timeout 5m -y
@@ -390,15 +390,15 @@ jobs:
     - name: Download staged bundle
       uses: actions/download-artifact@v3
       with:
-        name: service-binding-controller-bundle.tar
-    - name: Upload service-binding-controller-bundle.tar
+        name: servicebinding-runtime-bundle.tar
+    - name: Upload servicebinding-runtime-bundle.tar
       uses: actions/upload-release-asset@v1.0.2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: service-binding-controller-bundle.tar
-        asset_name: service-binding-controller-bundle-${{ steps.get_version.outputs.VERSION }}.tar
+        asset_path: servicebinding-runtime-bundle.tar
+        asset_name: servicebinding-runtime-bundle-${{ steps.get_version.outputs.VERSION }}.tar
         asset_content_type: application/x-tar
     - name: Install crane
       run: |
@@ -421,7 +421,7 @@ jobs:
 
         version=${{ steps.get_version.outputs.VERSION }}
 
-        ${IMGPKG} copy --tar service-binding-controller-bundle.tar --to-repo "ghcr.io/${{ github.repository }}/bundle"
+        ${IMGPKG} copy --tar servicebinding-runtime-bundle.tar --to-repo "ghcr.io/${{ github.repository }}/bundle"
         crane tag "ghcr.io/${{ github.repository }}/bundle" "${version}"
         digest=$(crane digest "ghcr.io/${{ github.repository }}/bundle:${version}")
 
@@ -429,16 +429,16 @@ jobs:
         mkdir -p ${scratch}
         ${IMGPKG} pull -b "ghcr.io/${{ github.repository }}/bundle:${version}@${digest}" -o ${scratch}
 
-        cp hack/boilerplate.yaml.txt service-binding-controller.yaml
+        cp hack/boilerplate.yaml.txt servicebinding-runtime.yaml
         ${KBLD} -f ${scratch}/config/ -f ${scratch}/.imgpkg/images.yml \
-          >> service-binding-controller.yaml
+          >> servicebinding-runtime.yaml
 
-    - name: Upload service-binding-controller.yaml
+    - name: Upload servicebinding-runtime.yaml
       uses: actions/upload-release-asset@v1.0.2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: service-binding-controller.yaml
-        asset_name: service-binding-controller-${{ steps.get_version.outputs.VERSION }}.yaml
+        asset_path: servicebinding-runtime.yaml
+        asset_name: servicebinding-runtime-${{ steps.get_version.outputs.VERSION }}.yaml
         asset_content_type: application/x-yaml

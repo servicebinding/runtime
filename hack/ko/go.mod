@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/ko
+module github.com/servicebinding/runtime/hack/ko
 
 go 1.18
 

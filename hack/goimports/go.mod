@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/goimports
+module github.com/servicebinding/runtime/hack/goimports
 
 go 1.18
 

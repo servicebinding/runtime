@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller
+module github.com/servicebinding/runtime
 
 go 1.18
 

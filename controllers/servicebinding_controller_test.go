@@ -39,9 +39,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
-	"github.com/servicebinding/service-binding-controller/controllers"
-	dieservicebindingv1beta1 "github.com/servicebinding/service-binding-controller/dies/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	"github.com/servicebinding/runtime/controllers"
+	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
 )
 
 func TestServiceBindingReconciler(t *testing.T) {

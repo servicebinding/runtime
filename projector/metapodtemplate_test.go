@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 
-	servicebindingv1beta1 "github.com/servicebinding/service-binding-controller/apis/v1beta1"
+	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
 func TestNewMetaPodTemplate(t *testing.T) {

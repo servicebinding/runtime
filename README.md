@@ -1,11 +1,11 @@
 <img src="https://avatars.githubusercontent.com/u/64096231" align="right" />
 
-# Service Binding Controller <!-- omit in toc -->
+# Service Binding Runtime <!-- omit in toc -->
 
-[![CI](https://github.com/servicebinding/service-binding-controller/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/servicebinding/service-binding-controller/actions/workflows/ci.yaml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/servicebinding/service-binding-controller)](https://goreportcard.com/report/github.com/servicebinding/service-binding-controller)
-[![Go Reference](https://pkg.go.dev/badge/github.com/servicebinding/service-binding-controller.svg)](https://pkg.go.dev/github.com/servicebinding/service-binding-controller)
-[![codecov](https://codecov.io/gh/servicebinding/service-binding-controller/branch/main/graph/badge.svg?token=D2Hs4MIXBZ)](https://codecov.io/gh/servicebinding/service-binding-controller)
+[![CI](https://github.com/servicebinding/runtime/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/servicebinding/runtime/actions/workflows/ci.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/servicebinding/runtime)](https://goreportcard.com/report/github.com/servicebinding/runtime)
+[![Go Reference](https://pkg.go.dev/badge/github.com/servicebinding/runtime.svg)](https://pkg.go.dev/github.com/servicebinding/runtime)
+[![codecov](https://codecov.io/gh/servicebinding/runtime/branch/main/graph/badge.svg?token=D2Hs4MIXBZ)](https://codecov.io/gh/servicebinding/runtime)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [1.0 spec](https://servicebinding.io/spec/core/1.0.0/). The full specification is implemented, please open an issue for any discrepancies.
@@ -152,5 +152,5 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 [working-group]: https://docs.google.com/document/d/1rR0qLpsjU38nRXxeich7F5QUy73RHJ90hnZiFIQ-JJ8/edit#heading=h.ar8ibc31ux6f
 [slack]: https://kubernetes.slack.com/archives/C012F2GPMTQ
-[repo]: https://github.com/servicebinding/service-binding-controller
+[repo]: https://github.com/servicebinding/runtime
 [code-of-conduct]: ./code-of-conduct.md

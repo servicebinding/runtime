@@ -1,4 +1,4 @@
-module github.com/servicebinding/service-binding-controller/hack/controller-gen
+module github.com/servicebinding/runtime/hack/controller-gen
 
 go 1.18
 
