@@ -21,9 +21,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	rtesting "github.com/vmware-labs/reconciler-runtime/testing"
-	"github.com/vmware-labs/reconciler-runtime/tracker"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -277,14 +275,11 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			config := reconcilers.Config{
-				Client:  rtesting.NewFakeClient(scheme, c.givenObjects...),
-				Tracker: tracker.New(0),
-			}
-			restMapper := config.RESTMapper().(*meta.DefaultRESTMapper)
+			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			restMapper := client.RESTMapper().(*meta.DefaultRESTMapper)
 			restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
 			restMapper.Add(schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "CronJob"}, meta.RESTScopeNamespace)
-			resolver := resolver.New(config)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupMapping(ctx, c.workload)
 
@@ -390,11 +385,8 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			config := reconcilers.Config{
-				Client:  rtesting.NewFakeClient(scheme, c.givenObjects...),
-				Tracker: tracker.New(0),
-			}
-			resolver := resolver.New(config)
+			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupBindingSecret(ctx, c.serviceRef)
 
@@ -693,11 +685,8 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			config := reconcilers.Config{
-				Client:  rtesting.NewFakeClient(scheme, c.givenObjects...),
-				Tracker: tracker.New(0),
-			}
-			resolver := resolver.New(config)
+			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupWorkloads(ctx, c.serviceRef, c.selector)
 

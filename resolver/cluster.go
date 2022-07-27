@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,27 +33,27 @@ import (
 )
 
 // New creates a new resolver backed by a reconciler-runtime config
-func New(config reconcilers.Config) Resolver {
+func New(client client.Client) Resolver {
 	return &clusterResolver{
-		config: config,
+		client: client,
 	}
 }
 
 type clusterResolver struct {
-	config reconcilers.Config
+	client client.Client
 }
 
 func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error) {
-	gvk, err := apiutil.GVKForObject(workload, m.config.Scheme())
+	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
 	if err != nil {
 		return nil, err
 	}
-	rm, err := m.config.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
+	rm, err := m.client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
 	}
 	wrm := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
-	err = m.config.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
+	err = m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
 	if err != nil {
 		if !apierrs.IsNotFound(err) {
 			return nil, err
@@ -91,7 +90,7 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	service := &unstructured.Unstructured{}
 	service.SetAPIVersion(serviceRef.APIVersion)
 	service.SetKind(serviceRef.Kind)
-	if err := r.config.TrackAndGet(ctx, client.ObjectKey{Namespace: serviceRef.Namespace, Name: serviceRef.Name}, service); err != nil {
+	if err := r.client.Get(ctx, client.ObjectKey{Namespace: serviceRef.Namespace, Name: serviceRef.Name}, service); err != nil {
 		return "", err
 	}
 	secretName, exists, err := unstructured.NestedString(service.UnstructuredContent(), "status", "binding", "name")
@@ -115,7 +114,7 @@ func (r *clusterResolver) lookupWorkload(ctx context.Context, workloadRef corev1
 	workload := &unstructured.Unstructured{}
 	workload.SetAPIVersion(workloadRef.APIVersion)
 	workload.SetKind(workloadRef.Kind)
-	if err := r.config.TrackAndGet(ctx, client.ObjectKey{Namespace: workloadRef.Namespace, Name: workloadRef.Name}, workload); err != nil {
+	if err := r.client.Get(ctx, client.ObjectKey{Namespace: workloadRef.Namespace, Name: workloadRef.Name}, workload); err != nil {
 		return nil, err
 	}
 	return workload, nil
@@ -129,7 +128,7 @@ func (r *clusterResolver) lookupWorkloads(ctx context.Context, workloadRef corev
 	if err != nil {
 		return nil, err
 	}
-	if err := r.config.List(ctx, workloads, client.InNamespace(workloadRef.Namespace), client.MatchingLabelsSelector{Selector: ls}); err != nil {
+	if err := r.client.List(ctx, workloads, client.InNamespace(workloadRef.Namespace), client.MatchingLabelsSelector{Selector: ls}); err != nil {
 		return nil, err
 	}
 

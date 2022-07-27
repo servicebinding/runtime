@@ -74,7 +74,7 @@ func ResolveBindingSecret() reconcilers.SubReconciler {
 				Namespace:  resource.Namespace,
 				Name:       resource.Spec.Service.Name,
 			}
-			secretName, err := resolver.New(c).LookupBindingSecret(ctx, ref)
+			secretName, err := resolver.New(TrackingClient(c)).LookupBindingSecret(ctx, ref)
 			if err != nil {
 				if apierrs.IsNotFound(err) {
 					// leave Unknown, the provisioned service may be created shortly
@@ -120,7 +120,7 @@ func ResolveWorkloads() reconcilers.SubReconciler {
 				Namespace:  resource.Namespace,
 				Name:       resource.Spec.Workload.Name,
 			}
-			workloads, err := resolver.New(c).LookupWorkloads(ctx, ref, resource.Spec.Workload.Selector)
+			workloads, err := resolver.New(TrackingClient(c)).LookupWorkloads(ctx, ref, resource.Spec.Workload.Selector)
 			if err != nil {
 				if apierrs.IsNotFound(err) {
 					// leave Unknown, the workload may be created shortly
@@ -158,7 +158,7 @@ func ProjectBinding() reconcilers.SubReconciler {
 		SyncDuringFinalization: true,
 		Sync: func(ctx context.Context, resource *servicebindingv1beta1.ServiceBinding) error {
 			c := reconcilers.RetrieveConfigOrDie(ctx)
-			projector := projector.New(resolver.New(c))
+			projector := projector.New(resolver.New(TrackingClient(c)))
 
 			workloads := RetrieveWorkloads(ctx)
 			projectedWorkloads := make([]runtime.Object, len(workloads))
