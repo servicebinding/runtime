@@ -32,7 +32,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
 
-// New creates a new resolver backed by a reconciler-runtime config
+// New creates a new resolver backed by a controller-runtime client
 func New(client client.Client) Resolver {
 	return &clusterResolver{
 		client: client,
