@@ -76,6 +76,11 @@ func TestServiceBindingReconciler(t *testing.T) {
 			})
 		})
 
+	workloadMapping := dieservicebindingv1beta1.ClusterWorkloadResourceMappingBlank.
+		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+			d.Name("deployments.apps")
+		})
+
 	workload := dieappsv1.DeploymentBlank.
 		DieStamp(func(r *appsv1.Deployment) {
 			r.APIVersion = "apps/v1"
@@ -164,6 +169,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 		},
 		ExpectTracks: []rtesting.TrackRequest{
 			rtesting.NewTrackRequest(projectedWorkload, serviceBinding, scheme),
+			rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
 		},
 	}, {
 		Name: "newly created",
@@ -174,6 +180,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 		},
 		ExpectTracks: []rtesting.TrackRequest{
 			rtesting.NewTrackRequest(projectedWorkload, serviceBinding, scheme),
+			rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
 		},
 		ExpectEvents: []rtesting.Event{
 			rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "FinalizerPatched", "Patched finalizer %q", "servicebinding.io/finalizer"),
@@ -219,6 +226,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 		},
 		ExpectTracks: []rtesting.TrackRequest{
 			rtesting.NewTrackRequest(projectedWorkload, serviceBinding, scheme),
+			rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
 		},
 		ExpectEvents: []rtesting.Event{
 			rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", "my-workload"),
@@ -686,6 +694,11 @@ func TestProjectBinding(t *testing.T) {
 			})
 		})
 
+	workloadMapping := dieservicebindingv1beta1.ClusterWorkloadResourceMappingBlank.
+		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+			d.Name("deployments.apps")
+		})
+
 	workload := dieappsv1.DeploymentBlank.
 		DieStamp(func(r *appsv1.Deployment) {
 			r.APIVersion = "apps/v1"
@@ -772,6 +785,9 @@ func TestProjectBinding(t *testing.T) {
 				projectedWorkload.DieReleaseUnstructured(),
 			},
 		},
+		ExpectTracks: []rtesting.TrackRequest{
+			rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
+		},
 	}, {
 		Name: "unproject terminating workload",
 		Resource: serviceBinding.
@@ -794,6 +810,9 @@ func TestProjectBinding(t *testing.T) {
 			controllers.ProjectedWorkloadsStashKey: []runtime.Object{
 				unprojectedWorkload,
 			},
+		},
+		ExpectTracks: []rtesting.TrackRequest{
+			rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
 		},
 	}}
 
