@@ -18,6 +18,7 @@ Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [
 - [Getting Started](#getting-started)
   - [Running on the cluster](#running-on-the-cluster)
   - [Undeploy controller](#undeploy-controller)
+- [Samples](#samples)
 - [Contributing](#contributing)
   - [Test It Out](#test-it-out)
   - [Modifying the API definitions](#modifying-the-api-definitions)
@@ -115,6 +116,15 @@ Undeploy the controller to the cluster:
 ```sh
 make undeploy
 ```
+
+## Samples
+
+Samples are located in the [samples directory](./samples), including:
+
+- [Spring PetClinic with MySQL](./samples/spring-petclinic)
+- [Controlled Resource](./samples/controlled-resource)
+- [Overridden Type and Provider](./samples/overridden-type-provider)
+- [Multiple Bindings](./samples/multi-binding)
 
 ## Contributing
 
