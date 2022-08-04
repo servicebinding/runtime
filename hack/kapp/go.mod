@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kapp
 
 go 1.18
 
-require github.com/k14s/kapp v0.50.0
+require github.com/k14s/kapp v0.51.0
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/json-iterator/go v1.1.11 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/k14s/difflib v0.0.0-20201117154628-0c031775bf57 // indirect
 	github.com/k14s/starlark-go v0.0.0-20200720175618-3a5c849cc368 // indirect
 	github.com/k14s/ytt v0.36.0 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vito/go-interact v0.0.0-20171111012221-fa338ed9e9ec // indirect
