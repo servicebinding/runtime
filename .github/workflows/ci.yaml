@@ -124,7 +124,7 @@ jobs:
 
         echo "##[group]Build"
           cat hack/boilerplate.yaml.txt > "${scratch}/config/servicebinding-runtime.yaml"
-          ${KO} resolve -f config/servicebinding-runtime.yaml >> "${scratch}/config/servicebinding-runtime.yaml"
+          ${KO} resolve --platform all -f config/servicebinding-runtime.yaml >> "${scratch}/config/servicebinding-runtime.yaml"
           ${KBLD} -f "${scratch}/config/servicebinding-runtime.yaml" --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" > /dev/null
         echo "##[endgroup]"
 
