@@ -101,10 +101,12 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
    For kind, a registry is not required:
 
    ```sh
-   export KO_DOCKER_REPO=kind.local/servicebinding
+   export KO_DOCKER_REPO=kind.local
    ```
 	
 1. Build and Deploy the controller to the cluster:
+
+   Note: The cluster must have [cert-manager](https://cert-manager.io) installed.  There is a `make cert-manager` target to deploy cert-manager.
 
    ```sh
    make deploy
