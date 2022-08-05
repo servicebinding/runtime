@@ -106,7 +106,7 @@ You’ll need a Kubernetes cluster to run against. You can use [KIND](https://si
 	
 1. Build and Deploy the controller to the cluster:
 
-   Note: The cluster must have [cert-manager](https://cert-manager.io) installed.  There is a `make deploy-cert-manager` target to deploy cert-manager.
+   Note: The cluster must have the [cert-manager](https://cert-manager.io) deployed.  There is a `make deploy-cert-manager` target to deploy the cert-manager.
 
    ```sh
    make deploy
