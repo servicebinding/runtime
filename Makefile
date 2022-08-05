@@ -17,6 +17,8 @@ YTT ?= go run -modfile hack/ytt/go.mod github.com/vmware-tanzu/carvel-ytt/cmd/yt
 KAPP_APP ?= servicebinding-runtime
 KAPP_APP_NAMESPACE ?= default
 
+KO_PLATFORMS ?= all
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
@@ -73,7 +75,7 @@ test: manifests generate fmt vet ## Run tests.
 
 .PHONY: deploy
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve -f config/servicebinding-runtime.yaml)
+	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve --platform $(KO_PLATFORMS) -f config/servicebinding-runtime.yaml)
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
