@@ -77,6 +77,14 @@ test: manifests generate fmt vet ## Run tests.
 deploy: manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	$(KAPP) deploy -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE) -c -f config/kapp -f <($(KO) resolve --platform $(KO_PLATFORMS) -f config/servicebinding-runtime.yaml)
 
+.PHONY: deploy-cert-manager
+deploy-cert-manager: ## Deploy cert-manager to the K8s cluster specified in ~/.kube/config.
+	$(KAPP) deploy -a cert-manager -n $(KAPP_APP_NAMESPACE) --wait-timeout 5m -c -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+
+.PHONY: undeploy-cert-manager
+undeploy-cert-manager: ## Undeploy cert-manager from the K8s cluster specified in ~/.kube/config.
+	$(KAPP) delete -a cert-manager -n $(KAPP_APP_NAMESPACE)
+
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KAPP) delete -a $(KAPP_APP) -n $(KAPP_APP_NAMESPACE)
