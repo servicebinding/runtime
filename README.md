@@ -10,20 +10,88 @@
 
 Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [1.0 spec](https://servicebinding.io/spec/core/1.0.0/). The full specification is implemented, please open an issue for any discrepancies.
 
+- [Getting Started](#getting-started)
+  - [Deploy a released build](#deploy-a-released-build)
+  - [Build from source](#build-from-source)
+    - [Undeploy controller](#undeploy-controller)
+- [Samples](#samples)
+- [Supported Services](#supported-services)
+- [Supported Workloads](#supported-workloads)
 - [Architecture](#architecture)
   - [Controller](#controller)
   - [Webhooks](#webhooks)
-- [Supported Services](#supported-services)
-- [Supported Workloads](#supported-workloads)
-- [Getting Started](#getting-started)
-  - [Running on the cluster](#running-on-the-cluster)
-  - [Undeploy controller](#undeploy-controller)
-- [Samples](#samples)
 - [Contributing](#contributing)
   - [Test It Out](#test-it-out)
   - [Modifying the API definitions](#modifying-the-api-definitions)
 - [Community, discussion, contribution, and support](#community-discussion-contribution-and-support)
   - [Code of conduct](#code-of-conduct)
+
+## Getting Started
+
+You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+
+After the controller is deployed, try out the [samples](#samples).
+
+### Deploy a released build
+
+The easiest way to get started is by deploying the [latest release](https://github.com/servicebinding/runtime/releases). Alternatively, you can [build the runtime from source](#build-from-source).
+
+### Build from source
+
+1. Define where to publish images:
+
+   ```sh
+   export KO_DOCKER_REPO=<a-repository-you-can-write-to>
+   ```
+
+   For kind, a registry is not required:
+
+   ```sh
+   export KO_DOCKER_REPO=kind.local
+   ```
+	
+1. Build and Deploy the controller to the cluster:
+
+   Note: The cluster must have the [cert-manager](https://cert-manager.io) deployed.  There is a `make deploy-cert-manager` target to deploy the cert-manager.
+
+   ```sh
+   make deploy
+   ```
+
+#### Undeploy controller
+Undeploy the controller to the cluster:
+
+```sh
+make undeploy
+```
+
+## Samples
+
+Samples are located in the [samples directory](./samples), including:
+
+- [Spring PetClinic with MySQL](./samples/spring-petclinic)
+- [Controlled Resource](./samples/controlled-resource)
+- [Overridden Type and Provider](./samples/overridden-type-provider)
+- [Multiple Bindings](./samples/multi-binding)
+
+## Supported Services
+
+Kubernetes defines no provisioned services by default, however, `Secret`s may be [directly referenced](https://servicebinding.io/spec/core/1.0.0/#direct-secret-reference).
+
+Additional services can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac).
+
+## Supported Workloads
+
+Support for the built-in k8s workload resource is pre-configured including:
+- apps `DaemonSet`
+- apps `Deployment`
+- apps `ReplicaSet`
+- apps `StatefulSet`
+- batch `CronJob` (also includes a `ClusterResourceMapping`)
+- batch `Job` (since Jobs are immutable, the ServiceBinding must be defined and service resolved before the job is created)
+- core `ReplicationController`
+
+Additional workloads can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac-1) and if not PodSpecable, a [`ClusterWorkloadResourceMapping`](https://servicebinding.io/spec/core/1.0.0/#workload-resource-mapping).
 
 ## Architecture
 
@@ -66,67 +134,6 @@ The `MutatingWebhookConfiguration` is used to intercept create and update reques
 The `ValidationWebhookConfiguration` is used as an alternative to watching the API Server directly for these types and keeping an informer cache. When a webhook request is received, the `ServiceBinding`s that reference that resource as a workload or service are resolved and enqueued for the controller to process.
 
 No blocking work is performed within the webhooks.
-
-## Supported Services
-
-Kubernetes defines no provisioned services by default, however, `Secret`s may be [directly referenced](https://servicebinding.io/spec/core/1.0.0/#direct-secret-reference).
-
-Additional services can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac).
-
-## Supported Workloads
-
-Support for the built-in k8s workload resource is pre-configured including:
-- apps `DaemonSet`
-- apps `Deployment`
-- apps `ReplicaSet`
-- apps `StatefulSet`
-- batch `CronJob` (also includes a `ClusterResourceMapping`)
-- batch `Job` (since Jobs are immutable, the ServiceBinding must be defined and service resolved before the job is created)
-- core `ReplicationController`
-
-Additional workloads can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac-1) and if not PodSpecable, a [`ClusterWorkloadResourceMapping`](https://servicebinding.io/spec/core/1.0.0/#workload-resource-mapping).
-
-
-## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
-
-### Running on the cluster
-1. Define where to publish images:
-
-   ```sh
-   export KO_DOCKER_REPO=<a-repository-you-can-write-to>
-   ```
-
-   For kind, a registry is not required:
-
-   ```sh
-   export KO_DOCKER_REPO=kind.local
-   ```
-	
-1. Build and Deploy the controller to the cluster:
-
-   Note: The cluster must have the [cert-manager](https://cert-manager.io) deployed.  There is a `make deploy-cert-manager` target to deploy the cert-manager.
-
-   ```sh
-   make deploy
-   ```
-
-### Undeploy controller
-Undeploy the controller to the cluster:
-
-```sh
-make undeploy
-```
-
-## Samples
-
-Samples are located in the [samples directory](./samples), including:
-
-- [Spring PetClinic with MySQL](./samples/spring-petclinic)
-- [Controlled Resource](./samples/controlled-resource)
-- [Overridden Type and Provider](./samples/overridden-type-provider)
-- [Multiple Bindings](./samples/multi-binding)
 
 ## Contributing
 
