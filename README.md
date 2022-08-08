@@ -28,7 +28,7 @@ Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [
 
 ## Getting Started
 
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+You’ll need a Kubernetes cluster to run against. You can use [kind](https://kind.sigs.k8s.io) to get a local cluster for testing, or run against a remote cluster.
 
 After the controller is deployed, try out the [samples](#samples).
 
@@ -50,7 +50,7 @@ The easiest way to get started is by deploying the [latest release](https://gith
    export KO_DOCKER_REPO=kind.local
    ```
 	
-1. Build and Deploy the controller to the cluster:
+1. Build and deploy the controller to the cluster:
 
    Note: The cluster must have the [cert-manager](https://cert-manager.io) deployed.  There is a `make deploy-cert-manager` target to deploy the cert-manager.
 
@@ -113,7 +113,7 @@ When a `ServiceBinding` is created, updated or deleted the controller processes 
 - resolve the referenced service resource, looking at it's `.spec.binding.name` for the name of the Secret to bind
 - reflect the discovered `Secret` name onto the `ServiceBinding`'s `.status.binding.name`
 - the `ServiceAvailable` condition is updated on the `ServiceBinding`
-- the references workloads are resolved (either by name or selector)
+- the referenced workloads are resolved (either by name or selector)
 - a `ClusterWorkloadResourceMapping` is resolved for the apiVersion/kind of the workload (or a default value for a PodSpecable workload is used)
 - the resolved `Secret` name is projected into the workload
 - the `Ready` condition is updated on the `ServiceBinding`
@@ -122,8 +122,8 @@ When a `ServiceBinding` is created, updated or deleted the controller processes 
 
 In addition to that main flow, a `MutatingWebhookConfiguration` and `ValidationWebhookConfiguration` are updated:
 - all `ServiceBinding`s in the cluster are resolved
-- the rules for a MutatingWebhookConfiguration are updated based on the set of all workload group-kinds referenced
-- the rules for a ValidatingWebhookConfiguration are updated based on the set of all workload and service group-kinds referenced
+- the rules for a `MutatingWebhookConfiguration` are updated based on the set of all workload group-kinds referenced
+- the rules for a `ValidatingWebhookConfiguration` are updated based on the set of all workload and service group-kinds referenced
 
 The `MutatingWebhookConfiguration` is used to intercept create and update requests for workloads:
 - all `ServiceBinding`s targeting the workload are resolved
