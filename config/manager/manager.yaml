@@ -108,5 +108,4 @@ webhooks:
       namespace: system
       path: /trigger
   failurePolicy: Ignore
-  reinvocationPolicy: Never
   sideEffects: None
