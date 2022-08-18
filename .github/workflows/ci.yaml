@@ -322,7 +322,7 @@ jobs:
       with:
         fetch-depth: 1
         path: conformance-tests
-        ref: main
+        ref: ec9536e2d9b3c50c32a97503a3c76ae5ef7aae07
         repository: servicebinding/conformance.git
 
     - name: Conformance tests
