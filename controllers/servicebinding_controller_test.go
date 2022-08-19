@@ -17,6 +17,7 @@ limitations under the License.
 package controllers_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -36,6 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -172,19 +174,14 @@ func TestServiceBindingReconciler(t *testing.T) {
 				rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
 			},
 		},
-		"newly created": {
+		"newly created, resolves secret": {
 			Key: key,
 			GivenObjects: []client.Object{
 				serviceBinding,
 				workload,
 			},
-			ExpectTracks: []rtesting.TrackRequest{
-				rtesting.NewTrackRequest(projectedWorkload, serviceBinding, scheme),
-				rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
-			},
 			ExpectEvents: []rtesting.Event{
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "FinalizerPatched", "Patched finalizer %q", "servicebinding.io/finalizer"),
-				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", "my-workload"),
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "StatusUpdated", "Updated status"),
 			},
 			ExpectPatches: []rtesting.PatchRef{
@@ -196,6 +193,42 @@ func TestServiceBindingReconciler(t *testing.T) {
 					PatchType: types.MergePatchType,
 					Patch:     []byte(`{"metadata":{"finalizers":["servicebinding.io/finalizer"],"resourceVersion":"999"}}`),
 				},
+			},
+			ExpectStatusUpdates: []client.Object{
+				serviceBinding.
+					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+						d.ConditionsDie(
+							dieservicebindingv1beta1.ServiceBindingConditionReady.Unknown().Reason("Initializing"),
+							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.Unknown().Reason("Initializing"),
+						)
+						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+							d.Name(secretName)
+						})
+					}),
+			},
+		},
+		"has resolved secret, project into workload": {
+			Key: key,
+			GivenObjects: []client.Object{
+				serviceBinding.
+					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+						d.Finalizers("servicebinding.io/finalizer")
+					}).
+					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+							d.Name(secretName)
+						})
+					}),
+				workload,
+			},
+			ExpectTracks: []rtesting.TrackRequest{
+				rtesting.NewTrackRequest(projectedWorkload, serviceBinding, scheme),
+				rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
+			},
+			ExpectEvents: []rtesting.Event{
+				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", "my-workload"),
+				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "StatusUpdated", "Updated status"),
 			},
 			ExpectUpdates: []client.Object{
 				projectedWorkload.DieReleaseUnstructured().(client.Object),
@@ -292,6 +325,21 @@ func TestResolveBindingSecret(t *testing.T) {
 	}
 
 	rts := rtesting.SubReconcilerTests{
+		"in sync": {
+			Resource: serviceBinding.
+				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+					d.Service(directSecretRef.DieRelease())
+				}).
+				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.Name(secretName)
+					})
+					d.ConditionsDie(
+						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+							True().Reason("ResolvedBindingSecret"),
+					)
+				}),
+		},
 		"resolve direct secret": {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
@@ -310,6 +358,12 @@ func TestResolveBindingSecret(t *testing.T) {
 							True().Reason("ResolvedBindingSecret"),
 					)
 				}),
+			ShouldErr: true,
+			Verify: func(t *testing.T, result ctrl.Result, err error) {
+				if !errors.Is(err, reconcilers.HaltSubReconcilers) {
+					t.Errorf("expected err to be of type reconcilers.HaltSubReconcilers")
+				}
+			},
 		},
 		"service is a provisioned service": {
 			Resource: serviceBinding.
@@ -334,6 +388,12 @@ func TestResolveBindingSecret(t *testing.T) {
 				}),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(provisionedService, serviceBinding, scheme),
+			},
+			ShouldErr: true,
+			Verify: func(t *testing.T, result ctrl.Result, err error) {
+				if !errors.Is(err, reconcilers.HaltSubReconcilers) {
+					t.Errorf("expected err to be of type reconcilers.HaltSubReconcilers")
+				}
 			},
 		},
 		"service is not a provisioned service": {
