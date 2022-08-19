@@ -125,7 +125,14 @@ jobs:
         echo "##[group]Build"
           cat hack/boilerplate.yaml.txt > "${scratch}/config/servicebinding-runtime.yaml"
           ${KO} resolve --platform all -f config/servicebinding-runtime.yaml >> "${scratch}/config/servicebinding-runtime.yaml"
-          ${KBLD} -f "${scratch}/config/servicebinding-runtime.yaml" --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" > /dev/null
+
+          cat hack/boilerplate.yaml.txt > "${scratch}/config/servicebinding-workloadresourcemappings.yaml"
+          cat config/servicebinding-workloadresourcemappings.yaml >> "${scratch}/config/servicebinding-workloadresourcemappings.yaml"
+
+          ${KBLD} --imgpkg-lock-output "${scratch}/.imgpkg/images.yml" \
+            -f "${scratch}/config/servicebinding-runtime.yaml" \
+            -f "${scratch}/config/servicebinding-workloadresourcemappings.yaml" \
+            > /dev/null
         echo "##[endgroup]"
 
         echo "##[group]Create bundle"
@@ -430,8 +437,12 @@ jobs:
         ${IMGPKG} pull -b "ghcr.io/${{ github.repository }}/bundle:${version}@${digest}" -o ${scratch}
 
         cp hack/boilerplate.yaml.txt servicebinding-runtime.yaml
-        ${KBLD} -f ${scratch}/config/ -f ${scratch}/.imgpkg/images.yml \
+        ${KBLD} -f ${scratch}/config/servicebinding-runtime.yaml -f ${scratch}/.imgpkg/images.yml \
           >> servicebinding-runtime.yaml
+
+        cp hack/boilerplate.yaml.txt servicebinding-workloadresourcemappings.yaml
+        ${KBLD} -f ${scratch}/config/servicebinding-workloadresourcemappings.yaml -f ${scratch}/.imgpkg/images.yml \
+          >> servicebinding-workloadresourcemappings.yaml
 
     - name: Upload servicebinding-runtime.yaml
       uses: actions/upload-release-asset@v1.0.2
@@ -441,4 +452,13 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
         asset_path: servicebinding-runtime.yaml
         asset_name: servicebinding-runtime-${{ steps.get_version.outputs.VERSION }}.yaml
+        asset_content_type: application/x-yaml
+    - name: Upload servicebinding-workloadresourcemappings.yaml
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: servicebinding-workloadresourcemappings.yaml
+        asset_name: servicebinding-workloadresourcemappings-${{ steps.get_version.outputs.VERSION }}.yaml
         asset_content_type: application/x-yaml
