@@ -1,9 +1,0 @@
-#@ load("@ytt:overlay", "overlay")
-
-#@overlay/match by=overlay.subset({"kind":"ClusterWorkloadResourceMapping"})
----
-metadata:
-  #@overlay/replace via=lambda left, right: left.split("-")[-1]
-  name:
-  #@overlay/remove
-  namespace:
