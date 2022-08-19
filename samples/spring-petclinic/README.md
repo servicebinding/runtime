@@ -6,19 +6,25 @@
 
 If not already installed, [install the ServiceBinding CRD and controller][install].
 
+This sample uses [Carvel Kapp][kapp-install], rather than `kubectl` to install and watch the sample become ready.
+
 ## Deploy
 
 Apply the PetClinic workload, MySQL service and connect them with a ServiceBinding:
 
 ```sh
-kubectl apply -f ./samples/spring-petclinic
+kapp deploy --app servicebinding-sample-spring-petclinic -f samples/spring-petclinic
 ```
 
-Wait for the workload (and database) to start and become healthy:
+When you are done with this sample, all resources in the deploy can be removed by running:
 
 ```sh
-kubectl wait deployment spring-petclinic --for condition=available --timeout=2m
+kapp delete --app servicebinding-sample-spring-petclinic
 ```
+
+When prompted, you can review the resource about to be created (updated or deleted) and approve them, or add `--yes` to the above commands. Resources are [tracked between deploys](https://carvel.dev/kapp/docs/latest/diff/), if a resource is removed from the file it will be removed from the cluster on the next deploy.
+
+Kapp will monitor the [health of the resources](https://carvel.dev/kapp/docs/latest/apply-waiting/) it creates and exit when they become ready, or fail to become ready. The startup [logs from our workload](https://carvel.dev/kapp/docs/latest/apply/#kappk14siodeploy-logs) will also be displayed.
 
 ## Understand
 
@@ -28,7 +34,7 @@ Inspect the PetClinic workload as bound:
 kubectl describe deployment spring-petclinic
 ```
 
-If the ServiceBinding is working, a new environment variable (SERVICE_BINDING_ROOT), volume and volume mount (binding-49a23274b0590d5057aae1ae621be723716c4dd5) is added to the deployment.
+If the ServiceBinding is working, a new environment variable (SERVICE_BINDING_ROOT), volume and volume mount (e.g. servicebinding-54dec81e-49f6-467d-934f-36029f2dfd26) is added to the deployment.
 The describe output will contain:
 
 ```txt
@@ -52,7 +58,7 @@ The describe output will contain:
 The workload uses [Spring Cloud Bindings][scb], which discovers the bound MySQL service by type and reconfigures Spring Boot to consume the service.
 Spring Cloud Bindings is automatically added to Spring applications built by Paketo buildpacks.
 
-We can see the effect of Spring Cloud Bindings by view the workload logs:
+We can see the effect of Spring Cloud Bindings by view the workload logs. While the startup logs are shown as part of the deploy, we can fetch them directly as well:
 
 ```sh
 kubectl logs -l app=spring-petclinic -c workload --tail 1000
@@ -85,6 +91,10 @@ Spring Cloud Bindings Enabled
 2022-08-02 21:35:27.350  INFO 1 --- [           main] .BindingSpecificEnvironmentPostProcessor : Creating binding-specific PropertySource from Kubernetes Service Bindings
 ...
 ```
+
+`kapp` uses config file defined in [kapp-config.yaml](./kapp-config.yaml) to teach it understand the specifics for the `ServiceBinding` resource. We instruct kapp to wait for the `Ready` condition to be `True` to indicate the binding is successful, or `False` to indicate an error the requires attention. We also tell it to wait for the `ServiceAvailable` condition to be `True` before creating any resources that depend on the `ServiceBinding`.
+
+Annotations (`kapp.k14s.io/...`) on individual resources are used to further configure kapp. In this case we define the [order resources are applied](https://carvel.dev/kapp/docs/latest/apply-ordering/) with change groups for sets of resources (`service`, `workload` and `binding`), and change rules to define the order that resources are created or deleted. On the `ServiceBinding` we define a rule `upsert before upserting workload`, this tells kapp to create/update the ServiceBinding resource before create/update the resource in the workload change group. This way, we can intercept the create request for the workload Deployment, and project the binding in at creation time, rather than either needing to manually order the creation of resources, or initially rolling out a ReplicaSet without the binding that we know will fail only to shortly have the correct config with the projection applied.
 
 ## Play
 
