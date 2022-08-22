@@ -1130,8 +1130,8 @@ github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df/go.mod h1:JP3t17
 github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1DwXk04H54A1oHXtwZmA0grkVMdPxx/VGLCah0=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-imgpkg v0.30.0 h1:zbBzWk0Z2lQy0ddn2OD9QyvQKJNayR+XPoYvEHVKEN0=
-github.com/vmware-tanzu/carvel-imgpkg v0.30.0/go.mod h1:sw3Mb1kqhZ60RXYnO07tJ5gYDGNPZHy2MtFgDJKd1sM=
+github.com/vmware-tanzu/carvel-imgpkg v0.31.0 h1:jtT0vs8rTvxRuwZ4HaAT//iCun4V9WS0MQalN3XggSU=
+github.com/vmware-tanzu/carvel-imgpkg v0.31.0/go.mod h1:sw3Mb1kqhZ60RXYnO07tJ5gYDGNPZHy2MtFgDJKd1sM=
 github.com/vmware/govmomi v0.20.3/go.mod h1:URlwyTFZX72RmxtxuaFL2Uj3fD1JTvZdx59bHWk6aFU=
 github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/willf/bitset v1.1.11/go.mod h1:83CECat5yLh5zVOf4P1ErAgKA5UDvKtgyUABdr3+MjI=

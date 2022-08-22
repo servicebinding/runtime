@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/imgpkg
 
 go 1.18
 
-require github.com/vmware-tanzu/carvel-imgpkg v0.30.0
+require github.com/vmware-tanzu/carvel-imgpkg v0.31.0
 
 require (
 	github.com/Azure/azure-sdk-for-go v55.0.0+incompatible // indirect
