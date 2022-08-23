@@ -24,7 +24,6 @@ import (
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	"github.com/vmware-labs/reconciler-runtime/tracker"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -74,13 +73,6 @@ func AdmissionProjectorReconciler(c reconcilers.Config, name string, accessCheck
 			rules := RetrieveWebhookRules(ctx)
 			resource.Webhooks[0].Rules = rules
 			return resource, nil
-		},
-		SemanticEquals: func(a1, a2 *admissionregistrationv1.MutatingWebhookConfiguration) bool {
-			if a1 == nil || len(a1.Webhooks) != 1 || a2 == nil || len(a2.Webhooks) != 1 {
-				// the webhook config isn't in a form that we expect, ignore it
-				return true
-			}
-			return equality.Semantic.DeepEqual(a1.Webhooks[0].Rules, a2.Webhooks[0].Rules)
 		},
 		MergeBeforeUpdate: func(current, desired *admissionregistrationv1.MutatingWebhookConfiguration) {
 			if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {
@@ -194,13 +186,6 @@ func TriggerReconciler(c reconcilers.Config, name string, accessChecker rbac.Acc
 			rules := RetrieveWebhookRules(ctx)
 			resource.Webhooks[0].Rules = rules
 			return resource, nil
-		},
-		SemanticEquals: func(a1, a2 *admissionregistrationv1.ValidatingWebhookConfiguration) bool {
-			if a1 == nil || len(a1.Webhooks) != 1 || a2 == nil || len(a2.Webhooks) != 1 {
-				// the webhook config isn't in a form that we expect, ignore it
-				return true
-			}
-			return equality.Semantic.DeepEqual(a1.Webhooks[0].Rules, a2.Webhooks[0].Rules)
 		},
 		MergeBeforeUpdate: func(current, desired *admissionregistrationv1.ValidatingWebhookConfiguration) {
 			if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {

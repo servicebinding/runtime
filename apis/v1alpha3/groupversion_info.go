@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 // Package v1alpha3 contains API Schema definitions for the  v1alpha3 API group
-//+kubebuilder:object:generate=true
-//+groupName=servicebinding.io
+// +kubebuilder:object:generate=true
+// +groupName=servicebinding.io
 package v1alpha3
 
 import (

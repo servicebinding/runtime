@@ -23,7 +23,6 @@ import (
 	"github.com/vmware-labs/reconciler-runtime/apis"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/equality"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -195,9 +194,6 @@ func PatchWorkloads() reconcilers.SubReconciler {
 		Type: &unstructured.Unstructured{},
 		MergeBeforeUpdate: func(current, desired *unstructured.Unstructured) {
 			current.SetUnstructuredContent(desired.UnstructuredContent())
-		},
-		SemanticEquals: func(a1, a2 *unstructured.Unstructured) bool {
-			return equality.Semantic.DeepEqual(a1, a2)
 		},
 	}
 
