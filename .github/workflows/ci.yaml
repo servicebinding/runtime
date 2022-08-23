@@ -306,6 +306,16 @@ jobs:
           ${KAPP} deploy -a servicebinding-runtime -n apps --wait-timeout 5m -y \
             -f <(${KBLD} -f bundle/.imgpkg/images.yml -f bundle/config)
         echo "##[endgroup]"
+    - name: Test samples
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        echo "##[group]Deploy spring-petclinic"
+          ${KAPP} deploy -a servicebinding-sample-spring-petclinic -n apps --wait-timeout 5m -y \
+            -f samples/spring-petclinic
+        echo "##[endgroup]"
 
     # TODO add acceptance tests
     
@@ -350,6 +360,9 @@ jobs:
         set -o nounset
         set -o pipefail
 
+        echo "##[group]Delete spring-petclinic"
+          ${KAPP} delete -a servicebinding-sample-spring-petclinic -n apps --wait-timeout 5m -y
+        echo "##[endgroup]"
         echo "##[group]Delete servicebinding-runtime"
           ${KAPP} delete -a servicebinding-runtime -n apps --wait-timeout 5m -y
         echo "##[endgroup]"

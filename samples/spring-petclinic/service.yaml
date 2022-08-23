@@ -17,6 +17,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: spring-petclinic-db
+  annotations:
+    kapp.k14s.io/change-group: service
 type: servicebinding.io/mysql
 stringData:
   type: mysql
@@ -33,6 +35,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: spring-petclinic-db
+  annotations:
+    kapp.k14s.io/change-group: service
 spec:
   ports:
   - port: 3306
@@ -44,6 +48,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spring-petclinic-db
+  annotations:
+    kapp.k14s.io/change-group: service
   labels:
     app: spring-petclinic-db
 spec:
