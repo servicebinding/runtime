@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/kapp
 
-go 1.18
+go 1.19
 
 require github.com/k14s/kapp v0.52.0
 
