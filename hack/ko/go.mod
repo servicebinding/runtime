@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/ko
 
-go 1.18
+go 1.19
 
 require github.com/google/ko v0.11.2
 

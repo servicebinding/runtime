@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/kustomize
 
-go 1.18
+go 1.19
 
 require sigs.k8s.io/kustomize/kustomize/v4 v4.5.7
 

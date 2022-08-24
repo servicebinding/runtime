@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/controller-gen
 
-go 1.18
+go 1.19
 
 require dies.dev/diegen v0.5.0
 
