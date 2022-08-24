@@ -317,8 +317,28 @@ jobs:
             -f samples/spring-petclinic
         echo "##[endgroup]"
 
-    # TODO add acceptance tests
-    
+    - name: Checkout conformance tests
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+        path: conformance-tests
+        ref: ec9536e2d9b3c50c32a97503a3c76ae5ef7aae07
+        repository: servicebinding/conformance.git
+
+    - name: Conformance tests
+      run: |
+        set -o errexit
+        set -o nounset
+        set -o pipefail
+
+        cd conformance-tests
+        echo "##[group]Setup conformance tests"
+          . setup.sh
+        echo "##[endgroup]"
+        echo "##[group]Run conformance tests"
+          . run_tests.sh
+        echo "##[endgroup]"
+
     - name: Collect diagnostics
       run: |
         set +o errexit
@@ -328,11 +348,11 @@ jobs:
         echo "##[group]kubectl get clusterworkloadresourcemappings.servicebinding.io"
           kubectl get clusterworkloadresourcemappings.servicebinding.io
         echo "##[endgroup]"
-        echo "##[group]kubectl get servicebindings.servicebinding.io"
-          kubectl get servicebindings.servicebinding.io
+        echo "##[group]kubectl get servicebindings.servicebinding.io -A"
+          kubectl get servicebindings.servicebinding.io -A
         echo "##[endgroup]"
-        echo "##[group]kubectl describe servicebindings.servicebinding.io"
-          kubectl describe servicebindings.servicebinding.io
+        echo "##[group]kubectl describe servicebindings.servicebinding.io -A"
+          kubectl describe servicebindings.servicebinding.io -A
         echo "##[endgroup]"
         echo "##[group]kapp list -A"
           ${KAPP} list -A
@@ -340,8 +360,14 @@ jobs:
         echo "##[group]kubectl get all -n servicebinding-system"
           kubectl get all -n servicebinding-system
         echo "##[endgroup]"
+        echo "##[group]kubectl get all -n servicebinding-cts"
+          kubectl get all -n servicebindings-cts
+        echo "##[endgroup]"
         echo "##[group]kubectl describe deployments.apps -n servicebinding-system"
           kubectl describe deployments.apps -n servicebinding-system
+        echo "##[endgroup]"
+        echo "##[group]kubectl describe deployments.apps -n servicebinding-cts"
+          kubectl describe deployments.apps -n servicebindings-cts
         echo "##[endgroup]"
         echo "##[group]kubectl describe mutatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-admission-projector"
           kubectl describe mutatingwebhookconfigurations.admissionregistration.k8s.io servicebinding-admission-projector
