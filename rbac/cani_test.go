@@ -27,7 +27,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -35,168 +34,179 @@ import (
 )
 
 func TestAccessChecker(t *testing.T) {
-	resource := &appsv1.Deployment{}
-	var ac *accessChecker
-
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	rts := rtesting.SubReconcilerTestSuite{{
-		Name:     "allow, added to cache",
-		Resource: resource,
-		WithReactors: []rtesting.ReactionFunc{
-			allowSelfSubjectAccessReviewFor("apps", "deployments", "get"),
+	rts := rtesting.SubReconcilerTests{
+		"allow, added to cache": {
+			Resource: &appsv1.Deployment{},
+			WithReactors: []rtesting.ReactionFunc{
+				allowSelfSubjectAccessReviewFor("apps", "deployments", "get"),
+			},
+			ExpectCreates: []client.Object{
+				selfSubjectAccessReviewFor("apps", "deployments", "get"),
+			},
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+				ac := tc.Metadata["accessChecker"].(*accessChecker)
+				if len(ac.cache) != 1 {
+					t.Errorf("unexpected cache")
+				}
+				if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
+					Group:    "apps",
+					Resource: "deployments",
+					Verb:     "get",
+				}]; !ok {
+					t.Errorf("review should be in cache")
+				} else if !ssar.Status.Allowed {
+					t.Errorf("cached review should be allowed")
+				}
+				return nil
+			},
 		},
-		ExpectCreates: []client.Object{
-			selfSubjectAccessReviewFor("apps", "deployments", "get"),
-		},
-		CleanUp: func(t *testing.T) error {
-			if len(ac.cache) != 1 {
-				t.Errorf("unexpected cache")
-			}
-			if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}]; !ok {
-				t.Errorf("review should be in cache")
-			} else if !ssar.Status.Allowed {
-				t.Errorf("cached review should be allowed")
-			}
-			return nil
-		},
-	}, {
-		Name:     "allow, from cache",
-		Resource: resource,
-		Prepare: func(t *testing.T) error {
-			ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}] = authorizationv1.SelfSubjectAccessReview{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: metav1.Now(),
+		"allow, from cache": {
+			Resource: &appsv1.Deployment{},
+			Metadata: map[string]interface{}{
+				"cache": map[authorizationv1.ResourceAttributes]authorizationv1.SelfSubjectAccessReview{
+					{
+						Group:    "apps",
+						Resource: "deployments",
+						Verb:     "get",
+					}: {
+						ObjectMeta: metav1.ObjectMeta{
+							CreationTimestamp: metav1.Now(),
+						},
+						Status: authorizationv1.SubjectAccessReviewStatus{
+							Allowed: true,
+						},
+					},
 				},
-				Status: authorizationv1.SubjectAccessReviewStatus{
-					Allowed: true,
+			},
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+				ac := tc.Metadata["accessChecker"].(*accessChecker)
+				if len(ac.cache) != 1 {
+					t.Errorf("unexpected cache")
+				}
+				if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
+					Group:    "apps",
+					Resource: "deployments",
+					Verb:     "get",
+				}]; !ok {
+					t.Errorf("review should be in cache")
+				} else if !ssar.Status.Allowed {
+					t.Errorf("cached review should be allowed")
+				}
+				return nil
+			},
+		},
+		"deny, added to cache": {
+			Resource: &appsv1.Deployment{},
+			ExpectCreates: []client.Object{
+				selfSubjectAccessReviewFor("apps", "deployments", "get"),
+			},
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+				ac := tc.Metadata["accessChecker"].(*accessChecker)
+				if len(ac.cache) != 1 {
+					t.Errorf("unexpected cache")
+				}
+				if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
+					Group:    "apps",
+					Resource: "deployments",
+					Verb:     "get",
+				}]; !ok {
+					t.Errorf("review should be in cache")
+				} else if ssar.Status.Allowed {
+					t.Errorf("cached review should be denied")
+				}
+				return nil
+			},
+			ShouldErr: true,
+		},
+		"deny, from cache": {
+			Resource: &appsv1.Deployment{},
+			Metadata: map[string]interface{}{
+				"cache": map[authorizationv1.ResourceAttributes]authorizationv1.SelfSubjectAccessReview{
+					{
+						Group:    "apps",
+						Resource: "deployments",
+						Verb:     "get",
+					}: {
+						ObjectMeta: metav1.ObjectMeta{
+							CreationTimestamp: metav1.Now(),
+						},
+						Status: authorizationv1.SubjectAccessReviewStatus{
+							Allowed: false,
+						},
+					},
 				},
-			}
-			return nil
+			},
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+				ac := tc.Metadata["accessChecker"].(*accessChecker)
+				if len(ac.cache) != 1 {
+					t.Errorf("unexpected cache")
+				}
+				if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
+					Group:    "apps",
+					Resource: "deployments",
+					Verb:     "get",
+				}]; !ok {
+					t.Errorf("review should be in cache")
+				} else if ssar.Status.Allowed {
+					t.Errorf("cached review should be denied")
+				}
+				return nil
+			},
+			ShouldErr: true,
 		},
-		CleanUp: func(t *testing.T) error {
-			if len(ac.cache) != 1 {
-				t.Errorf("unexpected cache")
-			}
-			if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}]; !ok {
-				t.Errorf("review should be in cache")
-			} else if !ssar.Status.Allowed {
-				t.Errorf("cached review should be allowed")
-			}
-			return nil
-		},
-	}, {
-		Name:     "deny, added to cache",
-		Resource: resource,
-		ExpectCreates: []client.Object{
-			selfSubjectAccessReviewFor("apps", "deployments", "get"),
-		},
-		CleanUp: func(t *testing.T) error {
-			if len(ac.cache) != 1 {
-				t.Errorf("unexpected cache")
-			}
-			if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}]; !ok {
-				t.Errorf("review should be in cache")
-			} else if ssar.Status.Allowed {
-				t.Errorf("cached review should be denied")
-			}
-			return nil
-		},
-		ShouldErr: true,
-	}, {
-		Name:     "deny, from cache",
-		Resource: resource,
-		Prepare: func(t *testing.T) error {
-			ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}] = authorizationv1.SelfSubjectAccessReview{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: metav1.Now(),
+		"refresh stale cache": {
+			Resource: &appsv1.Deployment{},
+			Metadata: map[string]interface{}{
+				"cache": map[authorizationv1.ResourceAttributes]authorizationv1.SelfSubjectAccessReview{
+					{
+						Group:    "apps",
+						Resource: "deployments",
+						Verb:     "get",
+					}: {
+						ObjectMeta: metav1.ObjectMeta{
+							CreationTimestamp: metav1.NewTime(time.Now().Add(-2 * time.Hour)),
+						},
+						Status: authorizationv1.SubjectAccessReviewStatus{
+							Allowed: false,
+						},
+					},
 				},
-				Status: authorizationv1.SubjectAccessReviewStatus{
-					Allowed: false,
-				},
-			}
-			return nil
+			},
+			WithReactors: []rtesting.ReactionFunc{
+				allowSelfSubjectAccessReviewFor("apps", "deployments", "get"),
+			},
+			ExpectCreates: []client.Object{
+				selfSubjectAccessReviewFor("apps", "deployments", "get"),
+			},
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+				ac := tc.Metadata["accessChecker"].(*accessChecker)
+				if len(ac.cache) != 1 {
+					t.Errorf("unexpected cache")
+				}
+				if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
+					Group:    "apps",
+					Resource: "deployments",
+					Verb:     "get",
+				}]; !ok {
+					t.Errorf("review should be in cache")
+				} else if !ssar.Status.Allowed {
+					t.Errorf("cached review should be allowed")
+				}
+				return nil
+			},
 		},
-		CleanUp: func(t *testing.T) error {
-			if len(ac.cache) != 1 {
-				t.Errorf("unexpected cache")
-			}
-			if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}]; !ok {
-				t.Errorf("review should be in cache")
-			} else if ssar.Status.Allowed {
-				t.Errorf("cached review should be denied")
-			}
-			return nil
-		},
-		ShouldErr: true,
-	}, {
-		Name:     "refresh stale cache",
-		Resource: resource,
-		Prepare: func(t *testing.T) error {
-			ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}] = authorizationv1.SelfSubjectAccessReview{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: metav1.NewTime(time.Now().Add(-2 * time.Hour)),
-				},
-				Status: authorizationv1.SubjectAccessReviewStatus{
-					Allowed: false,
-				},
-			}
-			return nil
-		},
-		WithReactors: []rtesting.ReactionFunc{
-			allowSelfSubjectAccessReviewFor("apps", "deployments", "get"),
-		},
-		ExpectCreates: []client.Object{
-			selfSubjectAccessReviewFor("apps", "deployments", "get"),
-		},
-		CleanUp: func(t *testing.T) error {
-			if len(ac.cache) != 1 {
-				t.Errorf("unexpected cache")
-			}
-			if ssar, ok := ac.cache[authorizationv1.ResourceAttributes{
-				Group:    "apps",
-				Resource: "deployments",
-				Verb:     "get",
-			}]; !ok {
-				t.Errorf("review should be in cache")
-			} else if !ssar.Status.Allowed {
-				t.Errorf("cached review should be allowed")
-			}
-			return nil
-		},
-	}}
+	}
 
-	rts.Run(t, scheme, func(t *testing.T, rtc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
-		ac = NewAccessChecker(c, time.Hour).WithVerb("get").(*accessChecker)
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+		ac := NewAccessChecker(c, time.Hour).WithVerb("get").(*accessChecker)
+		if cache, ok := tc.Metadata["cache"].(map[authorizationv1.ResourceAttributes]authorizationv1.SelfSubjectAccessReview); ok {
+			ac.cache = cache
+		}
+		tc.Metadata["accessChecker"] = ac
+
 		return &reconcilers.SyncReconciler{
 			Sync: func(ctx context.Context, _ client.Object) error {
 				if !ac.CanI(ctx, "apps", "deployments") {
