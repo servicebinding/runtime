@@ -93,7 +93,20 @@ func ResolveBindingSecret() reconcilers.SubReconciler {
 			if secretName != "" {
 				// success
 				resource.GetConditionManager().MarkTrue(servicebindingv1beta1.ServiceBindingConditionServiceAvailable, "ResolvedBindingSecret", "")
+				previousSecretName := ""
+				if resource.Status.Binding != nil {
+					previousSecretName = resource.Status.Binding.Name
+				}
 				resource.Status.Binding = &servicebindingv1beta1.ServiceBindingSecretReference{Name: secretName}
+				if previousSecretName != secretName {
+					// stop processing subreconcilers, we need to allow the secret to be updated on
+					// the API Server so that webhook calls for workload that are targeted by the
+					// binding are able to see this secret. The next turn of the reconciler for
+					// this resource is automatically triggered by the change of status. We do not
+					// want to requeue as that may cause the resource to be re-reconciled before
+					// the informer cache is updated.
+					return reconcilers.HaltSubReconcilers
+				}
 			} else {
 				// leave Unknown, not success but also not an error
 				resource.GetConditionManager().MarkUnknown(servicebindingv1beta1.ServiceBindingConditionServiceAvailable, "ServiceMissingBinding", "the service was found, but did not contain a binding secret")
