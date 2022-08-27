@@ -300,7 +300,7 @@ jobs:
         echo "##[endgroup]"
         echo "##[group]Deploy cert-manager"
           ${KAPP} deploy -a cert-manager -n apps --wait-timeout 5m -y \
-            -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+            -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml
         echo "##[endgroup]"
         echo "##[group]Deploy servicebinding-runtime"
           ${KAPP} deploy -a servicebinding-runtime -n apps --wait-timeout 5m -y \
