@@ -231,7 +231,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "StatusUpdated", "Updated status"),
 			},
 			ExpectUpdates: []client.Object{
-				projectedWorkload.DieReleaseUnstructured().(client.Object),
+				projectedWorkload.DieReleaseUnstructured(),
 			},
 			ExpectStatusUpdates: []client.Object{
 				serviceBinding.
@@ -276,7 +276,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 				},
 			},
 			ExpectUpdates: []client.Object{
-				unprojectedWorkload.(client.Object),
+				unprojectedWorkload,
 			},
 		},
 	}
@@ -987,7 +987,7 @@ func TestPatchWorkloads(t *testing.T) {
 					SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 						// not something a binding would ever project, but good enough for a test
 						d.Paused(true)
-					}).DieReleaseUnstructured().(client.Object),
+					}).DieReleaseUnstructured(),
 			},
 		},
 		"update workload ignoring not found errors": {
@@ -1021,7 +1021,7 @@ func TestPatchWorkloads(t *testing.T) {
 					SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 						// not something a binding would ever project, but good enough for a test
 						d.Paused(true)
-					}).DieReleaseUnstructured().(client.Object),
+					}).DieReleaseUnstructured(),
 			},
 		},
 		"update workload forbidden": {
@@ -1071,7 +1071,7 @@ func TestPatchWorkloads(t *testing.T) {
 					SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 						// not something a binding would ever project, but good enough for a test
 						d.Paused(true)
-					}).DieReleaseUnstructured().(client.Object),
+					}).DieReleaseUnstructured(),
 			},
 		},
 		"require same number of workloads and projected workloads": {

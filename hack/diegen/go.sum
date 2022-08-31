@@ -1,5 +1,5 @@
-dies.dev/diegen v0.6.1 h1:PC+T5KbPpXvsayyNG/DoCiwdZZyKSu3TkZnRfgX526Y=
-dies.dev/diegen v0.6.1/go.mod h1:Sh3DR+p63PgMkU5mjqxSXyuPFcU5aLHzT7EIil2JAwk=
+dies.dev/diegen v0.6.2 h1:x4z8iQdMtDp3AOnVr7KUfMDI3Blv1rPp//6+gvMWbiY=
+dies.dev/diegen v0.6.2/go.mod h1:Sh3DR+p63PgMkU5mjqxSXyuPFcU5aLHzT7EIil2JAwk=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
