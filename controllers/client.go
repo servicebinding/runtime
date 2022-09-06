@@ -31,6 +31,6 @@ type trackingClient struct {
 	reconcilers.Config
 }
 
-func (c *trackingClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object) error {
-	return c.Config.TrackAndGet(ctx, key, obj)
+func (c *trackingClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	return c.Config.TrackAndGet(ctx, key, obj, opts...)
 }
