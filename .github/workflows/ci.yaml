@@ -157,10 +157,11 @@ jobs:
         - 1.18.20
         - 1.19.16
         - 1.20.15
-        - 1.21.12
-        - 1.22.9
-        - 1.23.6
-        - 1.24.3
+        - 1.21.14
+        - 1.22.13
+        - 1.23.10
+        - 1.24.4
+        - 1.25.0
     env:
       REGISTRY_NAME: registry.local
       BUNDLE: registry.local/bundle
@@ -172,7 +173,7 @@ jobs:
     - name: Install kind
       run: |
         cd $(mktemp -d -t kind.XXXX)
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.14.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.15.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin
         cd -
@@ -448,7 +449,7 @@ jobs:
         asset_content_type: application/x-tar
     - name: Install crane
       run: |
-        cd $(mktemp -d -t kind.XXXX)
+        cd $(mktemp -d -t crane.XXXX)
         curl -L https://github.com/google/go-containerregistry/releases/download/v0.9.0/go-containerregistry_Linux_x86_64.tar.gz | tar -xz
         chmod +x ./crane
         sudo mv ./crane /usr/local/bin
