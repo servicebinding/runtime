@@ -6,7 +6,7 @@ require (
 	dies.dev v0.6.2
 	github.com/go-logr/logr v1.2.3
 	github.com/google/go-cmp v0.5.9
-	github.com/vmware-labs/reconciler-runtime v0.9.0
+	github.com/vmware-labs/reconciler-runtime v0.9.1
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	k8s.io/api v0.25.1
 	k8s.io/apimachinery v0.25.1
