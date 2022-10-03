@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/imgpkg
 
 go 1.19
 
-require github.com/vmware-tanzu/carvel-imgpkg v0.32.0
+require github.com/vmware-tanzu/carvel-imgpkg v0.33.0
 
 require (
 	cloud.google.com/go/compute v1.9.0 // indirect
@@ -59,8 +59,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vbatts/tar-split v0.11.2 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e // indirect
+	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c // indirect
 	golang.org/x/oauth2 v0.0.0-20220718184931-c8730f7fcb92 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
 	golang.org/x/sys v0.0.0-20220811171246-fbc7d0a398ab // indirect
