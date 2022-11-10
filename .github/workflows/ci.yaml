@@ -321,10 +321,10 @@ jobs:
     - name: Checkout conformance tests
       uses: actions/checkout@v3
       with:
+        repository: servicebinding/conformance.git
+        ref: v0.1.0
         fetch-depth: 1
         path: conformance-tests
-        ref: ec9536e2d9b3c50c32a97503a3c76ae5ef7aae07
-        repository: servicebinding/conformance.git
 
     - name: Conformance tests
       run: |
