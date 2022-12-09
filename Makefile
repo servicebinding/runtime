@@ -16,7 +16,7 @@ KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomi
 KAPP_APP ?= servicebinding-runtime
 KAPP_APP_NAMESPACE ?= default
 
-KO_PLATFORMS ?= all
+KO_PLATFORMS ?= linux/arm64,linux/amd64
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
