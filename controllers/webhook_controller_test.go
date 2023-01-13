@@ -44,6 +44,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -221,8 +222,13 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 	response := dieadmissionv1.AdmissionResponseBlank.
 		Allowed(true)
 
+	addWorkloadRefIndex := func(cb *fake.ClientBuilder) *fake.ClientBuilder {
+		return cb.WithIndex(&servicebindingv1beta1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
+	}
+
 	wts := rtesting.AdmissionWebhookTests{
 		"no binding targeting workload": {
+			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -255,6 +261,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			},
 		},
 		"binding already projected": {
+			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
 				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -306,6 +313,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			},
 		},
 		"binding projected by name": {
+			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
 				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -373,6 +381,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			},
 		},
 		"binding projected by selector": {
+			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
 				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -440,6 +449,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			},
 		},
 		"ingore terminating bindings": {
+			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -464,6 +474,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			},
 		},
 		"error loading bindings": {
+			WithClientBuilder: addWorkloadRefIndex,
 			WithReactors: []rtesting.ReactionFunc{
 				rtesting.InduceFailure("list", "ServiceBindingList"),
 			},

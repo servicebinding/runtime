@@ -89,11 +89,7 @@ func AdmissionProjectorReconciler(c reconcilers.Config, name string, accessCheck
 		},
 
 		Setup: func(ctx context.Context, mgr controllerruntime.Manager, bldr *builder.Builder) error {
-			if err := mgr.GetFieldIndexer().IndexField(ctx, &servicebindingv1beta1.ServiceBinding{}, workloadRefIndexKey, func(obj client.Object) []string {
-				serviceBinding := obj.(*servicebindingv1beta1.ServiceBinding)
-				gvk := schema.FromAPIVersionAndKind(serviceBinding.Spec.Workload.APIVersion, serviceBinding.Spec.Workload.Kind)
-				return []string{workloadRefIndexValue(gvk.Group, gvk.Kind)}
-			}); err != nil {
+			if err := mgr.GetFieldIndexer().IndexField(ctx, &servicebindingv1beta1.ServiceBinding{}, WorkloadRefIndexKey, WorkloadRefIndexFunc); err != nil {
 				return err
 			}
 			return nil
@@ -113,7 +109,7 @@ func AdmissionProjectorWebhook(c reconcilers.Config) *reconcilers.AdmissionWebho
 				// find matching service bindings
 				serviceBindings := &servicebindingv1beta1.ServiceBindingList{}
 				gvk := schema.FromAPIVersionAndKind(workload.GetAPIVersion(), workload.GetKind())
-				if err := c.List(ctx, serviceBindings, client.InNamespace(workload.GetNamespace()), client.MatchingFields{workloadRefIndexKey: workloadRefIndexValue(gvk.Group, gvk.Kind)}); err != nil {
+				if err := c.List(ctx, serviceBindings, client.InNamespace(workload.GetNamespace()), client.MatchingFields{WorkloadRefIndexKey: workloadRefIndexValue(gvk.Group, gvk.Kind)}); err != nil {
 					return err
 				}
 
@@ -422,7 +418,15 @@ func RetrieveWebhookRules(ctx context.Context) []admissionregistrationv1.RuleWit
 	return nil
 }
 
-const workloadRefIndexKey = ".metadata.workloadRef"
+const WorkloadRefIndexKey = ".metadata.workloadRef"
+
+func WorkloadRefIndexFunc(obj client.Object) []string {
+	serviceBinding := obj.(*servicebindingv1beta1.ServiceBinding)
+	gvk := schema.FromAPIVersionAndKind(serviceBinding.Spec.Workload.APIVersion, serviceBinding.Spec.Workload.Kind)
+	return []string{
+		workloadRefIndexValue(gvk.Group, gvk.Kind),
+	}
+}
 
 func workloadRefIndexValue(group, kind string) string {
 	return schema.GroupKind{Group: group, Kind: kind}.String()

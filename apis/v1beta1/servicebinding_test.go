@@ -165,7 +165,7 @@ func TestServiceBindingValidate(t *testing.T) {
 						Operator: "NotAnOperator",
 						Values:   []string{"bar"},
 					}},
-				}, `"NotAnOperator" is not a valid pod selector operator`),
+				}, `"NotAnOperator" is not a valid label selector operator`),
 			},
 		},
 		{
