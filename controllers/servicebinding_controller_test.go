@@ -53,6 +53,8 @@ func TestServiceBindingReconciler(t *testing.T) {
 	secretName := "my-secret"
 	key := types.NamespacedName{Namespace: namespace, Name: name}
 
+	podSpecableMapping := `{"versions":[{"version":"*","annotations":".spec.template.metadata.annotations","containers":[{"path":".spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.template.spec.volumes"}]}`
+
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
@@ -102,6 +104,9 @@ func TestServiceBindingReconciler(t *testing.T) {
 			})
 		})
 	projectedWorkload := workload.
+		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+			d.AddAnnotation(fmt.Sprintf("projector.servicebinding.io/mapping-%s", uid), podSpecableMapping)
+		}).
 		SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 			d.TemplateDie(func(d *diecorev1.PodTemplateSpecDie) {
 				d.MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -143,6 +148,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 				})
 			})
 		}).DieReleaseUnstructured()
+	unstructured.SetNestedMap(unprojectedWorkload.UnstructuredContent(), map[string]interface{}{}, "metadata", "annotations")
 	unstructured.SetNestedMap(unprojectedWorkload.UnstructuredContent(), map[string]interface{}{}, "spec", "template", "metadata", "annotations")
 	containers, _, _ := unstructured.NestedSlice(unprojectedWorkload.UnstructuredContent(), "spec", "template", "spec", "containers")
 	unstructured.SetNestedSlice(containers[0].(map[string]interface{}), []interface{}{}, "volumeMounts")
@@ -731,6 +737,8 @@ func TestProjectBinding(t *testing.T) {
 	uid := types.UID("dde10100-d7b3-4cba-9430-51d60a8612a6")
 	secretName := "my-secret"
 
+	podSpecableMapping := `{"versions":[{"version":"*","annotations":".spec.template.metadata.annotations","containers":[{"path":".spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.template.spec.volumes"}]}`
+
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
@@ -781,6 +789,9 @@ func TestProjectBinding(t *testing.T) {
 			})
 		})
 	projectedWorkload := workload.
+		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+			d.AddAnnotation(fmt.Sprintf("projector.servicebinding.io/mapping-%s", uid), podSpecableMapping)
+		}).
 		SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 			d.TemplateDie(func(d *diecorev1.PodTemplateSpecDie) {
 				d.MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -822,6 +833,7 @@ func TestProjectBinding(t *testing.T) {
 				})
 			})
 		}).DieReleaseUnstructured()
+	unstructured.SetNestedMap(unprojectedWorkload.UnstructuredContent(), map[string]interface{}{}, "metadata", "annotations")
 	unstructured.SetNestedMap(unprojectedWorkload.UnstructuredContent(), map[string]interface{}{}, "spec", "template", "metadata", "annotations")
 	containers, _, _ := unstructured.NestedSlice(unprojectedWorkload.UnstructuredContent(), "spec", "template", "spec", "containers")
 	unstructured.SetNestedSlice(containers[0].(map[string]interface{}), []interface{}{}, "volumeMounts")

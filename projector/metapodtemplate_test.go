@@ -33,8 +33,11 @@ import (
 )
 
 func TestNewMetaPodTemplate(t *testing.T) {
-	testAnnotations := map[string]string{
-		"key": "value",
+	testPodTemplateAnnotations := map[string]string{
+		"hello": "podtemplate",
+	}
+	testWorkloadAnnotations := map[string]string{
+		"hello": "workload",
 	}
 	testEnv := corev1.EnvVar{
 		Name:  "NAME",
@@ -64,10 +67,13 @@ func TestNewMetaPodTemplate(t *testing.T) {
 			name:    "podspecable",
 			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: testWorkloadAnnotations,
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: testAnnotations,
+							Annotations: testPodTemplateAnnotations,
 						},
 						Spec: corev1.PodSpec{
 							InitContainers: []corev1.Container{
@@ -94,7 +100,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: testAnnotations,
+				WorkloadAnnotations:    testWorkloadAnnotations,
+				PodTemplateAnnotations: testPodTemplateAnnotations,
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String("init-hello"),
@@ -137,12 +144,15 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 			},
 			workload: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: testWorkloadAnnotations,
+				},
 				Spec: batchv1.CronJobSpec{
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
-									Annotations: testAnnotations,
+									Annotations: testPodTemplateAnnotations,
 								},
 								Spec: corev1.PodSpec{
 									InitContainers: []corev1.Container{
@@ -171,7 +181,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: testAnnotations,
+				WorkloadAnnotations:    testWorkloadAnnotations,
+				PodTemplateAnnotations: testPodTemplateAnnotations,
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String("init-hello"),
@@ -202,9 +213,10 @@ func TestNewMetaPodTemplate(t *testing.T) {
 			mapping:  &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
 			workload: &appsv1.Deployment{},
 			expected: &metaPodTemplate{
-				Annotations: map[string]string{},
-				Containers:  []metaContainer{},
-				Volumes:     []corev1.Volume{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
+				Containers:             []metaContainer{},
+				Volumes:                []corev1.Volume{},
 			},
 		},
 		{
@@ -222,7 +234,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: map[string]string{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String(""),
@@ -259,7 +272,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: map[string]string{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
 				Containers: []metaContainer{
 					{
 						Name:         nil,
@@ -280,10 +294,13 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: testWorkloadAnnotations,
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: testAnnotations,
+							Annotations: testPodTemplateAnnotations,
 						},
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
@@ -305,8 +322,9 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: testAnnotations,
-				Containers:  []metaContainer{},
+				WorkloadAnnotations:    testWorkloadAnnotations,
+				PodTemplateAnnotations: testPodTemplateAnnotations,
+				Containers:             []metaContainer{},
 				Volumes: []corev1.Volume{
 					testVolume,
 				},
@@ -330,7 +348,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: testAnnotations,
+							Annotations: testPodTemplateAnnotations,
 						},
 						Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
@@ -348,7 +366,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 				},
 			},
 			expected: &metaPodTemplate{
-				Annotations: map[string]string{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String(""),
@@ -403,8 +422,11 @@ func TestNewMetaPodTemplate(t *testing.T) {
 }
 
 func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
-	testAnnotations := map[string]string{
-		"key": "value",
+	testPodTemplateAnnotations := map[string]string{
+		"hello": "podtemplate",
+	}
+	testWorkloadAnnotations := map[string]string{
+		"hello": "workload",
 	}
 	testEnv := corev1.EnvVar{
 		Name:  "NAME",
@@ -435,7 +457,8 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 			name:    "podspecable",
 			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
-				Annotations: testAnnotations,
+				WorkloadAnnotations:    testWorkloadAnnotations,
+				PodTemplateAnnotations: testPodTemplateAnnotations,
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String("init-hello"),
@@ -477,10 +500,13 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: testWorkloadAnnotations,
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Annotations: testAnnotations,
+							Annotations: testPodTemplateAnnotations,
 						},
 						Spec: corev1.PodSpec{
 							InitContainers: []corev1.Container{
@@ -530,7 +556,8 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 			},
 			metadata: metaPodTemplate{
-				Annotations: testAnnotations,
+				WorkloadAnnotations:    testWorkloadAnnotations,
+				PodTemplateAnnotations: testPodTemplateAnnotations,
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String("init-hello"),
@@ -576,13 +603,15 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				},
 			},
 			expected: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: testWorkloadAnnotations,
+				},
 				Spec: batchv1.CronJobSpec{
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
-
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
-									Annotations: testAnnotations,
+									Annotations: testPodTemplateAnnotations,
 								},
 								Spec: corev1.PodSpec{
 									InitContainers: []corev1.Container{
@@ -621,12 +650,16 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 			name:    "no containers",
 			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
-				Annotations: map[string]string{},
-				Containers:  []metaContainer{},
-				Volumes:     []corev1.Volume{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
+				Containers:             []metaContainer{},
+				Volumes:                []corev1.Volume{},
 			},
 			workload: &appsv1.Deployment{},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -643,7 +676,8 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 			name:    "empty container",
 			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
-				Annotations: map[string]string{},
+				WorkloadAnnotations:    map[string]string{},
+				PodTemplateAnnotations: map[string]string{},
 				Containers: []metaContainer{
 					{
 						Name:         pointer.String(""),
@@ -665,6 +699,9 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{

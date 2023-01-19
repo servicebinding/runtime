@@ -19,7 +19,9 @@ package projector
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 )
@@ -32,8 +34,11 @@ type ServiceBindingProjector interface {
 }
 
 type MappingSource interface {
-	// LookupMapping the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the workload's
-	// fully qualified resource `{resource}.{group}`. The workload's version is either directly matched, or the wildcard version `*`
-	// mapping template is returned. If no explicit mapping is found, a mapping appropriate for a PodSpecable resource may be used.
-	LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error)
+	// LookupRESTMapping returns the RESTMapping for the workload type. The rest mapping contains a GroupVersionResource which can
+	// be used to fetch the workload mapping.
+	LookupRESTMapping(ctx context.Context, obj runtime.Object) (*meta.RESTMapping, error)
+
+	// LookupWorkloadMapping the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the
+	//  workload's fully qualified resource `{resource}.{group}`.
+	LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error)
 }

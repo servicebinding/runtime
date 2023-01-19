@@ -188,6 +188,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 	requestUID := types.UID("9deefaa1-2c90-4f40-9c7b-3f5c1fd75dde")
 	bindingUID := types.UID("89deaf20-7bab-4610-81db-6f8c3f7fa51d")
 
+	podSpecableMapping := `{"versions":[{"version":"*","annotations":".spec.template.metadata.annotations","containers":[{"path":".spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.template.spec.volumes"}]}`
+
 	workload := dieappsv1.DeploymentBlank.
 		APIVersion("apps/v1").
 		Kind("Deployment").
@@ -275,6 +277,9 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 				AdmissionRequest: request.
 					Object(
 						workload.
+							MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+								d.AddAnnotation(fmt.Sprintf("projector.servicebinding.io/mapping-%s", bindingUID), podSpecableMapping)
+							}).
 							SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 								d.TemplateDie(func(d *diecorev1.PodTemplateSpecDie) {
 									d.MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -331,6 +336,13 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			ExpectedResponse: admission.Response{
 				AdmissionResponse: response.DieRelease(),
 				Patches: []jsonpatch.Operation{
+					{
+						Operation: "add",
+						Path:      "/metadata/annotations",
+						Value: map[string]interface{}{
+							fmt.Sprintf("projector.servicebinding.io/mapping-%s", bindingUID): podSpecableMapping,
+						},
+					},
 					{
 						Operation: "add",
 						Path:      "/spec/template/metadata/annotations",
@@ -399,6 +411,13 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 			ExpectedResponse: admission.Response{
 				AdmissionResponse: response.DieRelease(),
 				Patches: []jsonpatch.Operation{
+					{
+						Operation: "add",
+						Path:      "/metadata/annotations",
+						Value: map[string]interface{}{
+							fmt.Sprintf("projector.servicebinding.io/mapping-%s", bindingUID): podSpecableMapping,
+						},
+					},
 					{
 						Operation: "add",
 						Path:      "/spec/template/metadata/annotations",

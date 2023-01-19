@@ -22,9 +22,11 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -43,8 +45,8 @@ type clusterResolver struct {
 	client client.Client
 }
 
-func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate, error) {
-	gvk, err := apiutil.GVKForObject(workload, m.client.Scheme())
+func (m *clusterResolver) LookupRESTMapping(ctx context.Context, obj runtime.Object) (*meta.RESTMapping, error) {
+	gvk, err := apiutil.GVKForObject(obj, m.client.Scheme())
 	if err != nil {
 		return nil, err
 	}
@@ -52,34 +54,30 @@ func (m *clusterResolver) LookupMapping(ctx context.Context, workload runtime.Ob
 	if err != nil {
 		return nil, err
 	}
+	return rm, nil
+}
+
+func (m *clusterResolver) LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error) {
 	wrm := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
-	err = m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", rm.Resource.Resource, rm.Resource.Group)}, wrm)
-	if err != nil {
+
+	if err := m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)}, wrm); err != nil {
 		if !apierrs.IsNotFound(err) {
 			return nil, err
 		}
-	}
-
-	// find version mapping
-	wildcardMapping := servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{Version: "*"}
-	var mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
-	for _, v := range wrm.Spec.Versions {
-		switch v.Version {
-		case gvk.Version:
-			mapping = &v
-		case "*":
-			wildcardMapping = v
+		wrm.Spec = servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+			Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+				{
+					Version: "*",
+				},
+			},
 		}
 	}
-	if mapping == nil {
-		// use wildcard version by default
-		mapping = &wildcardMapping
+
+	for i := range wrm.Spec.Versions {
+		wrm.Spec.Versions[i].Default()
 	}
 
-	mapping = mapping.DeepCopy()
-	mapping.Default()
-
-	return mapping, nil
+	return &wrm.Spec, nil
 }
 
 func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef corev1.ObjectReference) (string, error) {
