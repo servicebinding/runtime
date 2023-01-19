@@ -39,191 +39,41 @@ import (
 	"github.com/servicebinding/runtime/resolver"
 )
 
-func TestClusterResolver_LookupMapping(t *testing.T) {
+func TestClusterResolver_LookupRESTMapping(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(appsv1.AddToScheme(scheme))
 	utilruntime.Must(batchv1.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
 
+	deploymentRESTMapping := &meta.RESTMapping{
+		GroupVersionKind: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Resource:         schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"},
+		Scope:            meta.RESTScopeNamespace,
+	}
+	cronJobRESTMapping := &meta.RESTMapping{
+		GroupVersionKind: schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "CronJob"},
+		Resource:         schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
+		Scope:            meta.RESTScopeNamespace,
+	}
+
 	tests := []struct {
 		name         string
 		givenObjects []client.Object
 		workload     client.Object
-		expected     *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+		expected     *meta.RESTMapping
 		expectedErr  bool
 	}{
 		{
-			name:         "default mapping",
+			name:         "deloyment mapping",
 			givenObjects: []client.Object{},
 			workload:     &appsv1.Deployment{},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Version:     "*",
-				Annotations: ".spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-					{
-						Path:         ".spec.template.spec.initContainers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-					{
-						Path:         ".spec.template.spec.containers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-				},
-				Volumes: ".spec.template.spec.volumes",
-			},
+			expected:     deploymentRESTMapping,
 		},
 		{
-			name: "custom mapping",
-			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "cronjobs.batch",
-					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-							{
-								Version:     "v1",
-								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-										Name: ".name",
-									},
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-										Name: ".name",
-									},
-								},
-								Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-							},
-						},
-					},
-				},
-			},
-			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Version:     "v1",
-				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-					{
-						Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-					{
-						Path:         ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-				},
-				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-			},
-		},
-		{
-			name: "custom mapping with wildcard",
-			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "cronjobs.batch",
-					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-							{
-								Version:     "*",
-								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-										Name: ".name",
-									},
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-										Name: ".name",
-									},
-								},
-								Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-							},
-						},
-					},
-				},
-			},
-			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Version:     "*",
-				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-					{
-						Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-					{
-						Path:         ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-				},
-				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-			},
-		},
-		{
-			name: "default mapping is used when resource version is not defined, and no wildcard is defined",
-			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "cronjobs.batch",
-					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-							{
-								Version:     "v1beta1", // the workload is version v1
-								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-										Name: ".name",
-									},
-									{
-										Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-										Name: ".name",
-									},
-								},
-								Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-							},
-						},
-					},
-				},
-			},
-			workload: &batchv1.CronJob{},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Version: "*",
-				// default PodSpecable mapping, it won't actually work for a CronJob,
-				// but absent an explicit mapping, this is what's required.
-				Annotations: ".spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
-					{
-						Path:         ".spec.template.spec.initContainers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-					{
-						Path:         ".spec.template.spec.containers[*]",
-						Name:         ".name",
-						Env:          ".env",
-						VolumeMounts: ".volumeMounts",
-					},
-				},
-				Volumes: ".spec.template.spec.volumes",
-			},
+			name:         "cronjob mapping",
+			givenObjects: []client.Object{},
+			workload:     &batchv1.CronJob{},
+			expected:     cronJobRESTMapping,
 		},
 		{
 			name: "error if workload type not found in scheme",
@@ -277,20 +127,193 @@ func TestClusterResolver_LookupMapping(t *testing.T) {
 
 			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
 			restMapper := client.RESTMapper().(*meta.DefaultRESTMapper)
-			restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
-			restMapper.Add(schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "CronJob"}, meta.RESTScopeNamespace)
+			restMapper.Add(deploymentRESTMapping.GroupVersionKind, deploymentRESTMapping.Scope)
+			restMapper.Add(cronJobRESTMapping.GroupVersionKind, cronJobRESTMapping.Scope)
 			resolver := resolver.New(client)
 
-			actual, err := resolver.LookupMapping(ctx, c.workload)
+			actual, err := resolver.LookupRESTMapping(ctx, c.workload)
 
 			if (err != nil) != c.expectedErr {
-				t.Errorf("LookupMapping() expected err: %v", err)
+				t.Errorf("LookupRESTMapping() expected err: %v", err)
+			}
+			if c.expectedErr {
+				return
+			}
+			scopeComp := cmp.Comparer(func(a, b meta.RESTScope) bool { return a.Name() == b.Name() })
+			if diff := cmp.Diff(c.expected, actual, scopeComp); diff != "" {
+				t.Errorf("LookupRESTMapping() gvr (-expected, +actual): %s", diff)
+			}
+		})
+	}
+}
+
+func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(appsv1.AddToScheme(scheme))
+	utilruntime.Must(batchv1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+
+	tests := []struct {
+		name                string
+		givenObjects        []client.Object
+		gvr                 schema.GroupVersionResource
+		expected            *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+		expectedRESTMapping *meta.RESTMapping
+		expectedErr         bool
+	}{
+		{
+			name:         "default mapping",
+			givenObjects: []client.Object{},
+			gvr:          schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"},
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					{
+						Version:     "*",
+						Annotations: ".spec.template.metadata.annotations",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path:         ".spec.template.spec.initContainers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+							{
+								Path:         ".spec.template.spec.containers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+						},
+						Volumes: ".spec.template.spec.volumes",
+					},
+				},
+			},
+		},
+		{
+			name: "custom mapping",
+			givenObjects: []client.Object{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cronjobs.batch",
+					},
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+							{
+								Version:     "v1",
+								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+									{
+										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+										Name: ".name",
+									},
+									{
+										Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
+										Name: ".name",
+									},
+								},
+								Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
+							},
+						},
+					},
+				},
+			},
+			gvr: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					{
+						Version:     "v1",
+						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+							{
+								Path:         ".spec.jobTemplate.spec.template.spec.containers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+						},
+						Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
+					},
+				},
+			},
+		},
+		{
+			name: "custom mapping with wildcard",
+			givenObjects: []client.Object{
+				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "cronjobs.batch",
+					},
+					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+							{
+								Version:     "*",
+								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+									{
+										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+										Name: ".name",
+									},
+									{
+										Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
+										Name: ".name",
+									},
+								},
+								Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
+							},
+						},
+					},
+				},
+			},
+			gvr: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
+			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					{
+						Version:     "*",
+						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+							{
+								Path:         ".spec.jobTemplate.spec.template.spec.containers[*]",
+								Name:         ".name",
+								Env:          ".env",
+								VolumeMounts: ".volumeMounts",
+							},
+						},
+						Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range tests {
+		t.Run(c.name, func(t *testing.T) {
+			ctx := context.TODO()
+
+			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			resolver := resolver.New(client)
+
+			actual, err := resolver.LookupWorkloadMapping(ctx, c.gvr)
+
+			if (err != nil) != c.expectedErr {
+				t.Errorf("LookupWorkloadMapping() expected err: %v", err)
 			}
 			if c.expectedErr {
 				return
 			}
 			if diff := cmp.Diff(c.expected, actual); diff != "" {
-				t.Errorf("LookupMapping() (-expected, +actual): %s", diff)
+				t.Errorf("LookupWorkloadMapping() (-expected, +actual): %s", diff)
 			}
 		})
 	}

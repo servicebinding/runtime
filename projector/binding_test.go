@@ -25,8 +25,10 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
@@ -36,6 +38,20 @@ func TestBinding(t *testing.T) {
 	uid := types.UID("26894874-4719-4802-8f43-8ceed127b4c2")
 	bindingName := "my-binding"
 	secretName := "my-secret"
+
+	podSpecableMapping := `{"versions":[{"version":"*","annotations":".spec.template.metadata.annotations","containers":[{"path":".spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.template.spec.volumes"}]}`
+	cronJobMapping := `{"versions":[{"version":"*","annotations":".spec.jobTemplate.spec.template.metadata.annotations","containers":[{"path":".spec.jobTemplate.spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.jobTemplate.spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.jobTemplate.spec.template.spec.volumes"}]}`
+
+	deploymentRESTMapping := &meta.RESTMapping{
+		GroupVersionKind: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
+		Resource:         schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"},
+		Scope:            meta.RESTScopeNamespace,
+	}
+	cronJobRESTMapping := &meta.RESTMapping{
+		GroupVersionKind: schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "CronJob"},
+		Resource:         schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
+		Scope:            meta.RESTScopeNamespace,
+	}
 
 	tests := []struct {
 		name        string
@@ -47,7 +63,7 @@ func TestBinding(t *testing.T) {
 	}{
 		{
 			name:    "podspecable",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -92,6 +108,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -193,20 +214,25 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "almost podspecable",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 					{
-						Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
-						Name: ".name",
-					},
-					{
-						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
-						Name: ".name",
+						Version:     "*",
+						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+								Name: ".name",
+							},
+							{
+								Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
+								Name: ".name",
+							},
+						},
+						Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
 					},
 				},
-				Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
-			}),
+			}, cronJobRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -255,6 +281,618 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": cronJobMapping,
+					},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Volumes: []corev1.Volume{
+										{
+											Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											VolumeSource: corev1.VolumeSource{
+												Projected: &corev1.ProjectedVolumeSource{
+													Sources: []corev1.VolumeProjection{
+														{
+															Secret: &corev1.SecretProjection{
+																LocalObjectReference: corev1.LocalObjectReference{
+																	Name: "my-secret",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/custom/path/my-binding",
+												},
+											},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "almost podspecable, unbind with stashed mapping",
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
+			binding: &servicebindingv1beta1.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Spec: servicebindingv1beta1.ServiceBindingSpec{
+					Name: bindingName,
+				},
+				Status: servicebindingv1beta1.ServiceBindingStatus{
+					Binding: nil,
+				},
+			},
+			workload: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": cronJobMapping,
+					},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Volumes: []corev1.Volume{
+										{
+											Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											VolumeSource: corev1.VolumeSource{
+												Projected: &corev1.ProjectedVolumeSource{
+													Sources: []corev1.VolumeProjection{
+														{
+															Secret: &corev1.SecretProjection{
+																LocalObjectReference: corev1.LocalObjectReference{
+																	Name: "my-secret",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/custom/path/my-binding",
+												},
+											},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								Spec: corev1.PodSpec{
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "almost podspecable, unbind with cluster mapping",
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					{
+						Version:     "*",
+						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
+								Name: ".name",
+							},
+							{
+								Path: ".spec.jobTemplate.spec.template.spec.containers[*]",
+								Name: ".name",
+							},
+						},
+						Volumes: ".spec.jobTemplate.spec.template.spec.volumes",
+					},
+				},
+			}, cronJobRESTMapping),
+			binding: &servicebindingv1beta1.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Spec: servicebindingv1beta1.ServiceBindingSpec{
+					Name: bindingName,
+				},
+				Status: servicebindingv1beta1.ServiceBindingStatus{
+					Binding: nil,
+				},
+			},
+			workload: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Volumes: []corev1.Volume{
+										{
+											Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											VolumeSource: corev1.VolumeSource{
+												Projected: &corev1.ProjectedVolumeSource{
+													Sources: []corev1.VolumeProjection{
+														{
+															Secret: &corev1.SecretProjection{
+																LocalObjectReference: corev1.LocalObjectReference{
+																	Name: "my-secret",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/custom/path/my-binding",
+												},
+											},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{},
+								},
+								Spec: corev1.PodSpec{
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{},
+										},
+									},
+									Volumes: []corev1.Volume{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "almost podspecable, unable to unbind without mapping",
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
+			binding: &servicebindingv1beta1.ServiceBinding{
+				ObjectMeta: metav1.ObjectMeta{
+					UID: uid,
+				},
+				Spec: servicebindingv1beta1.ServiceBindingSpec{
+					Name: bindingName,
+				},
+				Status: servicebindingv1beta1.ServiceBindingStatus{
+					Binding: nil,
+				},
+			},
+			workload: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
+				Spec: batchv1.CronJobSpec{
+					JobTemplate: batchv1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{
+										"projector.servicebinding.io/secret-26894874-4719-4802-8f43-8ceed127b4c2": "my-secret",
+									},
+								},
+								Spec: corev1.PodSpec{
+									Volumes: []corev1.Volume{
+										{
+											Name: "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+											VolumeSource: corev1.VolumeSource{
+												Projected: &corev1.ProjectedVolumeSource{
+													Sources: []corev1.VolumeProjection{
+														{
+															Secret: &corev1.SecretProjection{
+																LocalObjectReference: corev1.LocalObjectReference{
+																	Name: "my-secret",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									InitContainers: []corev1.Container{
+										{
+											Name: "init-hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+										{
+											Name: "init-hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+									Containers: []corev1.Container{
+										{
+											Name: "hello",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/custom/path",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/custom/path/my-binding",
+												},
+											},
+										},
+										{
+											Name: "hello-2",
+											Env: []corev1.EnvVar{
+												{
+													Name:  "SERVICE_BINDING_ROOT",
+													Value: "/bindings",
+												},
+											},
+											VolumeMounts: []corev1.VolumeMount{
+												{
+													Name:      "servicebinding-26894874-4719-4802-8f43-8ceed127b4c2",
+													ReadOnly:  true,
+													MountPath: "/bindings/my-binding",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
 				Spec: batchv1.CronJobSpec{
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
@@ -360,7 +998,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "no containers",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -376,6 +1014,11 @@ func TestBinding(t *testing.T) {
 			},
 			workload: &appsv1.Deployment{},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -409,7 +1052,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "rotate binding secret",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -472,6 +1115,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -522,7 +1170,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "project service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -558,6 +1206,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -630,7 +1283,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "remove service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -715,6 +1368,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -765,7 +1423,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "update service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -860,6 +1518,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -932,7 +1595,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "project service binding type and provider for env and volume",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -970,6 +1633,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1062,7 +1730,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "update service binding type and provider",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -1177,6 +1845,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1249,7 +1922,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "no binding if missing secret",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -1270,6 +1943,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1290,7 +1966,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "only bind to allowed containers",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -1327,6 +2003,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1388,7 +2069,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "preserve other bindings",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -1569,6 +2250,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1765,7 +2451,7 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "apply binding should be idempotent",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
 			binding: &servicebindingv1beta1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
@@ -1871,6 +2557,11 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			expected: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
+					},
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1967,20 +2658,32 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "invalid container jsonpath",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
 					{
-						Path: "[",
+						Version: "*",
+						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+							{
+								Path: "[",
+							},
+						},
 					},
 				},
-			}),
+			}, deploymentRESTMapping),
 			binding:     &servicebindingv1beta1.ServiceBinding{},
 			workload:    &appsv1.Deployment{},
 			expectedErr: true,
 		},
 		{
-			name:        "conversion error",
-			mapping:     NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{}),
+			name: "conversion error",
+			mapping: NewStaticMapping(
+				&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{},
+				&meta.RESTMapping{
+					GroupVersionKind: schema.GroupVersionKind{Group: "test", Version: "v1", Kind: "BadMarshalJSON"},
+					Resource:         schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "badmarshaljsons"},
+					Scope:            meta.RESTScopeNamespace,
+				},
+			),
 			workload:    &BadMarshalJSON{},
 			expectedErr: true,
 		},

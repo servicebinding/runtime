@@ -35,9 +35,10 @@ type metaPodTemplate struct {
 	workload runtime.Object
 	mapping  *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
 
-	Annotations map[string]string
-	Containers  []metaContainer
-	Volumes     []corev1.Volume
+	WorkloadAnnotations    map[string]string
+	PodTemplateAnnotations map[string]string
+	Containers             []metaContainer
+	Volumes                []corev1.Volume
 }
 
 // metaContainer contains the aspects of a Container that are appropriate for service binding.
@@ -55,9 +56,10 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *s
 		workload: workload,
 		mapping:  mapping,
 
-		Annotations: map[string]string{},
-		Containers:  []metaContainer{},
-		Volumes:     []corev1.Volume{},
+		WorkloadAnnotations:    map[string]string{},
+		PodTemplateAnnotations: map[string]string{},
+		Containers:             []metaContainer{},
+		Volumes:                []corev1.Volume{},
 	}
 
 	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(workload)
@@ -66,7 +68,10 @@ func NewMetaPodTemplate(ctx context.Context, workload runtime.Object, mapping *s
 	}
 	uv := reflect.ValueOf(u)
 
-	if err := mpt.getAt(mpt.mapping.Annotations, uv, &mpt.Annotations); err != nil {
+	if err := mpt.getAt(".metadata.annotations", uv, &mpt.WorkloadAnnotations); err != nil {
+		return nil, err
+	}
+	if err := mpt.getAt(mpt.mapping.Annotations, uv, &mpt.PodTemplateAnnotations); err != nil {
 		return nil, err
 	}
 	for i := range mpt.mapping.Containers {
@@ -120,7 +125,10 @@ func (mpt *metaPodTemplate) WriteToWorkload(ctx context.Context) error {
 	}
 	uv := reflect.ValueOf(u)
 
-	if err := mpt.setAt(mpt.mapping.Annotations, &mpt.Annotations, uv); err != nil {
+	if err := mpt.setAt(".metadata.annotations", &mpt.WorkloadAnnotations, uv); err != nil {
+		return err
+	}
+	if err := mpt.setAt(mpt.mapping.Annotations, &mpt.PodTemplateAnnotations, uv); err != nil {
 		return err
 	}
 	ci := 0
