@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kbld
 
 go 1.19
 
-require github.com/vmware-tanzu/carvel-kbld v0.36.2
+require github.com/vmware-tanzu/carvel-kbld v0.36.3
 
 require (
 	github.com/cppforlife/cobrautil v0.0.0-20200514214827-bb86e6965d72 // indirect
