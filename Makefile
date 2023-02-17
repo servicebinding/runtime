@@ -16,7 +16,12 @@ KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomi
 KAPP_APP ?= servicebinding-runtime
 KAPP_APP_NAMESPACE ?= default
 
+ifeq (${KO_DOCKER_REPO},kind.local)
+# kind isn't multi-arch aware, default to the current arch
+KO_PLATFORMS ?= linux/$(shell go env GOARCH)
+else
 KO_PLATFORMS ?= linux/arm64,linux/amd64
+endif
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
