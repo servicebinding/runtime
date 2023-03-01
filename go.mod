@@ -8,8 +8,8 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/vmware-labs/reconciler-runtime v0.11.1
 	gomodules.xyz/jsonpatch/v2 v2.2.0
-	k8s.io/api v0.26.1
-	k8s.io/apimachinery v0.26.1
+	k8s.io/api v0.26.2
+	k8s.io/apimachinery v0.26.2
 	k8s.io/client-go v0.26.1
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448
 	sigs.k8s.io/controller-runtime v0.14.4
@@ -50,11 +50,11 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/net v0.3.1-0.20221206200815-1e63c2f08a10 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/term v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v3 v3.0.1 // indirect
 	gomodules.xyz/orderedmap v0.1.0 // indirect
