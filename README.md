@@ -120,7 +120,7 @@ When a `ServiceBinding` is created, updated or deleted the controller processes 
 
 ### Webhooks
 
-In addition to that main flow, a `MutatingWebhookConfiguration` and `ValidationWebhookConfiguration` are updated:
+In addition to that main flow, a `MutatingWebhookConfiguration` and `ValidatingWebhookConfiguration` are updated:
 - all `ServiceBinding`s in the cluster are resolved
 - the rules for a `MutatingWebhookConfiguration` are updated based on the set of all workload group-kinds referenced
 - the rules for a `ValidatingWebhookConfiguration` are updated based on the set of all workload and service group-kinds referenced
@@ -131,7 +131,7 @@ The `MutatingWebhookConfiguration` is used to intercept create and update reques
 - for each `ServiceBinding` the resolved `Secret` name is projected into the workload
 - the delta between the original resource and the projected resource is returned with the webhook response as a patch
 
-The `ValidationWebhookConfiguration` is used as an alternative to watching the API Server directly for these types and keeping an informer cache. When a webhook request is received, the `ServiceBinding`s that reference that resource as a workload or service are resolved and enqueued for the controller to process.
+The `ValidatingWebhookConfiguration` is used as an alternative to watching the API Server directly for these types and keeping an informer cache. When a webhook request is received, the `ServiceBinding`s that reference that resource as a workload or service are resolved and enqueued for the controller to process.
 
 No blocking work is performed within the webhooks.
 
