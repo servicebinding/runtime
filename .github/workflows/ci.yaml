@@ -22,7 +22,7 @@ jobs:
     name: Unit Test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: 1.19.x
     - uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
       BUNDLE: registry.local/servicebinding/bundle
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: 1.19.x
     - name: Generate certs
@@ -183,7 +183,7 @@ jobs:
       BUNDLE: registry.local/bundle
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: 1.19.x
     - uses: actions/setup-python@v4
@@ -438,7 +438,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/setup-go@v4
       with:
         go-version: 1.19.x
     - name: Get the version
