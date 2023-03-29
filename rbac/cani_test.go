@@ -37,7 +37,7 @@ func TestAccessChecker(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[*appsv1.Deployment]{
 		"allow, added to cache": {
 			Resource: &appsv1.Deployment{},
 			WithReactors: []rtesting.ReactionFunc{
@@ -46,7 +46,7 @@ func TestAccessChecker(t *testing.T) {
 			ExpectCreates: []client.Object{
 				selfSubjectAccessReviewFor("apps", "deployments", "get"),
 			},
-			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment]) error {
 				ac := tc.Metadata["accessChecker"].(*accessChecker)
 				if len(ac.cache) != 1 {
 					t.Errorf("unexpected cache")
@@ -81,7 +81,7 @@ func TestAccessChecker(t *testing.T) {
 					},
 				},
 			},
-			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment]) error {
 				ac := tc.Metadata["accessChecker"].(*accessChecker)
 				if len(ac.cache) != 1 {
 					t.Errorf("unexpected cache")
@@ -103,7 +103,7 @@ func TestAccessChecker(t *testing.T) {
 			ExpectCreates: []client.Object{
 				selfSubjectAccessReviewFor("apps", "deployments", "get"),
 			},
-			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment]) error {
 				ac := tc.Metadata["accessChecker"].(*accessChecker)
 				if len(ac.cache) != 1 {
 					t.Errorf("unexpected cache")
@@ -139,7 +139,7 @@ func TestAccessChecker(t *testing.T) {
 					},
 				},
 			},
-			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment]) error {
 				ac := tc.Metadata["accessChecker"].(*accessChecker)
 				if len(ac.cache) != 1 {
 					t.Errorf("unexpected cache")
@@ -181,7 +181,7 @@ func TestAccessChecker(t *testing.T) {
 			ExpectCreates: []client.Object{
 				selfSubjectAccessReviewFor("apps", "deployments", "get"),
 			},
-			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase) error {
+			CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment]) error {
 				ac := tc.Metadata["accessChecker"].(*accessChecker)
 				if len(ac.cache) != 1 {
 					t.Errorf("unexpected cache")
@@ -200,15 +200,15 @@ func TestAccessChecker(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*appsv1.Deployment], c reconcilers.Config) reconcilers.SubReconciler[*appsv1.Deployment] {
 		ac := NewAccessChecker(c, time.Hour).WithVerb("get").(*accessChecker)
 		if cache, ok := tc.Metadata["cache"].(map[authorizationv1.ResourceAttributes]authorizationv1.SelfSubjectAccessReview); ok {
 			ac.cache = cache
 		}
 		tc.Metadata["accessChecker"] = ac
 
-		return &reconcilers.SyncReconciler{
-			Sync: func(ctx context.Context, _ client.Object) error {
+		return &reconcilers.SyncReconciler[*appsv1.Deployment]{
+			Sync: func(ctx context.Context, _ *appsv1.Deployment) error {
 				if !ac.CanI(ctx, "apps", "deployments") {
 					return fmt.Errorf("access denied")
 				}

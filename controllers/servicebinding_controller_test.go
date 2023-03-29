@@ -51,7 +51,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 	name := "my-binding"
 	uid := types.UID("dde10100-d7b3-4cba-9430-51d60a8612a6")
 	secretName := "my-secret"
-	key := types.NamespacedName{Namespace: namespace, Name: name}
+	request := reconcilers.Request{NamespacedName: types.NamespacedName{Namespace: namespace, Name: name}}
 
 	podSpecableMapping := `{"versions":[{"version":"*","annotations":".spec.template.metadata.annotations","containers":[{"path":".spec.template.spec.initContainers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"},{"path":".spec.template.spec.containers[*]","name":".name","env":".env","volumeMounts":".volumeMounts"}],"volumes":".spec.template.spec.volumes"}]}`
 
@@ -157,7 +157,10 @@ func TestServiceBindingReconciler(t *testing.T) {
 
 	rts := rtesting.ReconcilerTests{
 		"in sync": {
-			Key: key,
+			Request: request,
+			StatusSubResourceTypes: []client.Object{
+				&servicebindingv1beta1.ServiceBinding{},
+			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -181,7 +184,10 @@ func TestServiceBindingReconciler(t *testing.T) {
 			},
 		},
 		"newly created, resolves secret": {
-			Key: key,
+			Request: request,
+			StatusSubResourceTypes: []client.Object{
+				&servicebindingv1beta1.ServiceBinding{},
+			},
 			GivenObjects: []client.Object{
 				serviceBinding,
 				workload,
@@ -215,7 +221,10 @@ func TestServiceBindingReconciler(t *testing.T) {
 			},
 		},
 		"has resolved secret, project into workload": {
-			Key: key,
+			Request: request,
+			StatusSubResourceTypes: []client.Object{
+				&servicebindingv1beta1.ServiceBinding{},
+			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -254,7 +263,10 @@ func TestServiceBindingReconciler(t *testing.T) {
 			},
 		},
 		"terminating": {
-			Key: key,
+			Request: request,
+			StatusSubResourceTypes: []client.Object{
+				&servicebindingv1beta1.ServiceBinding{},
+			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -330,7 +342,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 	}
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
 		"in sync": {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
@@ -344,13 +356,15 @@ func TestResolveBindingSecret(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 		},
 		"resolve direct secret": {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(directSecretRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectResource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(directSecretRef.DieRelease())
@@ -363,7 +377,8 @@ func TestResolveBindingSecret(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ShouldErr: true,
 			Verify: func(t *testing.T, result ctrl.Result, err error) {
 				if !errors.Is(err, reconcilers.HaltSubReconcilers) {
@@ -375,7 +390,8 @@ func TestResolveBindingSecret(t *testing.T) {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				provisionedService,
 			},
@@ -391,7 +407,8 @@ func TestResolveBindingSecret(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(provisionedService, serviceBinding, scheme),
 			},
@@ -406,7 +423,8 @@ func TestResolveBindingSecret(t *testing.T) {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				notProvisionedService,
 			},
@@ -423,7 +441,8 @@ func TestResolveBindingSecret(t *testing.T) {
 							Reason("ServiceMissingBinding").
 							Message("the service was found, but did not contain a binding secret"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(provisionedService, serviceBinding, scheme),
 			},
@@ -432,7 +451,8 @@ func TestResolveBindingSecret(t *testing.T) {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			WithReactors: []rtesting.ReactionFunc{
 				rtesting.InduceFailure("get", "MyProvisionedService", rtesting.InduceFailureOpts{
 					Error: apierrs.NewNotFound(schema.GroupResource{}, "my-service"),
@@ -451,7 +471,8 @@ func TestResolveBindingSecret(t *testing.T) {
 							Reason("ServiceNotFound").
 							Message("the service was not found"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(provisionedService, serviceBinding, scheme),
 			},
@@ -460,7 +481,8 @@ func TestResolveBindingSecret(t *testing.T) {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			WithReactors: []rtesting.ReactionFunc{
 				rtesting.InduceFailure("get", "MyProvisionedService", rtesting.InduceFailureOpts{
 					Error: apierrs.NewForbidden(schema.GroupResource{}, "my-service", fmt.Errorf("test forbidden")),
@@ -481,7 +503,8 @@ func TestResolveBindingSecret(t *testing.T) {
 							Reason("ServiceForbidden").
 							Message("the controller does not have permission to get the service"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(provisionedService, serviceBinding, scheme),
 			},
@@ -490,7 +513,8 @@ func TestResolveBindingSecret(t *testing.T) {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
-				}),
+				}).
+				DieReleasePtr(),
 			WithReactors: []rtesting.ReactionFunc{
 				rtesting.InduceFailure("get", "MyProvisionedService"),
 			},
@@ -501,7 +525,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 		return controllers.ResolveBindingSecret()
 	})
 }
@@ -542,7 +566,7 @@ func TestResolveWorkload(t *testing.T) {
 			d.AddLabel("app", "not")
 		})
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
 		"resolve named workload": {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
@@ -551,7 +575,8 @@ func TestResolveWorkload(t *testing.T) {
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload1,
 				workload2,
@@ -574,7 +599,8 @@ func TestResolveWorkload(t *testing.T) {
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectedResult: reconcile.Result{Requeue: true},
 			ExpectResource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
@@ -591,7 +617,8 @@ func TestResolveWorkload(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.
 							Reason("WorkloadNotFound").Message("the workload was not found"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(workload1, serviceBinding, scheme),
 			},
@@ -604,7 +631,8 @@ func TestResolveWorkload(t *testing.T) {
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload1,
 				workload2,
@@ -635,7 +663,8 @@ func TestResolveWorkload(t *testing.T) {
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to get the workload"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectTracks: []rtesting.TrackRequest{
 				rtesting.NewTrackRequest(workload1, serviceBinding, scheme),
 			},
@@ -650,7 +679,8 @@ func TestResolveWorkload(t *testing.T) {
 							d.AddMatchLabel("app", "my")
 						})
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload1,
 				workload2,
@@ -674,7 +704,8 @@ func TestResolveWorkload(t *testing.T) {
 							d.AddMatchLabel("app", "my")
 						})
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{},
 			},
@@ -689,7 +720,8 @@ func TestResolveWorkload(t *testing.T) {
 							d.AddMatchLabel("app", "my")
 						})
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload1,
 				workload2,
@@ -722,11 +754,12 @@ func TestResolveWorkload(t *testing.T) {
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to list the workloads"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 		return controllers.ResolveWorkloads()
 	})
 }
@@ -840,7 +873,7 @@ func TestProjectBinding(t *testing.T) {
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), containers, "spec", "template", "spec", "containers")
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), []interface{}{}, "spec", "template", "spec", "volumes")
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
 		"project workload": {
 			Resource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
@@ -849,7 +882,8 @@ func TestProjectBinding(t *testing.T) {
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{
 					workload.DieReleaseUnstructured(),
@@ -868,6 +902,7 @@ func TestProjectBinding(t *testing.T) {
 			Resource: serviceBinding.
 				MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 					d.DeletionTimestamp(&now)
+					d.Finalizers("servicebinding.io/finalizer")
 				}).
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -875,7 +910,8 @@ func TestProjectBinding(t *testing.T) {
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
-				}),
+				}).
+				DieReleasePtr(),
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{
 					projectedWorkload.DieReleaseUnstructured(),
@@ -892,7 +928,7 @@ func TestProjectBinding(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
 		return controllers.ProjectBinding()
@@ -943,7 +979,7 @@ func TestPatchWorkloads(t *testing.T) {
 			})
 		})
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
 		"in sync": {
 			Resource: serviceBinding.
 				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
@@ -952,7 +988,8 @@ func TestPatchWorkloads(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
 						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload,
 			},
@@ -966,7 +1003,7 @@ func TestPatchWorkloads(t *testing.T) {
 			},
 		},
 		"update workload": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload,
 			},
@@ -990,7 +1027,8 @@ func TestPatchWorkloads(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
 						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectEvents: []rtesting.Event{
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", "my-workload"),
 			},
@@ -1003,7 +1041,7 @@ func TestPatchWorkloads(t *testing.T) {
 			},
 		},
 		"update workload ignoring not found errors": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{
 					workload.DieReleaseUnstructured(),
@@ -1024,7 +1062,8 @@ func TestPatchWorkloads(t *testing.T) {
 						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
 						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectEvents: []rtesting.Event{
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeWarning, "UpdateFailed", "Failed to update Deployment %q: deployments.apps %q not found", "my-workload", "my-workload"),
 			},
@@ -1037,7 +1076,7 @@ func TestPatchWorkloads(t *testing.T) {
 			},
 		},
 		"update workload forbidden": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload,
 			},
@@ -1074,7 +1113,8 @@ func TestPatchWorkloads(t *testing.T) {
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to update the workloads"),
 					)
-				}),
+				}).
+				DieReleasePtr(),
 			ExpectEvents: []rtesting.Event{
 				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeWarning, "UpdateFailed", "Failed to update Deployment %q: forbidden: test forbidden", "my-workload"),
 			},
@@ -1087,7 +1127,7 @@ func TestPatchWorkloads(t *testing.T) {
 			},
 		},
 		"require same number of workloads and projected workloads": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenObjects: []client.Object{
 				workload,
 			},
@@ -1108,7 +1148,7 @@ func TestPatchWorkloads(t *testing.T) {
 			ShouldPanic: true,
 		},
 		"panic if workload and projected workload are not the same uid": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{
 					workload.DieReleaseUnstructured(),
@@ -1124,7 +1164,7 @@ func TestPatchWorkloads(t *testing.T) {
 			ShouldPanic: true,
 		},
 		"panic if workload and projected workload are not the same resource version": {
-			Resource: serviceBinding,
+			Resource: serviceBinding.DieReleasePtr(),
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{
 					workload.DieReleaseUnstructured(),
@@ -1141,7 +1181,7 @@ func TestPatchWorkloads(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 		return controllers.PatchWorkloads()
 	})
 }

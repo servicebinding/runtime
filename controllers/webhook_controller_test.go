@@ -60,7 +60,7 @@ import (
 
 func TestAdmissionProjectorReconciler(t *testing.T) {
 	name := "my-webhook"
-	key := types.NamespacedName{Name: name}
+	request := reconcilers.Request{NamespacedName: types.NamespacedName{Name: name}}
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -109,7 +109,7 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 
 	rts := rtesting.ReconcilerTests{
 		"in sync": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook,
 				serviceBinding,
@@ -122,7 +122,7 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 			},
 		},
 		"update": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook.
 					WebhookDie("projector.servicebinding.io", func(d *dieadmissionregistrationv1.MutatingWebhookDie) {
@@ -144,8 +144,10 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 			},
 		},
 		"ignore other keys": {
-			Key: types.NamespacedName{
-				Name: "other-webhook",
+			Request: reconcilers.Request{
+				NamespacedName: types.NamespacedName{
+					Name: "other-webhook",
+				},
 			},
 			GivenObjects: []client.Object{
 				webhook.
@@ -156,7 +158,7 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 			},
 		},
 		"ignore malformed webhook": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook.
 					Webhooks(),
@@ -474,6 +476,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						now := metav1.Now()
 						d.DeletionTimestamp(&now)
+						d.Finalizers("servicebinding.io/finalizer")
 					}).
 					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -522,7 +525,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 
 func TestTriggerReconciler(t *testing.T) {
 	name := "my-webhook"
-	key := types.NamespacedName{Name: name}
+	request := reconcilers.Request{NamespacedName: types.NamespacedName{Name: name}}
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -581,7 +584,7 @@ func TestTriggerReconciler(t *testing.T) {
 
 	rts := rtesting.ReconcilerTests{
 		"in sync": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook,
 				serviceBinding,
@@ -596,7 +599,7 @@ func TestTriggerReconciler(t *testing.T) {
 			},
 		},
 		"update": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook.
 					WebhookDie("trigger.servicebinding.io", func(d *dieadmissionregistrationv1.ValidatingWebhookDie) {
@@ -620,8 +623,10 @@ func TestTriggerReconciler(t *testing.T) {
 			},
 		},
 		"ignore other keys": {
-			Key: types.NamespacedName{
-				Name: "other-webhook",
+			Request: reconcilers.Request{
+				NamespacedName: types.NamespacedName{
+					Name: "other-webhook",
+				},
 			},
 			GivenObjects: []client.Object{
 				webhook.
@@ -632,7 +637,7 @@ func TestTriggerReconciler(t *testing.T) {
 			},
 		},
 		"ignore malformed webhook": {
-			Key: key,
+			Request: request,
 			GivenObjects: []client.Object{
 				webhook.
 					Webhooks(),
@@ -788,9 +793,9 @@ func TestLoadServiceBindings(t *testing.T) {
 			})
 		})
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[client.Object]{
 		"list all servicebindings": {
-			Resource: webhook,
+			Resource: webhook.DieReleasePtr(),
 			GivenObjects: []client.Object{
 				serviceBinding,
 			},
@@ -801,7 +806,7 @@ func TestLoadServiceBindings(t *testing.T) {
 			},
 		},
 		"error listing all servicebindings": {
-			Resource: webhook,
+			Resource: webhook.DieReleasePtr(),
 			GivenObjects: []client.Object{
 				serviceBinding,
 			},
@@ -812,7 +817,7 @@ func TestLoadServiceBindings(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[client.Object], c reconcilers.Config) reconcilers.SubReconciler[client.Object] {
 		req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "my-webhook"}}
 		return controllers.LoadServiceBindings(req)
 	})
@@ -843,7 +848,7 @@ func TestInterceptGVKs(t *testing.T) {
 			})
 		})
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[client.Object]{
 		"collect workload gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
@@ -876,7 +881,7 @@ func TestInterceptGVKs(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[client.Object], c reconcilers.Config) reconcilers.SubReconciler[client.Object] {
 		return controllers.InterceptGVKs()
 	})
 }
@@ -886,7 +891,9 @@ func TestTriggerGVKs(t *testing.T) {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
 
-	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank
+	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank.
+		APIVersion("admissionregistration.k8s.io").
+		Kind("ValidatingWebhookConfiguration")
 
 	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -906,7 +913,7 @@ func TestTriggerGVKs(t *testing.T) {
 			})
 		})
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[client.Object]{
 		"collect service gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
@@ -957,7 +964,7 @@ func TestTriggerGVKs(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[client.Object], c reconcilers.Config) reconcilers.SubReconciler[client.Object] {
 		return controllers.TriggerGVKs()
 	})
 }
@@ -967,13 +974,15 @@ func TestWebhookRules(t *testing.T) {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
 
-	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank
+	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank.
+		APIVersion("admissionregistration.k8s.io").
+		Kind("ValidatingWebhookConfiguration")
 
 	operations := []admissionregistrationv1.OperationType{
 		admissionregistrationv1.Connect,
 	}
 
-	rts := rtesting.SubReconcilerTests{
+	rts := rtesting.SubReconcilerTests[client.Object]{
 		"empty": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
@@ -1144,7 +1153,7 @@ func TestWebhookRules(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase, c reconcilers.Config) reconcilers.SubReconciler {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[client.Object], c reconcilers.Config) reconcilers.SubReconciler[client.Object] {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1beta1", Kind: "Deployment"}, meta.RESTScopeNamespace)

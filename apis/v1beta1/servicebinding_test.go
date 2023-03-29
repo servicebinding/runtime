@@ -255,13 +255,19 @@ func TestServiceBindingValidate(t *testing.T) {
 			}
 
 			expectedErr := c.expected.ToAggregate()
-			if diff := cmp.Diff(expectedErr, c.seed.ValidateCreate()); diff != "" {
+
+			_, actualCreateErr := c.seed.ValidateCreate()
+			if diff := cmp.Diff(expectedErr, actualCreateErr); diff != "" {
 				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
 			}
-			if diff := cmp.Diff(expectedErr, c.seed.ValidateUpdate(c.seed.DeepCopy())); diff != "" {
+
+			_, actualUpdateErr := c.seed.ValidateUpdate(c.seed.DeepCopy())
+			if diff := cmp.Diff(expectedErr, actualUpdateErr); diff != "" {
 				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
 			}
-			if diff := cmp.Diff(nil, c.seed.ValidateDelete()); diff != "" {
+
+			_, actualDeleteErr := c.seed.ValidateDelete()
+			if diff := cmp.Diff(nil, actualDeleteErr); diff != "" {
 				t.Errorf("ValidateDelete (-expected, +actual): %s", diff)
 			}
 		})

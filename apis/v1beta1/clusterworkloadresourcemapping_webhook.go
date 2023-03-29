@@ -24,6 +24,7 @@ import (
 	"k8s.io/client-go/util/jsonpath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 func (r *ClusterWorkloadResourceMapping) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -77,21 +78,21 @@ func (r *ClusterWorkloadResourceMappingTemplate) Default() {
 var _ webhook.Validator = &ClusterWorkloadResourceMapping{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateCreate() error {
+func (r *ClusterWorkloadResourceMapping) ValidateCreate() (admission.Warnings, error) {
 	r.Default()
-	return r.validate().ToAggregate()
+	return nil, r.validate().ToAggregate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateUpdate(old runtime.Object) error {
+func (r *ClusterWorkloadResourceMapping) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	r.Default()
 	// TODO(user): check for immutable fields, if any
-	return r.validate().ToAggregate()
+	return nil, r.validate().ToAggregate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateDelete() error {
-	return nil
+func (r *ClusterWorkloadResourceMapping) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
 func (r *ClusterWorkloadResourceMapping) validate() field.ErrorList {
