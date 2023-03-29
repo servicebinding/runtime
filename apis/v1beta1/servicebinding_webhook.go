@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -44,21 +45,21 @@ func (r *ServiceBinding) Default() {
 var _ webhook.Validator = &ServiceBinding{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateCreate() error {
+func (r *ServiceBinding) ValidateCreate() (admission.Warnings, error) {
 	r.Default()
-	return r.validate().ToAggregate()
+	return nil, r.validate().ToAggregate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateUpdate(old runtime.Object) error {
+func (r *ServiceBinding) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	// TODO(user): check for immutable fields, if any
 	r.Default()
-	return r.validate().ToAggregate()
+	return nil, r.validate().ToAggregate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateDelete() error {
-	return nil
+func (r *ServiceBinding) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
 func (r *ServiceBinding) validate() field.ErrorList {

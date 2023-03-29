@@ -34,6 +34,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/resolver"
@@ -125,7 +126,10 @@ func TestClusterResolver_LookupRESTMapping(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			client := fakeclient.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(c.givenObjects...).
+				Build()
 			restMapper := client.RESTMapper().(*meta.DefaultRESTMapper)
 			restMapper.Add(deploymentRESTMapping.GroupVersionKind, deploymentRESTMapping.Scope)
 			restMapper.Add(cronJobRESTMapping.GroupVersionKind, cronJobRESTMapping.Scope)
@@ -301,7 +305,10 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			client := fakeclient.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(c.givenObjects...).
+				Build()
 			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupWorkloadMapping(ctx, c.gvr)
@@ -408,7 +415,10 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			client := fakeclient.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(c.givenObjects...).
+				Build()
 			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupBindingSecret(ctx, c.serviceRef)
@@ -708,7 +718,10 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.TODO()
 
-			client := rtesting.NewFakeClient(scheme, c.givenObjects...)
+			client := fakeclient.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(c.givenObjects...).
+				Build()
 			resolver := resolver.New(client)
 
 			actual, err := resolver.LookupWorkloads(ctx, c.serviceRef, c.selector)
