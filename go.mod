@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	dies.dev v0.7.0
-	github.com/go-logr/logr v1.2.3
+	github.com/go-logr/logr v1.2.4
 	github.com/google/go-cmp v0.5.9
 	github.com/vmware-labs/reconciler-runtime v0.11.1
 	gomodules.xyz/jsonpatch/v2 v2.2.0
