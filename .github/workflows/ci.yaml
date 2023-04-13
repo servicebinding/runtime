@@ -178,6 +178,8 @@ jobs:
           os: ubuntu-latest
         - node: kindest/node:v1.26.0@sha256:691e24bd2417609db7e589e1a479b902d2e209892a10ce375fab60a8407c7352
           os: ubuntu-latest
+        - node: kindest/node:v1.27.0@sha256:c6b22e613523b1af67d4bc8a0c38a4c3ea3a2b8fbc5b367ae36345c9cb844518
+          os: ubuntu-latest
     env:
       REGISTRY_NAME: registry.local
       BUNDLE: registry.local/bundle
