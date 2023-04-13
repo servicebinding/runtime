@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/kbld
 
-go 1.19
+go 1.20
 
 require github.com/vmware-tanzu/carvel-kbld v0.37.0
 
