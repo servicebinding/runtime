@@ -343,7 +343,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         repository: servicebinding/conformance.git
-        ref: c22d4b05dde6cef4e528f2b7f6ee7956c2a2ae53 # main as of 2023-04-24
+        ref: v0.2.1
         fetch-depth: 1
         path: conformance-tests
 
