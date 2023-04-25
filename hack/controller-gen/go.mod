@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/controller-gen
 
-go 1.19
+go 1.20
 
 require sigs.k8s.io/controller-tools v0.11.3
 
