@@ -1,0 +1,90 @@
+# Copyright 2020 the original author or authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+apiVersion: servicebinding.io/v1beta1
+kind: ServiceBinding
+metadata:
+  name: eso-example-db
+  annotations:
+    kapp.k14s.io/change-group: service
+    kapp.k14s.io/change-rule.service: "upsert after upserting secret"
+    kapp.k14s.io/change-rule.service-delete: "delete before deleting secret"
+spec:
+  service:
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    name: eso-example-db
+  workload:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eso-example-db
+  env:
+  - name: MYSQL_USER
+    key: username
+  - name: MYSQL_PASSWORD
+    key: password
+  - name: MYSQL_DATABASE
+    key: database
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eso-example-db
+  annotations:
+    kapp.k14s.io/change-group: service
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: eso-example-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eso-example-db
+  annotations:
+    kapp.k14s.io/change-group: service
+  labels:
+    app: eso-example-db
+spec:
+  selector:
+    matchLabels:
+      app: eso-example-db
+  template:
+    metadata:
+      labels:
+        app: eso-example-db
+    spec:
+      # no persistance configured, the database will be reset when the pod terminates
+      containers:
+      - image: mariadb:10.5
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+        ports:
+        - containerPort: 3306
+          name: mysql
+        livenessProbe:
+          tcpSocket:
+            port: mysql
+        readinessProbe:
+          tcpSocket:
+            port: mysql
+        startupProbe:
+          tcpSocket:
+            port: mysql
