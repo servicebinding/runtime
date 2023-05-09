@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kbld
 
 go 1.20
 
-require github.com/vmware-tanzu/carvel-kbld v0.37.0
+require github.com/vmware-tanzu/carvel-kbld v0.37.1
 
 require (
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
