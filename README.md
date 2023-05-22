@@ -73,6 +73,7 @@ Samples are located in the [samples directory](./samples), including:
 - [Controlled Resource](./samples/controlled-resource)
 - [Overridden Type and Provider](./samples/overridden-type-provider)
 - [Multiple Bindings](./samples/multi-binding)
+- [External Secrets Operator](./samples/external-secrets)
 
 ## Supported Services
 
