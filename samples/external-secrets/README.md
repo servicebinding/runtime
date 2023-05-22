@@ -4,11 +4,11 @@
 
 This sample uses a fake `SecretStore` (to avoid external infrastructure) and `ExternalSecret` to create a binding Secret. The [Spring PetClinic][petclinic] workload and MySQL database are independently bound to the `ExternalSecret`.
 
-> NOTE: Provisioned Service support within External Secrets is a proposal that is not part of any External Secrets release. This sample is to demonstrate what landing provisioned service support within ESO can enable.
-
 ## Setup
 
-If not already installed, [install the ServiceBinding CRD and controller][install], and an experimental version of the [External Secrets Operator from PR #2263][pr-2263].
+If not already installed, [install the ServiceBinding CRD and controller][install], and the [External Secrets Operator][eso-install].
+
+> NOTE: Provisioned Service support was added to External Secrets in the v0.8.2 release, prior versions are not compatible.
 
 This sample uses [Carvel Kapp][kapp-install], rather than `kubectl` to install and watch the sample become ready.
 
@@ -95,6 +95,6 @@ kubectl patch externalsecrets.external-secrets.io eso-example-db --type json --p
 Look at the `ExternalSecret` status and the `Deployment`s to see that they have been updated to use the `my-new-super-duper-secret` secret.
 
 [eso]: https://external-secrets.io/
-[pr-2263]: https://github.com/external-secrets/external-secrets/pull/2263
+[eso-install]: https://external-secrets.io/v0.8.2/introduction/getting-started/
 [install]: ../../README.md#getting-started
 [petclinic]: https://github.com/spring-projects/spring-petclinic
