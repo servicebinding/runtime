@@ -111,4 +111,5 @@ Then open `http://localhost:8080` in a browser.
 [boot]: https://spring.io/projects/spring-boot
 [paketo]: https://paketo.io
 [install]: ../../README.md#getting-started
+[kapp-install]: https://carvel.dev/kapp/
 [scb]: https://github.com/spring-cloud/spring-cloud-bindings
