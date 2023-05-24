@@ -97,4 +97,5 @@ Look at the `ExternalSecret` status and the `Deployment`s to see that they have 
 [eso]: https://external-secrets.io/
 [eso-install]: https://external-secrets.io/v0.8.2/introduction/getting-started/
 [install]: ../../README.md#getting-started
+[kapp-install]: https://carvel.dev/kapp/
 [petclinic]: https://github.com/spring-projects/spring-petclinic
