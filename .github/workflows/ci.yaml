@@ -366,7 +366,7 @@ jobs:
         set -o nounset
         set +o pipefail
 
-        if [ -e conformance-tests/test-output/results/failing_scenarios.txt] ; then
+        if [ -e conformance-tests/test-output/results/failing_scenarios.txt ] ; then
           echo "##[group]failing conformance tests"
             cat conformance-tests/test-output/results/failing_scenarios.txt
           echo "##[endgroup]"
