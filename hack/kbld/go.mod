@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kbld
 
 go 1.20
 
-require github.com/vmware-tanzu/carvel-kbld v0.37.2
+require github.com/vmware-tanzu/carvel-kbld v0.37.3
 
 require (
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
@@ -22,8 +22,8 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -35,11 +35,11 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
-	github.com/vmware-tanzu/carvel-imgpkg v0.36.1 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.33.1 // indirect
+	github.com/vmware-tanzu/carvel-imgpkg v0.37.1 // indirect
+	github.com/vmware-tanzu/carvel-vendir v0.34.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
