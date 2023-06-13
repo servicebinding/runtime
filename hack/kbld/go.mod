@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kbld
 
 go 1.20
 
-require github.com/vmware-tanzu/carvel-kbld v0.37.3
+require github.com/vmware-tanzu/carvel-kbld v0.37.4
 
 require (
 	github.com/carvel-dev/semver/v4 v4.0.1-0.20230221220520-8090ce423695 // indirect
@@ -35,8 +35,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vbatts/tar-split v0.11.3 // indirect
 	github.com/vito/go-interact v1.0.1 // indirect
-	github.com/vmware-tanzu/carvel-imgpkg v0.37.1 // indirect
-	github.com/vmware-tanzu/carvel-vendir v0.34.0 // indirect
+	github.com/vmware-tanzu/carvel-imgpkg v0.37.2 // indirect
+	github.com/vmware-tanzu/carvel-vendir v0.34.3 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
