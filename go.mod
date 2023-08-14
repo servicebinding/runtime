@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/logr v1.2.4
 	github.com/google/go-cmp v0.5.9
 	github.com/vmware-labs/reconciler-runtime v0.13.0
-	gomodules.xyz/jsonpatch/v2 v2.3.0
+	gomodules.xyz/jsonpatch/v2 v2.4.0
 	k8s.io/api v0.27.4
 	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v0.27.4
