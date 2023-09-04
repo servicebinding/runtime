@@ -25,7 +25,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: 1.20.x
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test
       run: make test
     - name: Report coverage
@@ -47,7 +47,7 @@ jobs:
       KO_PLATFORMS: linux/amd64,linux/arm64
       BUNDLE: registry.local/servicebinding/bundle
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v4
       with:
         go-version: 1.20.x
@@ -183,7 +183,7 @@ jobs:
       REGISTRY_NAME: registry.local
       BUNDLE: registry.local/bundle
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v4
       with:
         go-version: 1.20.x
@@ -339,7 +339,7 @@ jobs:
         echo "##[endgroup]"
 
     - name: Checkout conformance tests
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: servicebinding/conformance.git
         ref: v0.3.1
@@ -450,7 +450,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v4
       with:
         go-version: 1.20.x
