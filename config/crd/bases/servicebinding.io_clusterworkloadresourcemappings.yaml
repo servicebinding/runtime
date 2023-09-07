@@ -108,9 +108,7 @@ spec:
                         to `.spec.template.spec.volumes`.
                       type: string
                   required:
-                  - annotations
                   - version
-                  - volumes
                   type: object
                 type: array
             type: object
