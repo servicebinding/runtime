@@ -34,3 +34,7 @@ type trackingClient struct {
 func (c *trackingClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
 	return c.Config.TrackAndGet(ctx, key, obj, opts...)
 }
+
+func (c *trackingClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	return c.Config.TrackAndList(ctx, list, opts...)
+}
