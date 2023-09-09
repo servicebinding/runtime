@@ -26,12 +26,14 @@ import (
 	diemetav1 "dies.dev/apis/meta/v1"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	rtesting "github.com/vmware-labs/reconciler-runtime/testing"
+	"github.com/vmware-labs/reconciler-runtime/tracker"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -692,6 +694,19 @@ func TestResolveWorkload(t *testing.T) {
 					workload2.DieReleaseUnstructured(),
 				},
 			},
+			ExpectTracks: []rtesting.TrackRequest{
+				{
+					Tracker: types.NamespacedName{Namespace: serviceBinding.GetNamespace(), Name: serviceBinding.GetName()},
+					TrackedReference: tracker.Reference{
+						APIGroup:  "apps",
+						Kind:      "Deployment",
+						Namespace: serviceBinding.GetNamespace(),
+						Selector: labels.SelectorFromSet(labels.Set{
+							"app": "my",
+						}),
+					},
+				},
+			},
 		},
 		"resolve selected workload not found": {
 			GivenObjects: []client.Object{},
@@ -708,6 +723,19 @@ func TestResolveWorkload(t *testing.T) {
 				DieReleasePtr(),
 			ExpectStashedValues: map[reconcilers.StashKey]interface{}{
 				controllers.WorkloadsStashKey: []runtime.Object{},
+			},
+			ExpectTracks: []rtesting.TrackRequest{
+				{
+					Tracker: types.NamespacedName{Namespace: serviceBinding.GetNamespace(), Name: serviceBinding.GetName()},
+					TrackedReference: tracker.Reference{
+						APIGroup:  "apps",
+						Kind:      "Deployment",
+						Namespace: serviceBinding.GetNamespace(),
+						Selector: labels.SelectorFromSet(labels.Set{
+							"app": "my",
+						}),
+					},
+				},
 			},
 		},
 		"resolve selected workload forbidden": {
@@ -756,6 +784,19 @@ func TestResolveWorkload(t *testing.T) {
 					)
 				}).
 				DieReleasePtr(),
+			ExpectTracks: []rtesting.TrackRequest{
+				{
+					Tracker: types.NamespacedName{Namespace: serviceBinding.GetNamespace(), Name: serviceBinding.GetName()},
+					TrackedReference: tracker.Reference{
+						APIGroup:  "apps",
+						Kind:      "Deployment",
+						Namespace: serviceBinding.GetNamespace(),
+						Selector: labels.SelectorFromSet(labels.Set{
+							"app": "my",
+						}),
+					},
+				},
+			},
 		},
 	}
 
