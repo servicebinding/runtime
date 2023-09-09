@@ -45,10 +45,10 @@ func (d *ServiceBindingSpecDie) ServiceDie(fn func(d *ServiceBindingServiceRefer
 	})
 }
 
-func (d *ServiceBindingSpecDie) EnvDie(key string, fn func(d *EnvMappingDie)) *ServiceBindingSpecDie {
+func (d *ServiceBindingSpecDie) EnvDie(name string, fn func(d *EnvMappingDie)) *ServiceBindingSpecDie {
 	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingSpec) {
 		for i := range r.Env {
-			if key == r.Env[i].Key {
+			if name == r.Env[i].Name {
 				d := EnvMappingBlank.DieImmutable(false).DieFeed(r.Env[i])
 				fn(d)
 				r.Env[i] = d.DieRelease()
@@ -56,7 +56,7 @@ func (d *ServiceBindingSpecDie) EnvDie(key string, fn func(d *EnvMappingDie)) *S
 			}
 		}
 
-		d := EnvMappingBlank.DieImmutable(false).DieFeed(servicebindingv1beta1.EnvMapping{Key: key})
+		d := EnvMappingBlank.DieImmutable(false).DieFeed(servicebindingv1beta1.EnvMapping{Name: name})
 		fn(d)
 		r.Env = append(r.Env, d.DieRelease())
 	})
