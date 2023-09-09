@@ -46,6 +46,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/controllers"
 	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	"github.com/servicebinding/runtime/lifecycle"
 )
 
 func TestServiceBindingReconciler(t *testing.T) {
@@ -304,7 +305,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.ReconcilerTestCase, c reconcilers.Config) reconcile.Reconciler {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
-		return controllers.ServiceBindingReconciler(c)
+		return controllers.ServiceBindingReconciler(c, lifecycle.ServiceBindingHooks{})
 	})
 }
 
@@ -528,7 +529,7 @@ func TestResolveBindingSecret(t *testing.T) {
 	}
 
 	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
-		return controllers.ResolveBindingSecret()
+		return controllers.ResolveBindingSecret(lifecycle.ServiceBindingHooks{})
 	})
 }
 
@@ -801,7 +802,7 @@ func TestResolveWorkload(t *testing.T) {
 	}
 
 	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
-		return controllers.ResolveWorkloads()
+		return controllers.ResolveWorkloads(lifecycle.ServiceBindingHooks{})
 	})
 }
 
@@ -972,7 +973,7 @@ func TestProjectBinding(t *testing.T) {
 	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
-		return controllers.ProjectBinding()
+		return controllers.ProjectBinding(lifecycle.ServiceBindingHooks{})
 	})
 }
 

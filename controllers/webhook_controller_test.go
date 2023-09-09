@@ -55,6 +55,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/controllers"
 	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/rbac"
 )
 
@@ -519,7 +520,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 	wts.Run(t, scheme, func(t *testing.T, tc *rtesting.AdmissionWebhookTestCase, c reconcilers.Config) *admission.Webhook {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
-		return controllers.AdmissionProjectorWebhook(c).Build()
+		return controllers.AdmissionProjectorWebhook(c, lifecycle.ServiceBindingHooks{}).Build()
 	})
 }
 

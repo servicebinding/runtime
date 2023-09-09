@@ -39,6 +39,7 @@ import (
 	servicebindingv1alpha3 "github.com/servicebinding/runtime/apis/v1alpha3"
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/controllers"
+	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/rbac"
 	//+kubebuilder:scaffold:imports
 )
@@ -100,8 +101,12 @@ func main() {
 	config := reconcilers.NewConfig(mgr, &servicebindingv1beta1.ServiceBinding{}, syncPeriod)
 	accessChecker := rbac.NewAccessChecker(config, 5*time.Minute)
 
+	hooks := lifecycle.ServiceBindingHooks{}
+	// add migration hooks here
+
 	serviceBindingController, err := controllers.ServiceBindingReconciler(
 		config,
+		hooks,
 	).SetupWithManagerYieldingController(ctx, mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceBinding")
@@ -133,7 +138,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AdmissionProjector")
 		os.Exit(1)
 	}
-	mgr.GetWebhookServer().Register("/interceptor", controllers.AdmissionProjectorWebhook(config).Build())
+	mgr.GetWebhookServer().Register("/interceptor", controllers.AdmissionProjectorWebhook(config, hooks).Build())
 
 	if err = controllers.TriggerReconciler(
 		config,
