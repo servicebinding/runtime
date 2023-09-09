@@ -40,6 +40,7 @@ import (
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/controllers"
 	"github.com/servicebinding/runtime/lifecycle"
+	"github.com/servicebinding/runtime/lifecycle/vmware"
 	"github.com/servicebinding/runtime/rbac"
 	//+kubebuilder:scaffold:imports
 )
@@ -62,11 +63,14 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var migrateFromVMware bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&migrateFromVMware, "migrate-from-vmware", false,
+		"Enable migration from the VMware implementation.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -102,7 +106,12 @@ func main() {
 	accessChecker := rbac.NewAccessChecker(config, 5*time.Minute)
 
 	hooks := lifecycle.ServiceBindingHooks{}
-	// add migration hooks here
+	if migrateFromVMware {
+		setupLog.Info("Enabling VMware migration hooks.")
+		setupLog.Info("Use migration hooks only while migrating implementations. Leaving migration hooks on permanently incurs a performance penalty.")
+		hooks = vmware.InstallMigrationHooks(hooks)
+	}
+	// add additional migration hooks here
 
 	serviceBindingController, err := controllers.ServiceBindingReconciler(
 		config,

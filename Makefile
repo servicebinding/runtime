@@ -53,6 +53,7 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	@rm -rf config/crd/bases/_.yaml
 	cat hack/boilerplate.yaml.txt > config/servicebinding-runtime.yaml
 	$(KUSTOMIZE) build config/default >> config/servicebinding-runtime.yaml
 
