@@ -202,7 +202,7 @@ func TriggerReconciler(c reconcilers.Config, name string, accessChecker rbac.Acc
 
 func TriggerWebhook(c reconcilers.Config, serviceBindingController controller.Controller) *reconcilers.AdmissionWebhookAdapter[*unstructured.Unstructured] {
 	return &reconcilers.AdmissionWebhookAdapter[*unstructured.Unstructured]{
-		Name: "AdmissionProjectorWebhook",
+		Name: "TriggerWebhook",
 		Reconciler: &reconcilers.SyncReconciler[*unstructured.Unstructured]{
 			Sync: func(ctx context.Context, trigger *unstructured.Unstructured) error {
 				log := logr.FromContextOrDiscard(ctx)
