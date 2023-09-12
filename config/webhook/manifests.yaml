@@ -13,12 +13,11 @@ webhooks:
       namespace: system
       path: /validate-servicebinding-io-v1beta1-clusterworkloadresourcemapping
   failurePolicy: Fail
-  name: vclusterworkloadresourcemapping.kb.io
+  name: v1beta1.clusterworkloadresourcemappings.servicebinding.io
   rules:
   - apiGroups:
     - servicebinding.io
     apiVersions:
-    - v1alpha3
     - v1beta1
     operations:
     - CREATE
@@ -35,13 +34,54 @@ webhooks:
       namespace: system
       path: /validate-servicebinding-io-v1beta1-servicebinding
   failurePolicy: Fail
-  name: vservicebinding.kb.io
+  name: v1beta1.servicebindings.servicebinding.io
+  rules:
+  - apiGroups:
+    - servicebinding.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - servicebindings
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-servicebinding-io-v1alpha3-clusterworkloadresourcemapping
+  failurePolicy: Fail
+  name: v1alpha3.clusterworkloadresourcemappings.servicebinding.io
   rules:
   - apiGroups:
     - servicebinding.io
     apiVersions:
     - v1alpha3
-    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusterworkloadresourcemappings
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-servicebinding-io-v1alpha3-servicebinding
+  failurePolicy: Fail
+  name: v1alpha3.servicebindings.servicebinding.io
+  rules:
+  - apiGroups:
+    - servicebinding.io
+    apiVersions:
+    - v1alpha3
     operations:
     - CREATE
     - UPDATE
