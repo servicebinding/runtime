@@ -32,8 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
-	"github.com/servicebinding/runtime/projector"
-	"github.com/servicebinding/runtime/resolver"
+	"github.com/servicebinding/runtime/lifecycle"
 )
 
 //+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings,verbs=get;list;watch;create;update;patch;delete
@@ -42,14 +41,14 @@ import (
 //+kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create;update;patch;delete
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
-func ServiceBindingReconciler(c reconcilers.Config) *reconcilers.ResourceReconciler[*servicebindingv1beta1.ServiceBinding] {
+func ServiceBindingReconciler(c reconcilers.Config, hooks lifecycle.ServiceBindingHooks) *reconcilers.ResourceReconciler[*servicebindingv1beta1.ServiceBinding] {
 	return &reconcilers.ResourceReconciler[*servicebindingv1beta1.ServiceBinding]{
 		Reconciler: &reconcilers.WithFinalizer[*servicebindingv1beta1.ServiceBinding]{
 			Finalizer: servicebindingv1beta1.GroupVersion.Group + "/finalizer",
 			Reconciler: reconcilers.Sequence[*servicebindingv1beta1.ServiceBinding]{
-				ResolveBindingSecret(),
-				ResolveWorkloads(),
-				ProjectBinding(),
+				ResolveBindingSecret(hooks),
+				ResolveWorkloads(hooks),
+				ProjectBinding(hooks),
 				PatchWorkloads(),
 			},
 		},
@@ -58,7 +57,7 @@ func ServiceBindingReconciler(c reconcilers.Config) *reconcilers.ResourceReconci
 	}
 }
 
-func ResolveBindingSecret() reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+func ResolveBindingSecret(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 	return &reconcilers.SyncReconciler[*servicebindingv1beta1.ServiceBinding]{
 		Name: "ResolveBindingSecret",
 		Sync: func(ctx context.Context, resource *servicebindingv1beta1.ServiceBinding) error {
@@ -70,7 +69,7 @@ func ResolveBindingSecret() reconcilers.SubReconciler[*servicebindingv1beta1.Ser
 				Namespace:  resource.Namespace,
 				Name:       resource.Spec.Service.Name,
 			}
-			secretName, err := resolver.New(TrackingClient(c)).LookupBindingSecret(ctx, ref)
+			secretName, err := hooks.GetResolver(TrackingClient(c)).LookupBindingSecret(ctx, ref)
 			if err != nil {
 				if apierrs.IsNotFound(err) {
 					// leave Unknown, the provisioned service may be created shortly
@@ -116,7 +115,7 @@ func ResolveBindingSecret() reconcilers.SubReconciler[*servicebindingv1beta1.Ser
 	}
 }
 
-func ResolveWorkloads() reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+func ResolveWorkloads(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 	return &reconcilers.SyncReconciler[*servicebindingv1beta1.ServiceBinding]{
 		Name:                   "ResolveWorkloads",
 		SyncDuringFinalization: true,
@@ -129,7 +128,7 @@ func ResolveWorkloads() reconcilers.SubReconciler[*servicebindingv1beta1.Service
 				Namespace:  resource.Namespace,
 				Name:       resource.Spec.Workload.Name,
 			}
-			workloads, err := resolver.New(TrackingClient(c)).LookupWorkloads(ctx, ref, resource.Spec.Workload.Selector)
+			workloads, err := hooks.GetResolver(TrackingClient(c)).LookupWorkloads(ctx, ref, resource.Spec.Workload.Selector)
 			if err != nil {
 				if apierrs.IsNotFound(err) {
 					// leave Unknown, the workload may be created shortly
@@ -161,19 +160,30 @@ func ResolveWorkloads() reconcilers.SubReconciler[*servicebindingv1beta1.Service
 
 //+kubebuilder:rbac:groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=get;list;watch
 
-func ProjectBinding() reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+func ProjectBinding(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
 	return &reconcilers.SyncReconciler[*servicebindingv1beta1.ServiceBinding]{
 		Name:                   "ProjectBinding",
 		SyncDuringFinalization: true,
 		Sync: func(ctx context.Context, resource *servicebindingv1beta1.ServiceBinding) error {
 			c := reconcilers.RetrieveConfigOrDie(ctx)
-			projector := projector.New(resolver.New(TrackingClient(c)))
+			projector := hooks.GetProjector(hooks.GetResolver(TrackingClient(c)))
 
 			workloads := RetrieveWorkloads(ctx)
 			projectedWorkloads := make([]runtime.Object, len(workloads))
 
+			if f := hooks.ServiceBindingPreProjection; f != nil {
+				if err := f(ctx, resource); err != nil {
+					return err
+				}
+			}
 			for i := range workloads {
 				workload := workloads[i].DeepCopyObject()
+
+				if f := hooks.WorkloadPreProjection; f != nil {
+					if err := f(ctx, workload); err != nil {
+						return err
+					}
+				}
 				if !resource.DeletionTimestamp.IsZero() {
 					if err := projector.Unproject(ctx, resource, workload); err != nil {
 						return err
@@ -183,7 +193,18 @@ func ProjectBinding() reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBi
 						return err
 					}
 				}
+				if f := hooks.WorkloadPostProjection; f != nil {
+					if err := f(ctx, workload); err != nil {
+						return err
+					}
+				}
+
 				projectedWorkloads[i] = workload
+			}
+			if f := hooks.ServiceBindingPostProjection; f != nil {
+				if err := f(ctx, resource); err != nil {
+					return err
+				}
 			}
 
 			StashProjectedWorkloads(ctx, projectedWorkloads)

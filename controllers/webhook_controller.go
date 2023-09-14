@@ -38,9 +38,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
-	"github.com/servicebinding/runtime/projector"
+	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/rbac"
-	"github.com/servicebinding/runtime/resolver"
 )
 
 //+kubebuilder:rbac:groups=admissionregistration.k8s.io,resources=mutatingwebhookconfigurations,verbs=get;list;watch;create;update;patch
@@ -97,7 +96,7 @@ func AdmissionProjectorReconciler(c reconcilers.Config, name string, accessCheck
 	}
 }
 
-func AdmissionProjectorWebhook(c reconcilers.Config) *reconcilers.AdmissionWebhookAdapter[*unstructured.Unstructured] {
+func AdmissionProjectorWebhook(c reconcilers.Config, hooks lifecycle.ServiceBindingHooks) *reconcilers.AdmissionWebhookAdapter[*unstructured.Unstructured] {
 	return &reconcilers.AdmissionWebhookAdapter[*unstructured.Unstructured]{
 		Name: "AdmissionProjectorWebhook",
 		Reconciler: &reconcilers.SyncReconciler[*unstructured.Unstructured]{
@@ -135,11 +134,31 @@ func AdmissionProjectorWebhook(c reconcilers.Config) *reconcilers.AdmissionWebho
 				}
 
 				// project active bindings into workload
-				projector := projector.New(resolver.New(c))
+				if f := hooks.WorkloadPreProjection; f != nil {
+					if err := f(ctx, workload); err != nil {
+						return err
+					}
+				}
+				projector := hooks.GetProjector(hooks.GetResolver(c))
 				for i := range activeServiceBindings {
 					sb := activeServiceBindings[i].DeepCopy()
 					sb.Default()
+					if f := hooks.ServiceBindingPreProjection; f != nil {
+						if err := f(ctx, sb); err != nil {
+							return err
+						}
+					}
 					if err := projector.Project(ctx, sb, workload); err != nil {
+						return err
+					}
+					if f := hooks.ServiceBindingPostProjection; f != nil {
+						if err := f(ctx, sb); err != nil {
+							return err
+						}
+					}
+				}
+				if f := hooks.WorkloadPostProjection; f != nil {
+					if err := f(ctx, workload); err != nil {
 						return err
 					}
 				}
