@@ -188,8 +188,8 @@ github.com/vbatts/tar-split v0.11.3 h1:hLFqsOLQ1SsppQNTMpkpPXClLDfC2A3Zgy9OUU+RV
 github.com/vbatts/tar-split v0.11.3/go.mod h1:9QlHN18E+fEH7RdG+QAJJcuya3rqT7eXSTY7wGrAokY=
 github.com/vito/go-interact v1.0.1 h1:O8xi8c93bRUv2Tb/v6HdiuGc+WnWt+AQzF74MOOdlBs=
 github.com/vito/go-interact v1.0.1/go.mod h1:HrdHSJXD2yn1MhlTwSIMeFgQ5WftiIorszVGd3S/DAA=
-github.com/vmware-tanzu/carvel-imgpkg v0.37.4 h1:wo6IJIxQgn3YxzUb3aPMuReSHnmRtAQ0075RAKypqfU=
-github.com/vmware-tanzu/carvel-imgpkg v0.37.4/go.mod h1:9ylhupBVCJ4JpYZtZKUzYfeot0EB9oWL90iKZ7eetYA=
+github.com/vmware-tanzu/carvel-imgpkg v0.38.0 h1:OEFibSOVs+8OJ65tB+N9hPTt4awPNpXVlpLFc7W/pf0=
+github.com/vmware-tanzu/carvel-imgpkg v0.38.0/go.mod h1:9ylhupBVCJ4JpYZtZKUzYfeot0EB9oWL90iKZ7eetYA=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
