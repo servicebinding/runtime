@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/imgpkg
 
 go 1.20
 
-require github.com/vmware-tanzu/carvel-imgpkg v0.37.4
+require github.com/vmware-tanzu/carvel-imgpkg v0.38.0
 
 require (
 	cloud.google.com/go/compute v1.19.3 // indirect
