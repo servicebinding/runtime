@@ -17,10 +17,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
@@ -52,9 +55,41 @@ func (r *ServiceBinding) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	// TODO(user): check for immutable fields, if any
 	r.Default()
-	return nil, r.validate().ToAggregate()
+
+	errs := field.ErrorList{}
+
+	// check immutable fields
+	var ro *ServiceBinding
+	if o, ok := old.(*ServiceBinding); ok {
+		ro = o
+	} else if o, ok := old.(conversion.Convertible); ok {
+		ro = &ServiceBinding{}
+		if err := o.ConvertTo(ro); err != nil {
+			return nil, err
+		}
+	} else {
+		errs = append(errs,
+			field.InternalError(nil, fmt.Errorf("old object must be of type v1beta1.ServiceBinding")),
+		)
+	}
+	if len(errs) == 0 {
+		if r.Spec.Workload.APIVersion != ro.Spec.Workload.APIVersion {
+			errs = append(errs,
+				field.Forbidden(field.NewPath("spec", "workload", "apiVersion"), "Workload apiVersion is immutable. Delete and recreate the ServiceBinding to update."),
+			)
+		}
+		if r.Spec.Workload.Kind != ro.Spec.Workload.Kind {
+			errs = append(errs,
+				field.Forbidden(field.NewPath("spec", "workload", "kind"), "Workload kind is immutable. Delete and recreate the ServiceBinding to update."),
+			)
+		}
+	}
+
+	// validate new object
+	errs = append(errs, r.validate()...)
+
+	return nil, errs.ToAggregate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

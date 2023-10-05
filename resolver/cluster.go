@@ -19,12 +19,13 @@ package resolver
 import (
 	"context"
 	"fmt"
+	"sort"
 
-	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -80,7 +81,8 @@ func (m *clusterResolver) LookupWorkloadMapping(ctx context.Context, gvr schema.
 	return &wrm.Spec, nil
 }
 
-func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef corev1.ObjectReference) (string, error) {
+func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) (string, error) {
+	serviceRef := serviceBinding.Spec.Service
 	if serviceRef.APIVersion == "v1" && serviceRef.Kind == "Secret" {
 		// direct secret reference
 		return serviceRef.Name, nil
@@ -88,7 +90,7 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	service := &unstructured.Unstructured{}
 	service.SetAPIVersion(serviceRef.APIVersion)
 	service.SetKind(serviceRef.Kind)
-	if err := r.client.Get(ctx, client.ObjectKey{Namespace: serviceRef.Namespace, Name: serviceRef.Name}, service); err != nil {
+	if err := r.client.Get(ctx, client.ObjectKey{Namespace: serviceBinding.Namespace, Name: serviceRef.Name}, service); err != nil {
 		return "", err
 	}
 	secretName, exists, err := unstructured.NestedString(service.UnstructuredContent(), "status", "binding", "name")
@@ -97,43 +99,52 @@ func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceRef co
 	return secretName, err
 }
 
-func (r *clusterResolver) LookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
-	if workloadRef.Name != "" {
-		workload, err := r.lookupWorkload(ctx, workloadRef)
+const (
+	mappingAnnotationPrefix = "projector.servicebinding.io/mapping-"
+)
+
+func (r *clusterResolver) LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) ([]runtime.Object, error) {
+	workloadRef := serviceBinding.Spec.Workload
+
+	list := &unstructured.UnstructuredList{}
+	list.SetAPIVersion(workloadRef.APIVersion)
+	list.SetKind(fmt.Sprintf("%sList", workloadRef.Kind))
+
+	var ls labels.Selector
+	if workloadRef.Selector != nil {
+		var err error
+		ls, err = metav1.LabelSelectorAsSelector(workloadRef.Selector)
 		if err != nil {
 			return nil, err
 		}
-		return []runtime.Object{workload}, nil
-	}
-	return r.lookupWorkloads(ctx, workloadRef, selector)
-}
-
-func (r *clusterResolver) lookupWorkload(ctx context.Context, workloadRef corev1.ObjectReference) (runtime.Object, error) {
-	workload := &unstructured.Unstructured{}
-	workload.SetAPIVersion(workloadRef.APIVersion)
-	workload.SetKind(workloadRef.Kind)
-	if err := r.client.Get(ctx, client.ObjectKey{Namespace: workloadRef.Namespace, Name: workloadRef.Name}, workload); err != nil {
-		return nil, err
-	}
-	return workload, nil
-}
-
-func (r *clusterResolver) lookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error) {
-	workloads := &unstructured.UnstructuredList{}
-	workloads.SetAPIVersion(workloadRef.APIVersion)
-	workloads.SetKind(fmt.Sprintf("%sList", workloadRef.Kind))
-	ls, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return nil, err
-	}
-	if err := r.client.List(ctx, workloads, client.InNamespace(workloadRef.Namespace), client.MatchingLabelsSelector{Selector: ls}); err != nil {
-		return nil, err
 	}
 
-	// coerce to []runtime.Object
-	result := make([]runtime.Object, len(workloads.Items))
-	for i := range workloads.Items {
-		result[i] = &workloads.Items[i]
+	if err := r.client.List(ctx, list, client.InNamespace(serviceBinding.Namespace)); err != nil {
+		return nil, err
 	}
-	return result, nil
+	workloads := []runtime.Object{}
+	for i := range list.Items {
+		workload := &list.Items[i]
+		if annotations := workload.GetAnnotations(); annotations != nil {
+			if _, ok := annotations[fmt.Sprintf("%s%s", mappingAnnotationPrefix, serviceBinding.UID)]; ok {
+				workloads = append(workloads, workload)
+				continue
+			}
+		}
+		if workloadRef.Name != "" {
+			if workload.GetName() == workloadRef.Name {
+				workloads = append(workloads, workload)
+			}
+			continue
+		}
+		if ls.Matches(labels.Set(workload.GetLabels())) {
+			workloads = append(workloads, workload)
+		}
+	}
+
+	sort.Slice(workloads, func(i, j int) bool {
+		return workloads[i].(metav1.Object).GetName() < workloads[j].(metav1.Object).GetName()
+	})
+
+	return workloads, nil
 }

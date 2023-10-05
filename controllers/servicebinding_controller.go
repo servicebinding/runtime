@@ -22,10 +22,12 @@ import (
 
 	"github.com/vmware-labs/reconciler-runtime/apis"
 	"github.com/vmware-labs/reconciler-runtime/reconcilers"
-	corev1 "k8s.io/api/core/v1"
+	"github.com/vmware-labs/reconciler-runtime/tracker"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctlr "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -63,13 +65,7 @@ func ResolveBindingSecret(hooks lifecycle.ServiceBindingHooks) reconcilers.SubRe
 		Sync: func(ctx context.Context, resource *servicebindingv1beta1.ServiceBinding) error {
 			c := reconcilers.RetrieveConfigOrDie(ctx)
 
-			ref := corev1.ObjectReference{
-				APIVersion: resource.Spec.Service.APIVersion,
-				Kind:       resource.Spec.Service.Kind,
-				Namespace:  resource.Namespace,
-				Name:       resource.Spec.Service.Name,
-			}
-			secretName, err := hooks.GetResolver(TrackingClient(c)).LookupBindingSecret(ctx, ref)
+			secretName, err := hooks.GetResolver(TrackingClient(c)).LookupBindingSecret(ctx, resource)
 			if err != nil {
 				if apierrs.IsNotFound(err) {
 					// leave Unknown, the provisioned service may be created shortly
@@ -122,20 +118,26 @@ func ResolveWorkloads(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconc
 		SyncWithResult: func(ctx context.Context, resource *servicebindingv1beta1.ServiceBinding) (reconcile.Result, error) {
 			c := reconcilers.RetrieveConfigOrDie(ctx)
 
-			ref := corev1.ObjectReference{
-				APIVersion: resource.Spec.Workload.APIVersion,
-				Kind:       resource.Spec.Workload.Kind,
-				Namespace:  resource.Namespace,
-				Name:       resource.Spec.Workload.Name,
+			trackingRef := tracker.Reference{
+				APIGroup:  schema.FromAPIVersionAndKind(resource.Spec.Workload.APIVersion, "").Group,
+				Kind:      resource.Spec.Workload.Kind,
+				Namespace: resource.Namespace,
 			}
-			workloads, err := hooks.GetResolver(TrackingClient(c)).LookupWorkloads(ctx, ref, resource.Spec.Workload.Selector)
-			if err != nil {
-				if apierrs.IsNotFound(err) {
-					// leave Unknown, the workload may be created shortly
-					resource.GetConditionManager().MarkUnknown(servicebindingv1beta1.ServiceBindingConditionWorkloadProjected, "WorkloadNotFound", "the workload was not found")
-					// TODO use track rather than requeue
-					return reconcile.Result{Requeue: true}, nil
+			if resource.Spec.Workload.Name != "" {
+				trackingRef.Name = resource.Spec.Workload.Name
+			}
+			if resource.Spec.Workload.Selector != nil {
+				selector, err := metav1.LabelSelectorAsSelector(resource.Spec.Workload.Selector)
+				if err != nil {
+					// should never get here
+					return reconcile.Result{}, err
 				}
+				trackingRef.Selector = selector
+			}
+			c.Tracker.TrackReference(trackingRef, resource)
+
+			workloads, err := hooks.GetResolver(c).LookupWorkloads(ctx, resource)
+			if err != nil {
 				if apierrs.IsForbidden(err) {
 					// set False, the operator needs to give access to the resource
 					// see https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac-1
@@ -144,11 +146,23 @@ func ResolveWorkloads(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconc
 					} else {
 						resource.GetConditionManager().MarkFalse(servicebindingv1beta1.ServiceBindingConditionWorkloadProjected, "WorkloadForbidden", "the controller does not have permission to get the workload")
 					}
-					// TODO use track rather than requeue
-					return reconcile.Result{Requeue: true}, nil
+					return reconcile.Result{}, nil
 				}
 				// TODO handle other err cases
 				return reconcile.Result{}, err
+			}
+			if resource.Spec.Workload.Name != "" {
+				found := false
+				for _, workload := range workloads {
+					if workload.(metav1.Object).GetName() == resource.Spec.Workload.Name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					// leave Unknown, the workload may be created shortly
+					resource.GetConditionManager().MarkUnknown(servicebindingv1beta1.ServiceBindingConditionWorkloadProjected, "WorkloadNotFound", "the workload was not found")
+				}
 			}
 
 			StashWorkloads(ctx, workloads)

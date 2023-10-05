@@ -70,6 +70,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -78,6 +83,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -109,6 +117,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -239,6 +248,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "batch/v1",
+						Kind:       "CronJob",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -247,6 +261,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &batchv1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: batchv1.CronJobSpec{
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
@@ -282,6 +299,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": cronJobMapping,
 					},
@@ -398,6 +416,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "batch/v1",
+						Kind:       "CronJob",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: nil,
@@ -405,6 +428,7 @@ func TestBinding(t *testing.T) {
 			},
 			workload: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": cronJobMapping,
 					},
@@ -513,12 +537,16 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
 					JobTemplate: batchv1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Annotations: map[string]string{},
+								},
 								Spec: corev1.PodSpec{
 									InitContainers: []corev1.Container{
 										{
@@ -529,6 +557,7 @@ func TestBinding(t *testing.T) {
 													Value: "/bindings",
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 										{
 											Name: "init-hello-2",
@@ -538,6 +567,7 @@ func TestBinding(t *testing.T) {
 													Value: "/bindings",
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 									},
 									Containers: []corev1.Container{
@@ -549,6 +579,7 @@ func TestBinding(t *testing.T) {
 													Value: "/custom/path",
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 										{
 											Name: "hello-2",
@@ -558,8 +589,10 @@ func TestBinding(t *testing.T) {
 													Value: "/bindings",
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 									},
+									Volumes: []corev1.Volume{},
 								},
 							},
 						},
@@ -594,6 +627,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "batch/v1",
+						Kind:       "CronJob",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: nil,
@@ -601,6 +639,7 @@ func TestBinding(t *testing.T) {
 			},
 			workload: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
@@ -707,6 +746,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
@@ -778,6 +818,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "batch/v1",
+						Kind:       "CronJob",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: nil,
@@ -785,6 +830,7 @@ func TestBinding(t *testing.T) {
 			},
 			workload: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
@@ -891,6 +937,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &batchv1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: batchv1.CronJobSpec{
@@ -1005,6 +1052,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1012,9 +1064,14 @@ func TestBinding(t *testing.T) {
 					},
 				},
 			},
-			workload: &appsv1.Deployment{},
+			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
+			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1059,6 +1116,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1067,6 +1129,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1116,6 +1181,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1187,6 +1253,11 @@ func TestBinding(t *testing.T) {
 							Key:  "bar",
 						},
 					},
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1195,6 +1266,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -1207,6 +1281,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1290,6 +1365,11 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1298,6 +1378,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1369,6 +1452,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1440,6 +1524,11 @@ func TestBinding(t *testing.T) {
 							Key:  "bloop",
 						},
 					},
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1448,6 +1537,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1519,6 +1611,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1614,6 +1707,11 @@ func TestBinding(t *testing.T) {
 							Key:  "provider",
 						},
 					},
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1622,6 +1720,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -1634,6 +1735,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1747,6 +1849,11 @@ func TestBinding(t *testing.T) {
 							Key:  "provider",
 						},
 					},
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -1755,6 +1862,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1846,6 +1956,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -1929,9 +2040,17 @@ func TestBinding(t *testing.T) {
 				},
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -1944,6 +2063,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name:        "my-workload",
 					Annotations: map[string]string{},
 				},
 				Spec: appsv1.DeploymentSpec{
@@ -1974,6 +2094,9 @@ func TestBinding(t *testing.T) {
 				Spec: servicebindingv1beta1.ServiceBindingSpec{
 					Name: bindingName,
 					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
 						Containers: []string{"bind"},
 					},
 				},
@@ -1984,6 +2107,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						Spec: corev1.PodSpec{
@@ -2004,6 +2130,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -2082,6 +2209,11 @@ func TestBinding(t *testing.T) {
 							Key:  "foo",
 						},
 					},
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
 				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
@@ -2090,6 +2222,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -2251,6 +2386,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -2456,6 +2592,13 @@ func TestBinding(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
+				Spec: servicebindingv1beta1.ServiceBindingSpec{
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
+				},
 				Status: servicebindingv1beta1.ServiceBindingStatus{
 					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
 						Name: secretName,
@@ -2463,6 +2606,9 @@ func TestBinding(t *testing.T) {
 				},
 			},
 			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
@@ -2558,6 +2704,7 @@ func TestBinding(t *testing.T) {
 			},
 			expected: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
 					Annotations: map[string]string{
 						"projector.servicebinding.io/mapping-26894874-4719-4802-8f43-8ceed127b4c2": podSpecableMapping,
 					},
@@ -2670,8 +2817,20 @@ func TestBinding(t *testing.T) {
 					},
 				},
 			}, deploymentRESTMapping),
-			binding:     &servicebindingv1beta1.ServiceBinding{},
-			workload:    &appsv1.Deployment{},
+			binding: &servicebindingv1beta1.ServiceBinding{
+				Spec: servicebindingv1beta1.ServiceBindingSpec{
+					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deployment",
+						Name:       "my-workload",
+					},
+				},
+			},
+			workload: &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-workload",
+				},
+			},
 			expectedErr: true,
 		},
 		{
