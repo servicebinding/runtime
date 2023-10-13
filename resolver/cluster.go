@@ -19,7 +19,6 @@ package resolver
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -108,6 +107,7 @@ func (r *clusterResolver) LookupWorkloads(ctx context.Context, serviceBinding *s
 
 	list := &unstructured.UnstructuredList{}
 	list.SetAPIVersion(workloadRef.APIVersion)
+	// TODO this is unsafe if the ListKind doesn't follow this convention
 	list.SetKind(fmt.Sprintf("%sList", workloadRef.Kind))
 
 	var ls labels.Selector
@@ -141,10 +141,6 @@ func (r *clusterResolver) LookupWorkloads(ctx context.Context, serviceBinding *s
 			workloads = append(workloads, workload)
 		}
 	}
-
-	sort.Slice(workloads, func(i, j int) bool {
-		return workloads[i].(metav1.Object).GetName() < workloads[j].(metav1.Object).GetName()
-	})
 
 	return workloads, nil
 }
