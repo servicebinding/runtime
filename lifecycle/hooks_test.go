@@ -29,6 +29,7 @@ import (
 	rtesting "github.com/vmware-labs/reconciler-runtime/testing"
 	"github.com/vmware-labs/reconciler-runtime/tracker"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -289,6 +290,15 @@ func (p *mockProjector) Project(ctx context.Context, binding *servicebindingv1be
 func (p *mockProjector) Unproject(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error {
 	*p.i = *p.i + 1
 	return p.m.MethodCalled("Projector.Unproject", *p.i, ctx, binding, workload).Error(0)
+}
+
+func (p *mockProjector) IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
+	annotations := workload.(metav1.Object).GetAnnotations()
+	if len(annotations) == 0 {
+		return false
+	}
+	_, ok := annotations[fmt.Sprintf("%s%s", projector.MappingAnnotationPrefix, workload.(metav1.Object).GetUID())]
+	return ok
 }
 
 func makeHooks() (lifecycle.ServiceBindingHooks, *mock.Mock) {

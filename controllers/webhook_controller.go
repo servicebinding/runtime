@@ -110,10 +110,16 @@ func AdmissionProjectorWebhook(c reconcilers.Config, hooks lifecycle.ServiceBind
 					return err
 				}
 
+				projector := hooks.GetProjector(hooks.GetResolver(c))
+
 				// check that bindings are for this workload
 				activeServiceBindings := []servicebindingv1beta1.ServiceBinding{}
 				for _, sb := range serviceBindings.Items {
 					if !sb.DeletionTimestamp.IsZero() {
+						continue
+					}
+					if projector.IsProjected(ctx, &sb, workload) {
+						activeServiceBindings = append(activeServiceBindings, sb)
 						continue
 					}
 					ref := sb.Spec.Workload
@@ -139,7 +145,6 @@ func AdmissionProjectorWebhook(c reconcilers.Config, hooks lifecycle.ServiceBind
 						return err
 					}
 				}
-				projector := hooks.GetProjector(hooks.GetResolver(c))
 				for i := range activeServiceBindings {
 					sb := activeServiceBindings[i].DeepCopy()
 					sb.Default()

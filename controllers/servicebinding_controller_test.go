@@ -38,6 +38,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -89,13 +90,12 @@ func TestServiceBindingReconciler(t *testing.T) {
 		})
 
 	workload := dieappsv1.DeploymentBlank.
-		DieStamp(func(r *appsv1.Deployment) {
-			r.APIVersion = "apps/v1"
-			r.Kind = "Deployment"
-		}).
+		APIVersion("apps/v1").
+		Kind("Deployment").
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name("my-workload")
+			d.UID(uuid.NewUUID())
 		}).
 		SpecDie(func(d *dieappsv1.DeploymentSpecDie) {
 			d.TemplateDie(func(d *diecorev1.PodTemplateSpecDie) {
@@ -157,6 +157,8 @@ func TestServiceBindingReconciler(t *testing.T) {
 	unstructured.SetNestedSlice(containers[0].(map[string]interface{}), []interface{}{}, "volumeMounts")
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), containers, "spec", "template", "spec", "containers")
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), []interface{}{}, "spec", "template", "spec", "volumes")
+
+	newWorkloadUID := uuid.NewUUID()
 
 	rts := rtesting.ReconcilerTests{
 		"in sync": {
@@ -263,6 +265,59 @@ func TestServiceBindingReconciler(t *testing.T) {
 							d.Name(secretName)
 						})
 					}),
+			},
+		},
+		"switch bound workload": {
+			Request: request,
+			StatusSubResourceTypes: []client.Object{
+				&servicebindingv1beta1.ServiceBinding{},
+			},
+			GivenObjects: []client.Object{
+				serviceBinding.
+					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+						d.Finalizers("servicebinding.io/finalizer")
+					}).
+					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+							d.Name("new-workload")
+						})
+					}).
+					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+						d.ConditionsDie(
+							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+						)
+						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+							d.Name(secretName)
+						})
+					}),
+				projectedWorkload,
+				workload.
+					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+						d.Name("new-workload")
+						d.UID(newWorkloadUID)
+					}),
+			},
+			ExpectTracks: []rtesting.TrackRequest{
+				rtesting.NewTrackRequest(workload.MetadataDie(func(d *diemetav1.ObjectMetaDie) { d.Name("new-workload") }), serviceBinding, scheme),
+				rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
+				rtesting.NewTrackRequest(workloadMapping, serviceBinding, scheme),
+			},
+			ExpectEvents: []rtesting.Event{
+				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", workload.GetName()),
+				rtesting.NewEvent(serviceBinding, scheme, corev1.EventTypeNormal, "Updated", "Updated Deployment %q", "new-workload"),
+			},
+			ExpectUpdates: []client.Object{
+				// unproject my-workload
+				unprojectedWorkload,
+				// project new-workload
+				projectedWorkload.
+					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
+						d.Name("new-workload")
+						d.UID(newWorkloadUID)
+					}).
+					DieReleaseUnstructured(),
 			},
 		},
 		"terminating": {
@@ -604,7 +659,6 @@ func TestResolveWorkload(t *testing.T) {
 					})
 				}).
 				DieReleasePtr(),
-			ExpectedResult: reconcile.Result{Requeue: true},
 			ExpectResource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -642,11 +696,10 @@ func TestResolveWorkload(t *testing.T) {
 				workload3,
 			},
 			WithReactors: []rtesting.ReactionFunc{
-				rtesting.InduceFailure("get", "Deployment", rtesting.InduceFailureOpts{
-					Error: apierrs.NewForbidden(schema.GroupResource{}, "my-workload-1", fmt.Errorf("test forbidden")),
+				rtesting.InduceFailure("list", "DeploymentList", rtesting.InduceFailureOpts{
+					Error: apierrs.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("test forbidden")),
 				}),
 			},
-			ExpectedResult: reconcile.Result{Requeue: true},
 			ExpectResource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -761,7 +814,6 @@ func TestResolveWorkload(t *testing.T) {
 					Error: apierrs.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("test forbidden")),
 				}),
 			},
-			ExpectedResult: reconcile.Result{Requeue: true},
 			ExpectResource: serviceBinding.
 				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
@@ -922,7 +974,7 @@ func TestProjectBinding(t *testing.T) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
-						d.Name("my-workload-1")
+						d.Name(workload.GetName())
 					})
 				}).
 				DieReleasePtr(),
@@ -950,7 +1002,7 @@ func TestProjectBinding(t *testing.T) {
 					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
-						d.Name("my-workload-1")
+						d.Name(workload.GetName())
 					})
 				}).
 				DieReleasePtr(),

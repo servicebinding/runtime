@@ -27,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -66,6 +67,10 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 	// rather than attempt to merge an existing binding, unproject it
 	if err := p.Unproject(ctx, binding, workload); err != nil {
 		return err
+	}
+
+	if !p.shouldProject(binding, workload) {
+		return nil
 	}
 
 	versionMapping := MappingVersion(version, resourceMapping)
@@ -117,6 +122,15 @@ func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servic
 	return nil
 }
 
+func (p *serviceBindingProjector) IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
+	annotations := workload.(metav1.Object).GetAnnotations()
+	if len(annotations) == 0 {
+		return false
+	}
+	_, ok := annotations[fmt.Sprintf("%s%s", MappingAnnotationPrefix, binding.UID)]
+	return ok
+}
+
 type mappingValue struct {
 	WorkloadMapping *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
 	RESTMapping     *meta.RESTMapping
@@ -146,11 +160,28 @@ func (p *serviceBindingProjector) lookupClusterMapping(ctx context.Context, work
 	return ctx, wm, rm.Resource.Version, nil
 }
 
-func (p *serviceBindingProjector) project(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
+func (p *serviceBindingProjector) shouldProject(binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
 	if p.secretName(binding) == "" {
 		// no secret to bind
-		return
+		return false
 	}
+
+	if binding.Spec.Workload.Name != "" {
+		return binding.Spec.Workload.Name == workload.(metav1.Object).GetName()
+	}
+	if binding.Spec.Workload.Selector != nil {
+		ls, err := metav1.LabelSelectorAsSelector(binding.Spec.Workload.Selector)
+		if err != nil {
+			// should never get here
+			return false
+		}
+		return ls.Matches(labels.Set(workload.(metav1.Object).GetLabels()))
+	}
+
+	return false
+}
+
+func (p *serviceBindingProjector) project(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
 	p.projectVolume(binding, mpt)
 	for i := range mpt.Containers {
 		p.projectContainer(binding, mpt, &mpt.Containers[i])

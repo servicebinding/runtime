@@ -29,8 +29,10 @@ import (
 type ServiceBindingProjector interface {
 	// Project the service into the workload as defined by the ServiceBinding.
 	Project(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error
-	// Unproject the serice from the workload as defined by the ServiceBinding.
+	// Unproject the service from the workload as defined by the ServiceBinding.
 	Unproject(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error
+	// IsProjected returns true when the workload has been projected into by the binding
+	IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool
 }
 
 type MappingSource interface {

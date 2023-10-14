@@ -19,9 +19,7 @@ package resolver
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -40,9 +38,10 @@ type Resolver interface {
 	// LookupBindingSecret returns the binding secret name exposed by the service following the Provisioned Service duck-type
 	// (`.status.binding.name`). If a direction binding is used (where the referenced service is itself a Secret) the referenced Secret is
 	// returned without a lookup.
-	LookupBindingSecret(ctx context.Context, serviceRef corev1.ObjectReference) (string, error)
+	LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) (string, error)
 
 	// LookupWorkloads returns the referenced objects. Often a unstructured Object is used to sidestep issues with schemes and registered
-	// types. The selector is mutually exclusive with the reference name.
-	LookupWorkloads(ctx context.Context, workloadRef corev1.ObjectReference, selector *metav1.LabelSelector) ([]runtime.Object, error)
+	// types. The selector is mutually exclusive with the reference name. The UID of the ServiceBinding is used to find resources that
+	// may have been previously bound but no longer match the query.
+	LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) ([]runtime.Object, error)
 }

@@ -20,7 +20,9 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -269,6 +271,169 @@ func TestServiceBindingValidate(t *testing.T) {
 			_, actualDeleteErr := c.seed.ValidateDelete()
 			if diff := cmp.Diff(nil, actualDeleteErr); diff != "" {
 				t.Errorf("ValidateDelete (-expected, +actual): %s", diff)
+			}
+		})
+	}
+}
+
+func TestServiceBindingValidate_Immutable(t *testing.T) {
+	tests := []struct {
+		name     string
+		seed     *ServiceBinding
+		old      runtime.Object
+		expected field.ErrorList
+	}{
+		{
+			name: "allow update workload name",
+			seed: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Name:       "new-workload",
+					},
+				},
+			},
+			old: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Name:       "old-workload",
+					},
+				},
+			},
+			expected: field.ErrorList{},
+		},
+		{
+			name: "reject update workload apiVersion",
+			seed: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Name:       "my-workload",
+					},
+				},
+			},
+			old: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "extensions/v1beta1",
+						Kind:       "Deloyment",
+						Name:       "my-workload",
+					},
+				},
+			},
+			expected: field.ErrorList{
+				{
+					Type:     field.ErrorTypeForbidden,
+					Field:    "spec.workload.apiVersion",
+					Detail:   "Workload apiVersion is immutable. Delete and recreate the ServiceBinding to update.",
+					BadValue: "",
+				},
+			},
+		},
+		{
+			name: "reject update workload kind",
+			seed: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Name:       "my-workload",
+					},
+				},
+			},
+			old: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "StatefulSet",
+						Name:       "my-workload",
+					},
+				},
+			},
+			expected: field.ErrorList{
+				{
+					Type:     field.ErrorTypeForbidden,
+					Field:    "spec.workload.kind",
+					Detail:   "Workload kind is immutable. Delete and recreate the ServiceBinding to update.",
+					BadValue: "",
+				},
+			},
+		},
+		{
+			name: "unkonwn old object",
+			seed: &ServiceBinding{
+				Spec: ServiceBindingSpec{
+					Name: "my-binding",
+					Service: ServiceBindingServiceReference{
+						APIVersion: "v1",
+						Kind:       "Secret",
+						Name:       "my-service",
+					},
+					Workload: ServiceBindingWorkloadReference{
+						APIVersion: "apps/v1",
+						Kind:       "Deloyment",
+						Name:       "new-workload",
+					},
+				},
+			},
+			old: &corev1.Pod{},
+			expected: field.ErrorList{
+				{
+					Type:   field.ErrorTypeInternal,
+					Field:  "<nil>",
+					Detail: "old object must be of type v1beta1.ServiceBinding",
+				},
+			},
+		},
+	}
+
+	for _, c := range tests {
+		t.Run(c.name, func(t *testing.T) {
+			expectedErr := c.expected.ToAggregate()
+
+			_, actualUpdateErr := c.seed.ValidateUpdate(c.old)
+			if diff := cmp.Diff(expectedErr, actualUpdateErr); diff != "" {
+				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
 			}
 		})
 	}
