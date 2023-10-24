@@ -22,9 +22,8 @@ limitations under the License.
 package v1beta1
 
 import (
-	testingx "testing"
-
 	testing "dies.dev/testing"
+	testingx "testing"
 )
 
 func TestClusterWorkloadResourceMappingDie_MissingMethods(t *testingx.T) {

@@ -60,12 +60,15 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func disableHTTP2(t *tls.Config) {
+	t.NextProtos = []string{"http/1.1"}
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
 	var migrateFromVMware bool
-	var enableHTTP2 bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -73,7 +76,6 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&migrateFromVMware, "migrate-from-vmware", false,
 		"Enable migration from the VMware implementation.")
-	flag.BoolVar(&enableHTTP2, "enable-http2", false, "Enable HTTP2 for the metrics and webhook servers")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -82,26 +84,16 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	disableHTTP2 := func(t *tls.Config) {
-		if enableHTTP2 {
-			t.NextProtos = []string{"http/1.1"}
-		}
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
 		Metrics: server.Options{
 			BindAddress: metricsAddr,
-			TLSOpts: []func(*tls.Config){
-				disableHTTP2,
-			},
+			TLSOpts:     []func(*tls.Config){disableHTTP2},
 		},
 		WebhookServer: &webhook.DefaultServer{
 			Options: webhook.Options{
-				Port: 9443,
-				TLSOpts: []func(*tls.Config){
-					disableHTTP2,
-				},
+				Port:    9443,
+				TLSOpts: []func(*tls.Config){disableHTTP2},
 			},
 		},
 		Cache: cache.Options{
