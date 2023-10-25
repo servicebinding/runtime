@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime
 
-go 1.20
+go 1.21
 
 require (
 	dies.dev v0.9.0
