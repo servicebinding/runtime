@@ -1,6 +1,6 @@
 module github.com/servicebinding/runtime/hack/imgpkg
 
-go 1.20
+go 1.21
 
 require github.com/vmware-tanzu/carvel-imgpkg v0.38.0
 
