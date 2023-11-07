@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"os"
 	"time"
@@ -59,6 +60,10 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func disableHTTP2(t *tls.Config) {
+	t.NextProtos = []string{"http/1.1"}
+}
+
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
@@ -83,10 +88,12 @@ func main() {
 		Scheme: scheme,
 		Metrics: server.Options{
 			BindAddress: metricsAddr,
+			TLSOpts:     []func(*tls.Config){disableHTTP2},
 		},
 		WebhookServer: &webhook.DefaultServer{
 			Options: webhook.Options{
-				Port: 9443,
+				Port:    9443,
+				TLSOpts: []func(*tls.Config){disableHTTP2},
 			},
 		},
 		Cache: cache.Options{
