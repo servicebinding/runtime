@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/go-logr/logr"
@@ -60,7 +61,7 @@ func AdmissionProjectorReconciler(c reconcilers.Config, name string, accessCheck
 			Reconciler: reconcilers.Sequence[client.Object]{
 				LoadServiceBindings(req),
 				InterceptGVKs(),
-				WebhookRules([]admissionregistrationv1.OperationType{admissionregistrationv1.Create, admissionregistrationv1.Update}, accessChecker),
+				WebhookRules([]admissionregistrationv1.OperationType{admissionregistrationv1.Create, admissionregistrationv1.Update}, []string{}, accessChecker),
 			},
 		},
 		DesiredResource: func(ctx context.Context, resource *admissionregistrationv1.MutatingWebhookConfiguration) (*admissionregistrationv1.MutatingWebhookConfiguration, error) {
@@ -194,7 +195,7 @@ func TriggerReconciler(c reconcilers.Config, name string, accessChecker rbac.Acc
 				LoadServiceBindings(req),
 				TriggerGVKs(),
 				InterceptGVKs(),
-				WebhookRules([]admissionregistrationv1.OperationType{admissionregistrationv1.Create, admissionregistrationv1.Update, admissionregistrationv1.Delete}, accessChecker),
+				WebhookRules([]admissionregistrationv1.OperationType{admissionregistrationv1.Create, admissionregistrationv1.Update, admissionregistrationv1.Delete}, []string{"status"}, accessChecker),
 			},
 		},
 		DesiredResource: func(ctx context.Context, resource *admissionregistrationv1.ValidatingWebhookConfiguration) (*admissionregistrationv1.ValidatingWebhookConfiguration, error) {
@@ -332,7 +333,7 @@ func TriggerGVKs() reconcilers.SubReconciler[client.Object] {
 	}
 }
 
-func WebhookRules(operations []admissionregistrationv1.OperationType, accessChecker rbac.AccessChecker) reconcilers.SubReconciler[client.Object] {
+func WebhookRules(operations []admissionregistrationv1.OperationType, subresources []string, accessChecker rbac.AccessChecker) reconcilers.SubReconciler[client.Object] {
 	return &reconcilers.SyncReconciler[client.Object]{
 		Name: "WebhookRules",
 		Sync: func(ctx context.Context, _ client.Object) error {
@@ -376,6 +377,11 @@ func WebhookRules(operations []admissionregistrationv1.OperationType, accessChec
 
 				if resources.Len() == 0 {
 					continue
+				}
+				for _, resource := range resources.List() {
+					for _, subresource := range subresources {
+						resources.Insert(fmt.Sprintf("%s/%s", resource, subresource))
+					}
 				}
 
 				rules = append(rules, admissionregistrationv1.RuleWithOperations{

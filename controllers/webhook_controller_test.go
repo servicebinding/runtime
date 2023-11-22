@@ -547,7 +547,7 @@ func TestTriggerReconciler(t *testing.T) {
 				dieadmissionregistrationv1.RuleWithOperationsBlank.
 					APIGroups("apps").
 					APIVersions("*").
-					Resources("deployments").
+					Resources("deployments", "deployments/status").
 					Operations(
 						admissionregistrationv1.Create,
 						admissionregistrationv1.Update,
@@ -556,7 +556,7 @@ func TestTriggerReconciler(t *testing.T) {
 				dieadmissionregistrationv1.RuleWithOperationsBlank.
 					APIGroups("example").
 					APIVersions("*").
-					Resources("myservices").
+					Resources("myservices", "myservices/status").
 					Operations(
 						admissionregistrationv1.Create,
 						admissionregistrationv1.Update,
@@ -1010,7 +1010,7 @@ func TestWebhookRules(t *testing.T) {
 						Rule: admissionregistrationv1.Rule{
 							APIGroups:   []string{"apps"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"deployments"},
+							Resources:   []string{"deployments", "deployments/status"},
 						},
 					},
 				},
@@ -1037,7 +1037,7 @@ func TestWebhookRules(t *testing.T) {
 						Rule: admissionregistrationv1.Rule{
 							APIGroups:   []string{"apps"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"deployments"},
+							Resources:   []string{"deployments", "deployments/status"},
 						},
 					},
 				},
@@ -1065,7 +1065,7 @@ func TestWebhookRules(t *testing.T) {
 						Rule: admissionregistrationv1.Rule{
 							APIGroups:   []string{"apps"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"deployments", "statefulsets"},
+							Resources:   []string{"deployments", "deployments/status", "statefulsets", "statefulsets/status"},
 						},
 					},
 				},
@@ -1094,7 +1094,7 @@ func TestWebhookRules(t *testing.T) {
 						Rule: admissionregistrationv1.Rule{
 							APIGroups:   []string{"apps"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"deployments"},
+							Resources:   []string{"deployments", "deployments/status"},
 						},
 					},
 					{
@@ -1102,7 +1102,7 @@ func TestWebhookRules(t *testing.T) {
 						Rule: admissionregistrationv1.Rule{
 							APIGroups:   []string{"batch"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"jobs"},
+							Resources:   []string{"jobs", "jobs/status"},
 						},
 					},
 				},
@@ -1161,7 +1161,7 @@ func TestWebhookRules(t *testing.T) {
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "StatefulSet"}, meta.RESTScopeNamespace)
 		restMapper.Add(schema.GroupVersionKind{Group: "batch", Version: "v1", Kind: "Job"}, meta.RESTScopeNamespace)
 		accessChecker := rbac.NewAccessChecker(c, 0).WithVerb("get")
-		return controllers.WebhookRules(operations, accessChecker)
+		return controllers.WebhookRules(operations, []string{"status"}, accessChecker)
 	})
 }
 
