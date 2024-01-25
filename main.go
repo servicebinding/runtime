@@ -69,6 +69,8 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var migrateFromVMware bool
+	var leaseDuration time.Duration
+	var renewDeadline time.Duration
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -76,6 +78,9 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&migrateFromVMware, "migrate-from-vmware", false,
 		"Enable migration from the VMware implementation.")
+	// Default values taken from: https://github.com/kubernetes-sigs/controller-runtime/blob/b88ed7a3602b85b6cfd0acfe9c25033b978bdb83/pkg/manager/internal.go#L52-L53
+	flag.DurationVar(&leaseDuration, "leader-elect-lease-duration", 15*time.Second, "configure leader election lease duration")
+	flag.DurationVar(&renewDeadline, "leader-elect-renew-deadline", 10*time.Second, "configure leader election renew deadline")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -102,6 +107,8 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "a359ffaf.servicebinding.io",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
