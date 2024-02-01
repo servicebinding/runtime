@@ -29,7 +29,7 @@ jobs:
     - name: Test
       run: make test
     - name: Report coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
     - name: Disallow generated drift
       run: |
         set -o errexit
