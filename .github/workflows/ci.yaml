@@ -144,7 +144,7 @@ jobs:
           ${IMGPKG} push -f "${scratch}" -b "${BUNDLE}"
           ${IMGPKG} copy -b "${BUNDLE}" --to-tar servicebinding-runtime-bundle.tar
         echo "##[endgroup]"
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: servicebinding-runtime-bundle.tar
         path: servicebinding-runtime-bundle.tar
@@ -298,7 +298,7 @@ jobs:
             help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
         EOF
     - name: Download staged bundle
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: servicebinding-runtime-bundle.tar
     - name: Relocate bundle
@@ -408,7 +408,7 @@ jobs:
       if: always()
       continue-on-error: true
     - name: Save test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: acceptance-test-results-${{ matrix.version }}
@@ -467,7 +467,7 @@ jobs:
         release_name: ${{ steps.get_version.outputs.VERSION }}
         draft: true
     - name: Download staged bundle
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: servicebinding-runtime-bundle.tar
     - name: Upload servicebinding-runtime-bundle.tar
