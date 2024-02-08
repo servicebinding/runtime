@@ -30,6 +30,8 @@ jobs:
       run: make test
     - name: Report coverage
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: 0e521354-90f7-4a17-a876-73ca69b59cb5
     - name: Disallow generated drift
       run: |
         set -o errexit
