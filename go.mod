@@ -9,9 +9,9 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/vmware-labs/reconciler-runtime v0.17.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
-	k8s.io/api v0.29.1
-	k8s.io/apimachinery v0.29.1
-	k8s.io/client-go v0.29.1
+	k8s.io/api v0.29.2
+	k8s.io/apimachinery v0.29.2
+	k8s.io/client-go v0.29.2
 	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	sigs.k8s.io/controller-runtime v0.17.1
 	sigs.k8s.io/yaml v1.4.0
