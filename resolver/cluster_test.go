@@ -37,7 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	fakeclient "sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/projector"
 	"github.com/servicebinding/runtime/resolver"
 )
@@ -46,7 +46,7 @@ func TestClusterResolver_LookupRESTMapping(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(appsv1.AddToScheme(scheme))
 	utilruntime.Must(batchv1.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	deploymentRESTMapping := &meta.RESTMapping{
 		GroupVersionKind: schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"},
@@ -81,12 +81,12 @@ func TestClusterResolver_LookupRESTMapping(t *testing.T) {
 		{
 			name: "error if workload type not found in scheme",
 			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+				&servicebindingv1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "myworkloads.workload.local",
 					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version: "*",
 							},
@@ -101,12 +101,12 @@ func TestClusterResolver_LookupRESTMapping(t *testing.T) {
 		{
 			name: "error if workload type not found in restmapper",
 			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+				&servicebindingv1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "myworkloads.workload.local",
 					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version: "*",
 							},
@@ -157,13 +157,13 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(appsv1.AddToScheme(scheme))
 	utilruntime.Must(batchv1.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	tests := []struct {
 		name                string
 		givenObjects        []client.Object
 		gvr                 schema.GroupVersionResource
-		expected            *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+		expected            *servicebindingv1.ClusterWorkloadResourceMappingSpec
 		expectedRESTMapping *meta.RESTMapping
 		expectedErr         bool
 	}{
@@ -171,12 +171,12 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 			name:         "default mapping",
 			givenObjects: []client.Object{},
 			gvr:          schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version:     "*",
 						Annotations: ".spec.template.metadata.annotations",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path:         ".spec.template.spec.initContainers[*]",
 								Name:         ".name",
@@ -198,16 +198,16 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 		{
 			name: "custom mapping",
 			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+				&servicebindingv1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cronjobs.batch",
 					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version:     "v1",
 								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+								Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 									{
 										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 										Name: ".name",
@@ -224,12 +224,12 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 				},
 			},
 			gvr: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version:     "v1",
 						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 								Name:         ".name",
@@ -251,16 +251,16 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 		{
 			name: "custom mapping with wildcard",
 			givenObjects: []client.Object{
-				&servicebindingv1beta1.ClusterWorkloadResourceMapping{
+				&servicebindingv1.ClusterWorkloadResourceMapping{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "cronjobs.batch",
 					},
-					Spec: servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-						Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+					Spec: servicebindingv1.ClusterWorkloadResourceMappingSpec{
+						Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 							{
 								Version:     "*",
 								Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-								Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+								Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 									{
 										Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 										Name: ".name",
@@ -277,12 +277,12 @@ func TestClusterResolver_LookupWorkloadMapping(t *testing.T) {
 				},
 			},
 			gvr: schema.GroupVersionResource{Group: "batch", Version: "v1", Resource: "cronjobs"},
-			expected: &servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			expected: &servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version:     "*",
 						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path:         ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 								Name:         ".name",
@@ -335,19 +335,19 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 	tests := []struct {
 		name           string
 		givenObjects   []client.Object
-		serviceBinding *servicebindingv1beta1.ServiceBinding
+		serviceBinding *servicebindingv1.ServiceBinding
 		expected       string
 		expectedErr    bool
 	}{
 		{
 			name:         "direct binding",
 			givenObjects: []client.Object{},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Service: servicebindingv1beta1.ServiceBindingServiceReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Service: servicebindingv1.ServiceBindingServiceReference{
 						APIVersion: "v1",
 						Kind:       "Secret",
 						Name:       "my-secret",
@@ -375,12 +375,12 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Service: servicebindingv1beta1.ServiceBindingServiceReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Service: servicebindingv1.ServiceBindingServiceReference{
 						APIVersion: "service.local/v1",
 						Kind:       "ProvisionedService",
 						Name:       "my-service",
@@ -404,12 +404,12 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Service: servicebindingv1beta1.ServiceBindingServiceReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Service: servicebindingv1.ServiceBindingServiceReference{
 						APIVersion: "service.local/v1",
 						Kind:       "NotAProvisionedService",
 						Name:       "my-service",
@@ -421,12 +421,12 @@ func TestClusterResolver_LookupBindingSecret(t *testing.T) {
 		{
 			name:         "not found",
 			givenObjects: []client.Object{},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Service: servicebindingv1beta1.ServiceBindingServiceReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Service: servicebindingv1.ServiceBindingServiceReference{
 						APIVersion: "service.local/v1",
 						Kind:       "ProvisionedService",
 						Name:       "my-service",
@@ -471,20 +471,20 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 	tests := []struct {
 		name           string
 		givenObjects   []client.Object
-		serviceBinding *servicebindingv1beta1.ServiceBinding
+		serviceBinding *servicebindingv1.ServiceBinding
 		expected       []runtime.Object
 		expectedErr    bool
 	}{
 		{
 			name:         "not found",
 			givenObjects: []client.Object{},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
@@ -506,13 +506,13 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
@@ -558,13 +558,13 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
@@ -611,13 +611,13 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "workload.local/v1",
 						Kind:       "MyWorkload",
 						Name:       "my-workload",
@@ -668,13 +668,13 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Selector: &metav1.LabelSelector{
@@ -783,13 +783,13 @@ func TestClusterResolver_LookupWorkloads(t *testing.T) {
 					},
 				},
 			},
-			serviceBinding: &servicebindingv1beta1.ServiceBinding{
+			serviceBinding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: "my-namespace",
 					UID:       bindingUID,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "workload.local/v1",
 						Kind:       "MyWorkload",
 						Selector: &metav1.LabelSelector{

@@ -8,7 +8,7 @@
 [![codecov](https://codecov.io/gh/servicebinding/runtime/branch/main/graph/badge.svg?token=D2Hs4MIXBZ)](https://codecov.io/gh/servicebinding/runtime)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [1.0 spec](https://servicebinding.io/spec/core/1.0.0/). The full specification is implemented, please open an issue for any discrepancies.
+Reference implementation of the [ServiceBinding.io](https://servicebinding.io) [1.1 spec](https://servicebinding.io/spec/core/1.1.0/), along with [1.0](https://servicebinding.io/spec/core/1.0.0/). The full specification is implemented, please open an issue for any discrepancies.
 
 - [Getting Started](#getting-started)
   - [Deploy a released build](#deploy-a-released-build)
@@ -77,9 +77,9 @@ Samples are located in the [samples directory](./samples), including:
 
 ## Supported Services
 
-Kubernetes defines no provisioned services by default, however, `Secret`s may be [directly referenced](https://servicebinding.io/spec/core/1.0.0/#direct-secret-reference).
+Kubernetes defines no provisioned services by default, however, `Secret`s may be [directly referenced](https://servicebinding.io/spec/core/1.1.0/#direct-secret-reference).
 
-Additional services can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac).
+Additional services can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.1.0/#considerations-for-role-based-access-control-rbac).
 
 ## Supported Workloads
 
@@ -92,11 +92,11 @@ Support for the built-in k8s workload resource is pre-configured including:
 - batch `Job` (since Jobs are immutable, the ServiceBinding must be defined and service resolved before the job is created)
 - core `ReplicationController`
 
-Additional workloads can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.0.0/#considerations-for-role-based-access-control-rbac-1) and if not PodSpecable, a [`ClusterWorkloadResourceMapping`](https://servicebinding.io/spec/core/1.0.0/#workload-resource-mapping).
+Additional workloads can be supported dynamically by [defining a `ClusterRole`](https://servicebinding.io/spec/core/1.1.0/#considerations-for-role-based-access-control-rbac-1) and if not PodSpecable, a [`ClusterWorkloadResourceMapping`](https://servicebinding.io/spec/core/1.1.0/#workload-resource-mapping).
 
 ## Architecture
 
-The [Service Binding for Kubernetes Specification](https://servicebinding.io/spec/core/1.0.0/) defines the shape of [Provisioned Services](https://servicebinding.io/spec/core/1.0.0/#provisioned-service), and how the `Secret` is [projected into a workload](https://servicebinding.io/spec/core/1.0.0/#workload-projection). The spec says less (intentionally) about how this happens.
+The [Service Binding for Kubernetes Specification](https://servicebinding.io/spec/core/1.1.0/) defines the shape of [Provisioned Services](https://servicebinding.io/spec/core/1.1.0/#provisioned-service), and how the `Secret` is [projected into a workload](https://servicebinding.io/spec/core/1.1.0/#workload-projection). The spec says less (intentionally) about how this happens.
 
 Both a controller and mutating admission webhook are used to project a `Secret` defined by the service referenced by the `ServiceBinding` resource into the workloads referenced. The controller is used to process `ServiceBinding`s by resolving services, projecting workloads and updating the status. The webhook is used to prevent removal of the workload projection, projecting workload on create, and a notification trigger for `ServiceBinding`s the controller should process.
 

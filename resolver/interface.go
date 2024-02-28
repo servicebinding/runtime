@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 type Resolver interface {
@@ -33,15 +33,15 @@ type Resolver interface {
 
 	// LookupWorkloadMapping the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the
 	//  workload's fully qualified resource `{resource}.{group}`.
-	LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error)
+	LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1.ClusterWorkloadResourceMappingSpec, error)
 
 	// LookupBindingSecret returns the binding secret name exposed by the service following the Provisioned Service duck-type
 	// (`.status.binding.name`). If a direction binding is used (where the referenced service is itself a Secret) the referenced Secret is
 	// returned without a lookup.
-	LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) (string, error)
+	LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1.ServiceBinding) (string, error)
 
 	// LookupWorkloads returns the referenced objects. Often a unstructured Object is used to sidestep issues with schemes and registered
 	// types. The selector is mutually exclusive with the reference name. The UID of the ServiceBinding is used to find resources that
 	// may have been previously bound but no longer match the query.
-	LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) ([]runtime.Object, error)
+	LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1.ServiceBinding) ([]runtime.Object, error)
 }

@@ -19,36 +19,36 @@ package v1alpha3
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 // ServiceBindingWorkloadReference defines a subset of corev1.ObjectReference with extensions
-type ServiceBindingWorkloadReference = servicebindingv1beta1.ServiceBindingWorkloadReference
+type ServiceBindingWorkloadReference = servicebindingv1.ServiceBindingWorkloadReference
 
 // ServiceBindingServiceReference defines a subset of corev1.ObjectReference
-type ServiceBindingServiceReference = servicebindingv1beta1.ServiceBindingServiceReference
+type ServiceBindingServiceReference = servicebindingv1.ServiceBindingServiceReference
 
 // ServiceBindingSecretReference defines a mirror of corev1.LocalObjectReference
-type ServiceBindingSecretReference = servicebindingv1beta1.ServiceBindingSecretReference
+type ServiceBindingSecretReference = servicebindingv1.ServiceBindingSecretReference
 
 // EnvMapping defines a mapping from the value of a Secret entry to an environment variable
-type EnvMapping = servicebindingv1beta1.EnvMapping
+type EnvMapping = servicebindingv1.EnvMapping
 
 // ServiceBindingSpec defines the desired state of ServiceBinding
-type ServiceBindingSpec = servicebindingv1beta1.ServiceBindingSpec
+type ServiceBindingSpec = servicebindingv1.ServiceBindingSpec
 
 // These are valid conditions of ServiceBinding.
 const (
 	// ServiceBindingReady means the ServiceBinding has projected the ProvisionedService
 	// secret and the Workload is ready to start. It does not indicate the condition
 	// of either the Service or the Workload resources referenced.
-	ServiceBindingConditionReady = servicebindingv1beta1.ServiceBindingConditionReady
+	ServiceBindingConditionReady = servicebindingv1.ServiceBindingConditionReady
 )
 
 // ServiceBindingStatus defines the observed state of ServiceBinding
-type ServiceBindingStatus = servicebindingv1beta1.ServiceBindingStatus
+type ServiceBindingStatus = servicebindingv1.ServiceBindingStatus
 
-// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1beta1 instead"
+// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1 instead"
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Secret",type=string,JSONPath=`.status.binding.name`

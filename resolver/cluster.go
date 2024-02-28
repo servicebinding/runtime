@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 // New creates a new resolver backed by a controller-runtime client
@@ -57,15 +57,15 @@ func (m *clusterResolver) LookupRESTMapping(ctx context.Context, obj runtime.Obj
 	return rm, nil
 }
 
-func (m *clusterResolver) LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error) {
-	wrm := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
+func (m *clusterResolver) LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1.ClusterWorkloadResourceMappingSpec, error) {
+	wrm := &servicebindingv1.ClusterWorkloadResourceMapping{}
 
 	if err := m.client.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)}, wrm); err != nil {
 		if !apierrs.IsNotFound(err) {
 			return nil, err
 		}
-		wrm.Spec = servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-			Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+		wrm.Spec = servicebindingv1.ClusterWorkloadResourceMappingSpec{
+			Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 				{
 					Version: "*",
 				},
@@ -80,7 +80,7 @@ func (m *clusterResolver) LookupWorkloadMapping(ctx context.Context, gvr schema.
 	return &wrm.Spec, nil
 }
 
-func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) (string, error) {
+func (r *clusterResolver) LookupBindingSecret(ctx context.Context, serviceBinding *servicebindingv1.ServiceBinding) (string, error) {
 	serviceRef := serviceBinding.Spec.Service
 	if serviceRef.APIVersion == "v1" && serviceRef.Kind == "Secret" {
 		// direct secret reference
@@ -102,7 +102,7 @@ const (
 	mappingAnnotationPrefix = "projector.servicebinding.io/mapping-"
 )
 
-func (r *clusterResolver) LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1beta1.ServiceBinding) ([]runtime.Object, error) {
+func (r *clusterResolver) LookupWorkloads(ctx context.Context, serviceBinding *servicebindingv1.ServiceBinding) ([]runtime.Object, error) {
 	workloadRef := serviceBinding.Spec.Workload
 
 	list := &unstructured.UnstructuredList{}

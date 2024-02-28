@@ -22,7 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 func (r *ClusterWorkloadResourceMapping) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -35,7 +35,7 @@ var _ webhook.Defaulter = &ClusterWorkloadResourceMapping{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) Default() {
-	r1 := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
+	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
 	r.ConvertTo(r1)
 	r1.Default()
 	r.ConvertFrom(r1)
@@ -47,7 +47,7 @@ var _ webhook.Validator = &ClusterWorkloadResourceMapping{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateCreate() (admission.Warnings, error) {
-	r1 := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
+	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (r *ClusterWorkloadResourceMapping) ValidateCreate() (admission.Warnings, e
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	r1 := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
+	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (r *ClusterWorkloadResourceMapping) ValidateUpdate(old runtime.Object) (adm
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateDelete() (admission.Warnings, error) {
-	r1 := &servicebindingv1beta1.ClusterWorkloadResourceMapping{}
+	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}

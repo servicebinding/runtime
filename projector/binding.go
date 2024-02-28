@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 const (
@@ -58,7 +58,7 @@ func New(mappingSource MappingSource) ServiceBindingProjector {
 	}
 }
 
-func (p *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error {
+func (p *serviceBindingProjector) Project(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error {
 	ctx, resourceMapping, version, err := p.lookupClusterMapping(ctx, workload)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (p *serviceBindingProjector) Project(ctx context.Context, binding *serviceb
 	return nil
 }
 
-func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error {
+func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error {
 	resourceMapping, err := p.retrieveLocalMapping(binding, workload)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (p *serviceBindingProjector) Unproject(ctx context.Context, binding *servic
 	return nil
 }
 
-func (p *serviceBindingProjector) IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
+func (p *serviceBindingProjector) IsProjected(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) bool {
 	annotations := workload.(metav1.Object).GetAnnotations()
 	if len(annotations) == 0 {
 		return false
@@ -132,7 +132,7 @@ func (p *serviceBindingProjector) IsProjected(ctx context.Context, binding *serv
 }
 
 type mappingValue struct {
-	WorkloadMapping *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+	WorkloadMapping *servicebindingv1.ClusterWorkloadResourceMappingSpec
 	RESTMapping     *meta.RESTMapping
 }
 
@@ -140,7 +140,7 @@ type mappingValue struct {
 // avoids redundant calls to the mappingSource for the same workload call when Unproject
 // is called from Project. When the lookup is from the cluster, the value is stashed into
 // the context for future lookups in this turn.
-func (p *serviceBindingProjector) lookupClusterMapping(ctx context.Context, workload runtime.Object) (context.Context, *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, string, error) {
+func (p *serviceBindingProjector) lookupClusterMapping(ctx context.Context, workload runtime.Object) (context.Context, *servicebindingv1.ClusterWorkloadResourceMappingSpec, string, error) {
 	raw := ctx.Value(mappingValue{})
 	if value, ok := raw.(mappingValue); ok {
 		return ctx, value.WorkloadMapping, value.RESTMapping.Resource.Version, nil
@@ -160,7 +160,7 @@ func (p *serviceBindingProjector) lookupClusterMapping(ctx context.Context, work
 	return ctx, wm, rm.Resource.Version, nil
 }
 
-func (p *serviceBindingProjector) shouldProject(binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
+func (p *serviceBindingProjector) shouldProject(binding *servicebindingv1.ServiceBinding, workload runtime.Object) bool {
 	if p.secretName(binding) == "" {
 		// no secret to bind
 		return false
@@ -181,14 +181,14 @@ func (p *serviceBindingProjector) shouldProject(binding *servicebindingv1beta1.S
 	return false
 }
 
-func (p *serviceBindingProjector) project(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
+func (p *serviceBindingProjector) project(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) {
 	p.projectVolume(binding, mpt)
 	for i := range mpt.Containers {
 		p.projectContainer(binding, mpt, &mpt.Containers[i])
 	}
 }
 
-func (p *serviceBindingProjector) unproject(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
+func (p *serviceBindingProjector) unproject(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) {
 	p.unprojectVolume(binding, mpt)
 	for i := range mpt.Containers {
 		p.unprojectContainer(binding, mpt, &mpt.Containers[i])
@@ -200,7 +200,7 @@ func (p *serviceBindingProjector) unproject(binding *servicebindingv1beta1.Servi
 	delete(mpt.PodTemplateAnnotations, p.providerAnnotationName(binding))
 }
 
-func (p *serviceBindingProjector) projectVolume(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
+func (p *serviceBindingProjector) projectVolume(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) {
 	volume := corev1.Volume{
 		Name: p.volumeName(binding),
 		VolumeSource: corev1.VolumeSource{
@@ -271,7 +271,7 @@ func (p *serviceBindingProjector) projectVolume(binding *servicebindingv1beta1.S
 	})
 }
 
-func (p *serviceBindingProjector) unprojectVolume(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) {
+func (p *serviceBindingProjector) unprojectVolume(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) {
 	volumes := []corev1.Volume{}
 	projected := p.volumeName(binding)
 	for _, v := range mpt.Volumes {
@@ -282,7 +282,7 @@ func (p *serviceBindingProjector) unprojectVolume(binding *servicebindingv1beta1
 	mpt.Volumes = volumes
 }
 
-func (p *serviceBindingProjector) projectContainer(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
+func (p *serviceBindingProjector) projectContainer(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
 	if !p.isContainerBindable(binding, mc) {
 		return
 	}
@@ -290,12 +290,12 @@ func (p *serviceBindingProjector) projectContainer(binding *servicebindingv1beta
 	p.projectEnv(binding, mpt, mc)
 }
 
-func (p *serviceBindingProjector) unprojectContainer(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
+func (p *serviceBindingProjector) unprojectContainer(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
 	p.unprojectVolumeMount(binding, mc)
 	p.unprojectEnv(binding, mpt, mc)
 }
 
-func (p *serviceBindingProjector) projectVolumeMount(binding *servicebindingv1beta1.ServiceBinding, mc *metaContainer) {
+func (p *serviceBindingProjector) projectVolumeMount(binding *servicebindingv1.ServiceBinding, mc *metaContainer) {
 	mc.VolumeMounts = append(mc.VolumeMounts, corev1.VolumeMount{
 		Name:      p.volumeName(binding),
 		ReadOnly:  true,
@@ -321,7 +321,7 @@ func (p *serviceBindingProjector) projectVolumeMount(binding *servicebindingv1be
 	})
 }
 
-func (p *serviceBindingProjector) unprojectVolumeMount(binding *servicebindingv1beta1.ServiceBinding, mc *metaContainer) {
+func (p *serviceBindingProjector) unprojectVolumeMount(binding *servicebindingv1.ServiceBinding, mc *metaContainer) {
 	mounts := []corev1.VolumeMount{}
 	projected := p.volumeName(binding)
 	for _, m := range mc.VolumeMounts {
@@ -332,7 +332,7 @@ func (p *serviceBindingProjector) unprojectVolumeMount(binding *servicebindingv1
 	mc.VolumeMounts = mounts
 }
 
-func (p *serviceBindingProjector) projectEnv(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
+func (p *serviceBindingProjector) projectEnv(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
 	for _, e := range binding.Spec.Env {
 		if e.Key == "type" && binding.Spec.Type != "" {
 			mc.Env = append(mc.Env, corev1.EnvVar{
@@ -389,7 +389,7 @@ func (p *serviceBindingProjector) projectEnv(binding *servicebindingv1beta1.Serv
 	})
 }
 
-func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
+func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate, mc *metaContainer) {
 	env := []corev1.EnvVar{}
 	secret := mpt.PodTemplateAnnotations[p.secretAnnotationName(binding)]
 	typeFieldPath := fmt.Sprintf("metadata.annotations['%s']", p.typeAnnotationName(binding))
@@ -418,7 +418,7 @@ func (p *serviceBindingProjector) unprojectEnv(binding *servicebindingv1beta1.Se
 	mc.Env = env
 }
 
-func (p *serviceBindingProjector) isContainerBindable(binding *servicebindingv1beta1.ServiceBinding, mc *metaContainer) bool {
+func (p *serviceBindingProjector) isContainerBindable(binding *servicebindingv1.ServiceBinding, mc *metaContainer) bool {
 	if len(binding.Spec.Workload.Containers) == 0 || mc.Name == nil {
 		return true
 	}
@@ -467,14 +467,14 @@ func (p *serviceBindingProjector) knownProjectedSecrets(mpt *metaPodTemplate) se
 	return secrets
 }
 
-func (p *serviceBindingProjector) secretName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) secretName(binding *servicebindingv1.ServiceBinding) string {
 	if binding.Status.Binding == nil {
 		return ""
 	}
 	return binding.Status.Binding.Name
 }
 
-func (p *serviceBindingProjector) secretAnnotation(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) string {
+func (p *serviceBindingProjector) secretAnnotation(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) string {
 	key := p.secretAnnotationName(binding)
 	secret := p.secretName(binding)
 	if secret == "" {
@@ -484,35 +484,35 @@ func (p *serviceBindingProjector) secretAnnotation(binding *servicebindingv1beta
 	return secret
 }
 
-func (p *serviceBindingProjector) secretAnnotationName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) secretAnnotationName(binding *servicebindingv1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", SecretAnnotationPrefix, binding.UID)
 }
 
-func (p *serviceBindingProjector) volumeName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) volumeName(binding *servicebindingv1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", VolumePrefix, binding.UID)
 }
 
-func (p *serviceBindingProjector) typeAnnotation(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) string {
+func (p *serviceBindingProjector) typeAnnotation(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) string {
 	key := p.typeAnnotationName(binding)
 	mpt.PodTemplateAnnotations[key] = binding.Spec.Type
 	return key
 }
 
-func (p *serviceBindingProjector) typeAnnotationName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) typeAnnotationName(binding *servicebindingv1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", TypeAnnotationPrefix, binding.UID)
 }
 
-func (p *serviceBindingProjector) providerAnnotation(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate) string {
+func (p *serviceBindingProjector) providerAnnotation(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate) string {
 	key := p.providerAnnotationName(binding)
 	mpt.PodTemplateAnnotations[key] = binding.Spec.Provider
 	return key
 }
 
-func (p *serviceBindingProjector) providerAnnotationName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) providerAnnotationName(binding *servicebindingv1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", ProviderAnnotationPrefix, binding.UID)
 }
 
-func (p *serviceBindingProjector) retrieveLocalMapping(binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error) {
+func (p *serviceBindingProjector) retrieveLocalMapping(binding *servicebindingv1.ServiceBinding, workload runtime.Object) (*servicebindingv1.ClusterWorkloadResourceMappingSpec, error) {
 	annoations := workload.(metav1.Object).GetAnnotations()
 	if annoations == nil {
 		return nil, nil
@@ -521,14 +521,14 @@ func (p *serviceBindingProjector) retrieveLocalMapping(binding *servicebindingv1
 	if !ok {
 		return nil, nil
 	}
-	var mapping servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+	var mapping servicebindingv1.ClusterWorkloadResourceMappingSpec
 	if err := json.Unmarshal([]byte(data), &mapping); err != nil {
 		return nil, err
 	}
 	return &mapping, nil
 }
 
-func (p *serviceBindingProjector) stashLocalMapping(binding *servicebindingv1beta1.ServiceBinding, mpt *metaPodTemplate, mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec) error {
+func (p *serviceBindingProjector) stashLocalMapping(binding *servicebindingv1.ServiceBinding, mpt *metaPodTemplate, mapping *servicebindingv1.ClusterWorkloadResourceMappingSpec) error {
 	if mapping == nil {
 		delete(mpt.WorkloadAnnotations, p.mappingAnnotationName(binding))
 		return nil
@@ -541,6 +541,6 @@ func (p *serviceBindingProjector) stashLocalMapping(binding *servicebindingv1bet
 	return nil
 }
 
-func (p *serviceBindingProjector) mappingAnnotationName(binding *servicebindingv1beta1.ServiceBinding) string {
+func (p *serviceBindingProjector) mappingAnnotationName(binding *servicebindingv1.ServiceBinding) string {
 	return fmt.Sprintf("%s%s", MappingAnnotationPrefix, binding.UID)
 }

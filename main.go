@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	servicebindingv1alpha3 "github.com/servicebinding/runtime/apis/v1alpha3"
 	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
 	"github.com/servicebinding/runtime/controllers"
@@ -57,6 +58,7 @@ func init() {
 
 	utilruntime.Must(servicebindingv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -116,7 +118,7 @@ func main() {
 	}
 
 	ctx := ctrl.SetupSignalHandler()
-	config := reconcilers.NewConfig(mgr, &servicebindingv1beta1.ServiceBinding{}, syncPeriod)
+	config := reconcilers.NewConfig(mgr, &servicebindingv1.ServiceBinding{}, syncPeriod)
 	accessChecker := rbac.NewAccessChecker(config, 5*time.Minute)
 
 	hooks := lifecycle.ServiceBindingHooks{}
@@ -135,12 +137,20 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ServiceBinding")
 		os.Exit(1)
 	}
+	if err = (&servicebindingv1.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1")
+		os.Exit(1)
+	}
 	if err = (&servicebindingv1beta1.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1beta1")
 		os.Exit(1)
 	}
 	if err = (&servicebindingv1alpha3.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1alpha3")
+		os.Exit(1)
+	}
+	if err = (&servicebindingv1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping v1")
 		os.Exit(1)
 	}
 	if err = (&servicebindingv1beta1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {

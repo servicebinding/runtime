@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1
 
 import (
 	"testing"
@@ -421,7 +421,7 @@ func TestServiceBindingValidate_Immutable(t *testing.T) {
 				{
 					Type:   field.ErrorTypeInternal,
 					Field:  "<nil>",
-					Detail: "old object must be of type v1beta1.ServiceBinding",
+					Detail: "old object must be of type v1.ServiceBinding",
 				},
 			},
 		},

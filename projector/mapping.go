@@ -23,14 +23,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 // The workload's version is either directly matched, or the wildcard version `*`
 // mapping template is returned. If no explicit mapping is found, a mapping appropriate for a PodSpecable resource may be used.
-func MappingVersion(version string, mappings *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec) *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate {
-	wildcardMapping := servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{Version: "*"}
-	var mapping *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+func MappingVersion(version string, mappings *servicebindingv1.ClusterWorkloadResourceMappingSpec) *servicebindingv1.ClusterWorkloadResourceMappingTemplate {
+	wildcardMapping := servicebindingv1.ClusterWorkloadResourceMappingTemplate{Version: "*"}
+	var mapping *servicebindingv1.ClusterWorkloadResourceMappingTemplate
 	for _, v := range mappings.Versions {
 		switch v.Version {
 		case version:
@@ -53,15 +53,15 @@ func MappingVersion(version string, mappings *servicebindingv1beta1.ClusterWorkl
 var _ MappingSource = (*staticMapping)(nil)
 
 type staticMapping struct {
-	workloadMapping *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+	workloadMapping *servicebindingv1.ClusterWorkloadResourceMappingSpec
 	restMapping     *meta.RESTMapping
 }
 
 // NewStaticMapping returns a single ClusterWorkloadResourceMappingSpec for each lookup. It is useful for
 // testing.
-func NewStaticMapping(wm *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, rm *meta.RESTMapping) MappingSource {
+func NewStaticMapping(wm *servicebindingv1.ClusterWorkloadResourceMappingSpec, rm *meta.RESTMapping) MappingSource {
 	if len(wm.Versions) == 0 {
-		wm.Versions = []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+		wm.Versions = []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 			{
 				Version: "*",
 			},
@@ -81,6 +81,6 @@ func (m *staticMapping) LookupRESTMapping(ctx context.Context, obj runtime.Objec
 	return m.restMapping, nil
 }
 
-func (m *staticMapping) LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error) {
+func (m *staticMapping) LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1.ClusterWorkloadResourceMappingSpec, error) {
 	return m.workloadMapping, nil
 }

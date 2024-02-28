@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 the original author or authors.
+ * Copyright 2023 Original Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,13 @@
  * limitations under the License.
  */
 
-package v1beta1
+package v1
 
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-
-	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
-var _ conversion.Convertible = (*ServiceBinding)(nil)
+var _ conversion.Hub = (*ServiceBinding)(nil)
 
-func (src *ServiceBinding) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*servicebindingv1.ServiceBinding)
-
-	dst.ObjectMeta = src.ObjectMeta
-	dst.Spec = src.Spec
-	dst.Status = src.Status
-
-	return nil
-}
-
-func (dst *ServiceBinding) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*servicebindingv1.ServiceBinding)
-
-	dst.ObjectMeta = src.ObjectMeta
-	dst.Spec = src.Spec
-	dst.Status = src.Status
-
-	return nil
-}
+// Hub for conversion
+func (r *ServiceBinding) Hub() {}

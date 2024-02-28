@@ -31,7 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 func TestBinding(t *testing.T) {
@@ -56,28 +56,28 @@ func TestBinding(t *testing.T) {
 	tests := []struct {
 		name        string
 		mapping     MappingSource
-		binding     *servicebindingv1beta1.ServiceBinding
+		binding     *servicebindingv1.ServiceBinding
 		workload    runtime.Object
 		expected    runtime.Object
 		expectedErr bool
 	}{
 		{
 			name:    "podspecable",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -223,12 +223,12 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "almost podspecable",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version:     "*",
 						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 								Name: ".name",
@@ -242,20 +242,20 @@ func TestBinding(t *testing.T) {
 					},
 				},
 			}, cronJobRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "batch/v1",
 						Kind:       "CronJob",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -409,20 +409,20 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "almost podspecable, unbind with stashed mapping",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "batch/v1",
 						Kind:       "CronJob",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
+				Status: servicebindingv1.ServiceBindingStatus{
 					Binding: nil,
 				},
 			},
@@ -602,12 +602,12 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "almost podspecable, unbind with cluster mapping",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version:     "*",
 						Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 								Name: ".name",
@@ -621,19 +621,19 @@ func TestBinding(t *testing.T) {
 					},
 				},
 			}, cronJobRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "batch/v1",
 						Kind:       "CronJob",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
+				Status: servicebindingv1.ServiceBindingStatus{
 					Binding: nil,
 				},
 			},
@@ -811,20 +811,20 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "almost podspecable, unable to unbind without mapping",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, cronJobRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "batch/v1",
 						Kind:       "CronJob",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
+				Status: servicebindingv1.ServiceBindingStatus{
 					Binding: nil,
 				},
 			},
@@ -1045,21 +1045,21 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "no containers",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -1109,21 +1109,21 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "rotate binding secret",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName + "-updated",
 					},
 				},
@@ -1236,14 +1236,14 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "project service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Env: []servicebindingv1beta1.EnvMapping{
+					Env: []servicebindingv1.EnvMapping{
 						{
 							Name: "FOO",
 							Key:  "foo",
@@ -1253,14 +1253,14 @@ func TestBinding(t *testing.T) {
 							Key:  "bar",
 						},
 					},
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -1358,21 +1358,21 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "remove service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -1507,14 +1507,14 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "update service binding env",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Env: []servicebindingv1beta1.EnvMapping{
+					Env: []servicebindingv1.EnvMapping{
 						{
 							Name: "BLEEP",
 							Key:  "bleep",
@@ -1524,14 +1524,14 @@ func TestBinding(t *testing.T) {
 							Key:  "bloop",
 						},
 					},
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -1688,16 +1688,16 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "project service binding type and provider for env and volume",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name:     bindingName,
 					Type:     "my-type",
 					Provider: "my-provider",
-					Env: []servicebindingv1beta1.EnvMapping{
+					Env: []servicebindingv1.EnvMapping{
 						{
 							Name: "TYPE",
 							Key:  "type",
@@ -1707,14 +1707,14 @@ func TestBinding(t *testing.T) {
 							Key:  "provider",
 						},
 					},
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -1832,14 +1832,14 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "update service binding type and provider",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Env: []servicebindingv1beta1.EnvMapping{
+					Env: []servicebindingv1.EnvMapping{
 						{
 							Name: "TYPE",
 							Key:  "type",
@@ -1849,14 +1849,14 @@ func TestBinding(t *testing.T) {
 							Key:  "provider",
 						},
 					},
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -2033,14 +2033,14 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "no binding if missing secret",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
@@ -2086,22 +2086,22 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "only bind to allowed containers",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 						Containers: []string{"bind"},
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -2196,27 +2196,27 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "preserve other bindings",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
+				Spec: servicebindingv1.ServiceBindingSpec{
 					Name: bindingName,
-					Env: []servicebindingv1beta1.EnvMapping{
+					Env: []servicebindingv1.EnvMapping{
 						{
 							Name: "FOO",
 							Key:  "foo",
 						},
 					},
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -2587,20 +2587,20 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name:    "apply binding should be idempotent",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{}, deploymentRESTMapping),
+			binding: &servicebindingv1.ServiceBinding{
 				ObjectMeta: metav1.ObjectMeta{
 					UID: uid,
 				},
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
 					},
 				},
-				Status: servicebindingv1beta1.ServiceBindingStatus{
-					Binding: &servicebindingv1beta1.ServiceBindingSecretReference{
+				Status: servicebindingv1.ServiceBindingStatus{
+					Binding: &servicebindingv1.ServiceBindingSecretReference{
 						Name: secretName,
 					},
 				},
@@ -2805,11 +2805,11 @@ func TestBinding(t *testing.T) {
 		},
 		{
 			name: "invalid container jsonpath",
-			mapping: NewStaticMapping(&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{
-				Versions: []servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: NewStaticMapping(&servicebindingv1.ClusterWorkloadResourceMappingSpec{
+				Versions: []servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 					{
 						Version: "*",
-						Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+						Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 							{
 								Path: "[",
 							},
@@ -2817,9 +2817,9 @@ func TestBinding(t *testing.T) {
 					},
 				},
 			}, deploymentRESTMapping),
-			binding: &servicebindingv1beta1.ServiceBinding{
-				Spec: servicebindingv1beta1.ServiceBindingSpec{
-					Workload: servicebindingv1beta1.ServiceBindingWorkloadReference{
+			binding: &servicebindingv1.ServiceBinding{
+				Spec: servicebindingv1.ServiceBindingSpec{
+					Workload: servicebindingv1.ServiceBindingWorkloadReference{
 						APIVersion: "apps/v1",
 						Kind:       "Deployment",
 						Name:       "my-workload",
@@ -2836,7 +2836,7 @@ func TestBinding(t *testing.T) {
 		{
 			name: "conversion error",
 			mapping: NewStaticMapping(
-				&servicebindingv1beta1.ClusterWorkloadResourceMappingSpec{},
+				&servicebindingv1.ClusterWorkloadResourceMappingSpec{},
 				&meta.RESTMapping{
 					GroupVersionKind: schema.GroupVersionKind{Group: "test", Version: "v1", Kind: "BadMarshalJSON"},
 					Resource:         schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "badmarshaljsons"},

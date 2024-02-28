@@ -44,9 +44,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/controllers"
-	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/lifecycle/vmware"
 )
@@ -62,30 +62,30 @@ func TestMigrationHooks_Controller(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	now := metav1.Now().Rfc3339Copy()
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.UID(uid)
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("v1")
 				d.Kind("Secret")
 				d.Name(secretName)
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
 			})
 		})
 
-	workloadMapping := dieservicebindingv1beta1.ClusterWorkloadResourceMappingBlank.
+	workloadMapping := dieservicebindingv1.ClusterWorkloadResourceMappingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Name("deployments.apps")
 		})
@@ -213,20 +213,20 @@ func TestMigrationHooks_Controller(t *testing.T) {
 		"in sync": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -240,17 +240,17 @@ func TestMigrationHooks_Controller(t *testing.T) {
 		"migrate vmware binding": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
 							diemetav1.ConditionBlank.Type("Ready").True().Reason("Ready").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ServiceAvailable").True().Reason("Available").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ProjectionReady").True().Reason("Projected").LastTransitionTime(now),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -282,13 +282,13 @@ func TestMigrationHooks_Controller(t *testing.T) {
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -297,30 +297,30 @@ func TestMigrationHooks_Controller(t *testing.T) {
 		"migrate vmware binding with projected envvars and overridden type and provider": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
-					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+					SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 						d.Type("overridden-type")
 						d.Provider("overridden-provider")
-						d.EnvDie("BOUND_PASSWORD", func(d *dieservicebindingv1beta1.EnvMappingDie) {
+						d.EnvDie("BOUND_PASSWORD", func(d *dieservicebindingv1.EnvMappingDie) {
 							d.Key("password")
 						})
-						d.EnvDie("BOUND_TYPE", func(d *dieservicebindingv1beta1.EnvMappingDie) {
+						d.EnvDie("BOUND_TYPE", func(d *dieservicebindingv1.EnvMappingDie) {
 							d.Key("type")
 						})
-						d.EnvDie("BOUND_PROVIDER", func(d *dieservicebindingv1beta1.EnvMappingDie) {
+						d.EnvDie("BOUND_PROVIDER", func(d *dieservicebindingv1.EnvMappingDie) {
 							d.Key("provider")
 						})
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
 							diemetav1.ConditionBlank.Type("Ready").True().Reason("Ready").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ServiceAvailable").True().Reason("Available").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ProjectionReady").True().Reason("Projected").LastTransitionTime(now),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -491,13 +491,13 @@ func TestMigrationHooks_Controller(t *testing.T) {
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -525,23 +525,23 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	now := metav1.Now().Rfc3339Copy()
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.UID(uid)
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("v1")
 				d.Kind("Secret")
 				d.Name(secretName)
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -674,7 +674,7 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 		Allowed(true)
 
 	addWorkloadRefIndex := func(cb *fake.ClientBuilder) *fake.ClientBuilder {
-		return cb.WithIndex(&servicebindingv1beta1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
+		return cb.WithIndex(&servicebindingv1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
 	}
 
 	rts := rtesting.AdmissionWebhookTests{
@@ -687,13 +687,13 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
 							diemetav1.ConditionBlank.Type("Ready").True().Reason("Ready").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ServiceAvailable").True().Reason("Available").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ProjectionReady").True().Reason("Projected").LastTransitionTime(now),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -711,13 +711,13 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
 							diemetav1.ConditionBlank.Type("Ready").True().Reason("Ready").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ServiceAvailable").True().Reason("Available").LastTransitionTime(now),
 							diemetav1.ConditionBlank.Type("ProjectionReady").True().Reason("Projected").LastTransitionTime(now),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),

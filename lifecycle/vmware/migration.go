@@ -34,13 +34,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/servicebinding/runtime/apis/duck"
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 )
 
 func InstallMigrationHooks(hooks lifecycle.ServiceBindingHooks) lifecycle.ServiceBindingHooks {
 	serviceBindingPostProjection := hooks.ServiceBindingPostProjection
-	hooks.ServiceBindingPostProjection = func(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error {
+	hooks.ServiceBindingPostProjection = func(ctx context.Context, binding *servicebindingv1.ServiceBinding) error {
 		if err := CleanupServiceBinding(ctx, binding); err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func InstallMigrationHooks(hooks lifecycle.ServiceBindingHooks) lifecycle.Servic
 	return hooks
 }
 
-func CleanupServiceBinding(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error {
+func CleanupServiceBinding(ctx context.Context, binding *servicebindingv1.ServiceBinding) error {
 	if reconcilers.RetrieveRequest(ctx).Name == "" {
 		// we're not in a reconciler
 		return nil

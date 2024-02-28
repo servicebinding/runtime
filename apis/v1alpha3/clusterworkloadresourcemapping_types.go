@@ -19,12 +19,12 @@ package v1alpha3
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 // ClusterWorkloadResourceMappingTemplate defines the mapping for a specific version of an workload resource to a
 // logical PodTemplateSpec-like structure.
-type ClusterWorkloadResourceMappingTemplate = servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+type ClusterWorkloadResourceMappingTemplate = servicebindingv1.ClusterWorkloadResourceMappingTemplate
 
 // ClusterWorkloadResourceMappingContainer defines the mapping for a specific fragment of an workload resource
 // to a Container-like structure.
@@ -32,12 +32,12 @@ type ClusterWorkloadResourceMappingTemplate = servicebindingv1beta1.ClusterWorkl
 // Each mapping defines exactly one path that may match multiple container-like fragments within the workload
 // resource. For each object matching the path the name, env and volumeMounts expressions are resolved to find those
 // structures.
-type ClusterWorkloadResourceMappingContainer = servicebindingv1beta1.ClusterWorkloadResourceMappingContainer
+type ClusterWorkloadResourceMappingContainer = servicebindingv1.ClusterWorkloadResourceMappingContainer
 
 // ClusterWorkloadResourceMappingSpec defines the desired state of ClusterWorkloadResourceMapping
-type ClusterWorkloadResourceMappingSpec = servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+type ClusterWorkloadResourceMappingSpec = servicebindingv1.ClusterWorkloadResourceMappingSpec
 
-// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1beta1 instead"
+// +kubebuilder:deprecatedversion:warning="servicebinding.io/v1alpha3 is deprecated and will be removed in a future release, use v1 instead"
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`

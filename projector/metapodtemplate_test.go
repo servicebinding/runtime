@@ -29,7 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 func TestNewMetaPodTemplate(t *testing.T) {
@@ -58,14 +58,14 @@ func TestNewMetaPodTemplate(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		mapping     *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+		mapping     *servicebindingv1.ClusterWorkloadResourceMappingTemplate
 		workload    runtime.Object
 		expected    *metaPodTemplate
 		expectedErr bool
 	}{
 		{
 			name:    "podspecable",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			workload: &appsv1.Deployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: testWorkloadAnnotations,
@@ -129,9 +129,9 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name: "almost podspecable",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 						Name: ".name",
@@ -210,7 +210,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name:     "no containers",
-			mapping:  &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping:  &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			workload: &appsv1.Deployment{},
 			expected: &metaPodTemplate{
 				WorkloadAnnotations:    map[string]string{},
@@ -221,7 +221,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name:    "empty container",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			workload: &appsv1.Deployment{
 				Spec: appsv1.DeploymentSpec{
 					Template: corev1.PodTemplateSpec{
@@ -248,9 +248,9 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name: "unmapped container name",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 				Annotations: ".spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.template.spec.initContainers[*]",
 					},
@@ -286,8 +286,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name: "misaligned path",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".foo.bar",
 					},
@@ -332,9 +332,9 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name: "misaligned pointers",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 				Annotations: ".foo/nar",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path:         ".spec.template.spec.containers[*]",
 						Name:         ".foo.bar",
@@ -380,8 +380,8 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name: "invalid container jsonpath",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: "[",
 					},
@@ -392,7 +392,7 @@ func TestNewMetaPodTemplate(t *testing.T) {
 		},
 		{
 			name:        "conversion error",
-			mapping:     &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping:     &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			workload:    &BadMarshalJSON{},
 			expectedErr: true,
 		},
@@ -447,7 +447,7 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		mapping     *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+		mapping     *servicebindingv1.ClusterWorkloadResourceMappingTemplate
 		metadata    metaPodTemplate
 		workload    runtime.Object
 		expected    runtime.Object
@@ -455,7 +455,7 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 	}{
 		{
 			name:    "podspecable",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
 				WorkloadAnnotations:    testWorkloadAnnotations,
 				PodTemplateAnnotations: testPodTemplateAnnotations,
@@ -541,9 +541,9 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 		},
 		{
 			name: "almost podspecable",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{
 				Annotations: ".spec.jobTemplate.spec.template.metadata.annotations",
-				Containers: []servicebindingv1beta1.ClusterWorkloadResourceMappingContainer{
+				Containers: []servicebindingv1.ClusterWorkloadResourceMappingContainer{
 					{
 						Path: ".spec.jobTemplate.spec.template.spec.initContainers[*]",
 						Name: ".name",
@@ -648,7 +648,7 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 		},
 		{
 			name:    "no containers",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
 				WorkloadAnnotations:    map[string]string{},
 				PodTemplateAnnotations: map[string]string{},
@@ -674,7 +674,7 @@ func TestMetaPodTemplate_WriteToWorkload(t *testing.T) {
 		},
 		{
 			name:    "empty container",
-			mapping: &servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{},
+			mapping: &servicebindingv1.ClusterWorkloadResourceMappingTemplate{},
 			metadata: metaPodTemplate{
 				WorkloadAnnotations:    map[string]string{},
 				PodTemplateAnnotations: map[string]string{},
