@@ -680,21 +680,29 @@ func (d *ClusterWorkloadResourceMappingTemplateDie) Version(v string) *ClusterWo
 	})
 }
 
-// Annotations is a Restricted JSONPath that references the annotations map within the workload resource. These annotations must end up in the resulting Pod, and are generally not the workload resource's annotations. Defaults to `.spec.template.metadata.annotations`.
+// Annotations is a Restricted JSONPath that references the annotations map within the workload resource. These
+//
+// annotations must end up in the resulting Pod, and are generally not the workload resource's annotations.
+//
+// Defaults to `.spec.template.metadata.annotations`.
 func (d *ClusterWorkloadResourceMappingTemplateDie) Annotations(v string) *ClusterWorkloadResourceMappingTemplateDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingTemplate) {
 		r.Annotations = v
 	})
 }
 
-// Containers is the collection of mappings to container-like fragments of the workload resource. Defaults to mappings appropriate for a PodSpecable resource.
+// Containers is the collection of mappings to container-like fragments of the workload resource. Defaults to
+//
+// mappings appropriate for a PodSpecable resource.
 func (d *ClusterWorkloadResourceMappingTemplateDie) Containers(v ...apisv1beta1.ClusterWorkloadResourceMappingContainer) *ClusterWorkloadResourceMappingTemplateDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingTemplate) {
 		r.Containers = v
 	})
 }
 
-// Volumes is a Restricted JSONPath that references the slice of volumes within the workload resource. Defaults to `.spec.template.spec.volumes`.
+// Volumes is a Restricted JSONPath that references the slice of volumes within the workload resource. Defaults to
+//
+// `.spec.template.spec.volumes`.
 func (d *ClusterWorkloadResourceMappingTemplateDie) Volumes(v string) *ClusterWorkloadResourceMappingTemplateDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingTemplate) {
 		r.Volumes = v
@@ -890,21 +898,31 @@ func (d *ClusterWorkloadResourceMappingContainerDie) Path(v string) *ClusterWork
 	})
 }
 
-// Name is a Restricted JSONPath that references the name of the container with the container-like workload resource fragment. If not defined, container name filtering is ignored.
+// Name is a Restricted JSONPath that references the name of the container with the container-like workload resource
+//
+// fragment. If not defined, container name filtering is ignored.
 func (d *ClusterWorkloadResourceMappingContainerDie) Name(v string) *ClusterWorkloadResourceMappingContainerDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingContainer) {
 		r.Name = v
 	})
 }
 
-// Env is a Restricted JSONPath that references the slice of environment variables for the container with the container-like workload resource fragment. The referenced location is created if it does not exist. Defaults to `.envs`.
+// Env is a Restricted JSONPath that references the slice of environment variables for the container with the
+//
+// container-like workload resource fragment. The referenced location is created if it does not exist. Defaults
+//
+// to `.envs`.
 func (d *ClusterWorkloadResourceMappingContainerDie) Env(v string) *ClusterWorkloadResourceMappingContainerDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingContainer) {
 		r.Env = v
 	})
 }
 
-// VolumeMounts is a Restricted JSONPath that references the slice of volume mounts for the container with the container-like workload resource fragment. The referenced location is created if it does not exist. Defaults to `.volumeMounts`.
+// VolumeMounts is a Restricted JSONPath that references the slice of volume mounts for the container with the
+//
+// container-like workload resource fragment. The referenced location is created if it does not exist. Defaults
+//
+// to `.volumeMounts`.
 func (d *ClusterWorkloadResourceMappingContainerDie) VolumeMounts(v string) *ClusterWorkloadResourceMappingContainerDie {
 	return d.DieStamp(func(r *apisv1beta1.ClusterWorkloadResourceMappingContainer) {
 		r.VolumeMounts = v
@@ -1603,14 +1621,18 @@ func (d *ServiceBindingWorkloadReferenceDie) APIVersion(v string) *ServiceBindin
 	})
 }
 
-// Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+// Kind of the referent.
+//
+// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 func (d *ServiceBindingWorkloadReferenceDie) Kind(v string) *ServiceBindingWorkloadReferenceDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingWorkloadReference) {
 		r.Kind = v
 	})
 }
 
-// Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+// Name of the referent.
+//
+// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 func (d *ServiceBindingWorkloadReferenceDie) Name(v string) *ServiceBindingWorkloadReferenceDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingWorkloadReference) {
 		r.Name = v
@@ -1820,14 +1842,18 @@ func (d *ServiceBindingServiceReferenceDie) APIVersion(v string) *ServiceBinding
 	})
 }
 
-// Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+// Kind of the referent.
+//
+// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
 func (d *ServiceBindingServiceReferenceDie) Kind(v string) *ServiceBindingServiceReferenceDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingServiceReference) {
 		r.Kind = v
 	})
 }
 
-// Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+// Name of the referent.
+//
+// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 func (d *ServiceBindingServiceReferenceDie) Name(v string) *ServiceBindingServiceReferenceDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingServiceReference) {
 		r.Name = v
@@ -2212,7 +2238,9 @@ func (d *ServiceBindingStatusDie) DeepCopy() *ServiceBindingStatusDie {
 	}
 }
 
-// ObservedGeneration is the 'Generation' of the ServiceBinding that was last processed by the controller.
+// ObservedGeneration is the 'Generation' of the ServiceBinding that
+//
+// was last processed by the controller.
 func (d *ServiceBindingStatusDie) ObservedGeneration(v int64) *ServiceBindingStatusDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingStatus) {
 		r.ObservedGeneration = v
@@ -2415,7 +2443,9 @@ func (d *ServiceBindingSecretReferenceDie) DeepCopy() *ServiceBindingSecretRefer
 	}
 }
 
-// Name of the referent secret. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+// Name of the referent secret.
+//
+// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
 func (d *ServiceBindingSecretReferenceDie) Name(v string) *ServiceBindingSecretReferenceDie {
 	return d.DieStamp(func(r *apisv1beta1.ServiceBindingSecretReference) {
 		r.Name = v
