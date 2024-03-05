@@ -3,7 +3,7 @@ module github.com/servicebinding/runtime
 go 1.21
 
 require (
-	dies.dev v0.10.0
+	dies.dev v0.10.1
 	github.com/go-logr/logr v1.4.1
 	github.com/google/go-cmp v0.6.0
 	github.com/stretchr/testify v1.9.0
