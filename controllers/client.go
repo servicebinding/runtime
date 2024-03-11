@@ -19,7 +19,7 @@ package controllers
 import (
 	"context"
 
-	"github.com/vmware-labs/reconciler-runtime/reconcilers"
+	"reconciler.io/runtime/reconcilers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
