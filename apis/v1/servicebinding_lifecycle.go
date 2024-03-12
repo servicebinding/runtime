@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1beta1 contains API Schema definitions for the servicebinding.io v1beta1 API group
+// Package v1 contains API Schema definitions for the servicebinding.io v1 API group
 // +kubebuilder:object:generate=true
 // +groupName=servicebinding.io
-package v1beta1
+package v1
 
 import (
 	"github.com/vmware-labs/reconciler-runtime/apis"

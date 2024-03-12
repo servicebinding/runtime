@@ -22,7 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/projector"
 	"github.com/servicebinding/runtime/resolver"
 )
@@ -44,13 +44,13 @@ type ServiceBindingHooks struct {
 	// ServiceBinding before the projection.
 	//
 	// +optional
-	ServiceBindingPreProjection func(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error
+	ServiceBindingPreProjection func(ctx context.Context, binding *servicebindingv1.ServiceBinding) error
 
 	// ServiceBindingPostProjection can be used to alter the projected
 	// ServiceBinding before mutations are persisted.
 	//
 	// +optional
-	ServiceBindingPostProjection func(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error
+	ServiceBindingPostProjection func(ctx context.Context, binding *servicebindingv1.ServiceBinding) error
 
 	// WorkloadPreProjection can be used to alter the resolved workload before
 	// the projection.

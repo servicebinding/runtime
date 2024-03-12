@@ -52,9 +52,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/controllers"
-	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/rbac"
 )
@@ -65,7 +65,7 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.MutatingWebhookConfigurationBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -90,18 +90,18 @@ func TestAdmissionProjectorReconciler(t *testing.T) {
 			)
 		})
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace("my-namespace")
 			d.Name("my-binding")
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("example/v1")
 				d.Kind("MyService")
 				d.Name("my-service")
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -186,7 +186,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	requestUID := types.UID("9deefaa1-2c90-4f40-9c7b-3f5c1fd75dde")
 	bindingUID := types.UID("89deaf20-7bab-4610-81db-6f8c3f7fa51d")
@@ -209,14 +209,14 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 				})
 			})
 		})
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.UID(bindingUID)
 		}).
-		StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-			d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+		StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+			d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 				d.Name(secret)
 			})
 		})
@@ -228,7 +228,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 		Allowed(true)
 
 	addWorkloadRefIndex := func(cb *fake.ClientBuilder) *fake.ClientBuilder {
-		return cb.WithIndex(&servicebindingv1beta1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
+		return cb.WithIndex(&servicebindingv1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
 	}
 
 	wts := rtesting.AdmissionWebhookTests{
@@ -239,8 +239,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Name(fmt.Sprintf("%s-named", name))
 					}).
-					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+					SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+						d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 							d.Name("some-other-workload")
 						})
 					}),
@@ -248,8 +248,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Name(fmt.Sprintf("%s-selected", name))
 					}).
-					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+					SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+						d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 							d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
 								d.AddMatchLabel("some-other-workload", "true")
 							})
@@ -268,8 +268,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 		"binding already projected": {
 			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
-				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				serviceBinding.SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name(name)
@@ -323,8 +323,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 		"binding projected by name": {
 			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
-				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				serviceBinding.SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name(name)
@@ -398,8 +398,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 		"binding projected by selector": {
 			WithClientBuilder: addWorkloadRefIndex,
 			GivenObjects: []client.Object{
-				serviceBinding.SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				serviceBinding.SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Selector(&metav1.LabelSelector{})
@@ -479,8 +479,8 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 						d.DeletionTimestamp(&now)
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+					SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+						d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 							d.APIVersion("apps/v1")
 							d.Kind("Deployment")
 							d.Name(name)
@@ -530,7 +530,7 @@ func TestTriggerReconciler(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
@@ -565,18 +565,18 @@ func TestTriggerReconciler(t *testing.T) {
 			)
 		})
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace("my-namespace")
 			d.Name("my-binding")
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("example/v1")
 				d.Kind("MyService")
 				d.Name("my-service")
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -671,11 +671,11 @@ func TestTriggerWebhook(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	requestUID := types.UID("9deefaa1-2c90-4f40-9c7b-3f5c1fd75dde")
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(bindingName)
@@ -772,22 +772,22 @@ func TestTriggerWebhook(t *testing.T) {
 func TestLoadServiceBindings(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace("my-namespace")
 			d.Name("my-binding")
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("example/v1")
 				d.Kind("MyService")
 				d.Name("my-service")
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -801,7 +801,7 @@ func TestLoadServiceBindings(t *testing.T) {
 				serviceBinding,
 			},
 			ExpectStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.DieRelease(),
 				},
 			},
@@ -827,22 +827,22 @@ func TestLoadServiceBindings(t *testing.T) {
 func TestInterceptGVKs(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace("my-namespace")
 			d.Name("my-binding")
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("example/v1")
 				d.Kind("MyService")
 				d.Name("my-service")
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -853,7 +853,7 @@ func TestInterceptGVKs(t *testing.T) {
 		"collect workload gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.DieRelease(),
 				},
 			},
@@ -866,7 +866,7 @@ func TestInterceptGVKs(t *testing.T) {
 		"append workload gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.DieRelease(),
 				},
 				controllers.ObservedGVKsStashKey: []schema.GroupVersionKind{
@@ -890,24 +890,24 @@ func TestInterceptGVKs(t *testing.T) {
 func TestTriggerGVKs(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank.
 		APIVersion("admissionregistration.k8s.io").
 		Kind("ValidatingWebhookConfiguration")
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace("my-namespace")
 			d.Name("my-binding")
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("example/v1")
 				d.Kind("MyService")
 				d.Name("my-service")
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
@@ -918,7 +918,7 @@ func TestTriggerGVKs(t *testing.T) {
 		"collect service gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.DieRelease(),
 				},
 			},
@@ -931,7 +931,7 @@ func TestTriggerGVKs(t *testing.T) {
 		"append service gvks": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.DieRelease(),
 				},
 				controllers.ObservedGVKsStashKey: []schema.GroupVersionKind{
@@ -948,10 +948,10 @@ func TestTriggerGVKs(t *testing.T) {
 		"ignore direct binding": {
 			Resource: webhook,
 			GivenStashedValues: map[reconcilers.StashKey]interface{}{
-				controllers.ServiceBindingsStashKey: []servicebindingv1beta1.ServiceBinding{
+				controllers.ServiceBindingsStashKey: []servicebindingv1.ServiceBinding{
 					serviceBinding.
-						SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-							d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+						SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+							d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 								d.APIVersion("v1")
 								d.Kind("Secret")
 							})
@@ -973,7 +973,7 @@ func TestTriggerGVKs(t *testing.T) {
 func TestWebhookRules(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	webhook := dieadmissionregistrationv1.ValidatingWebhookConfigurationBlank.
 		APIVersion("admissionregistration.k8s.io").

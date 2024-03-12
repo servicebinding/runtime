@@ -19,13 +19,13 @@ package v1alpha3
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 var _ conversion.Convertible = (*ServiceBinding)(nil)
 
 func (src *ServiceBinding) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*servicebindingv1beta1.ServiceBinding)
+	dst := dstRaw.(*servicebindingv1.ServiceBinding)
 
 	dst.ObjectMeta = src.ObjectMeta
 	dst.Spec = src.Spec
@@ -35,7 +35,7 @@ func (src *ServiceBinding) ConvertTo(dstRaw conversion.Hub) error {
 }
 
 func (dst *ServiceBinding) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*servicebindingv1beta1.ServiceBinding)
+	src := srcRaw.(*servicebindingv1.ServiceBinding)
 
 	dst.ObjectMeta = src.ObjectMeta
 	dst.Spec = src.Spec

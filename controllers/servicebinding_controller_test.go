@@ -44,9 +44,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/controllers"
-	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 )
 
@@ -61,30 +61,30 @@ func TestServiceBindingReconciler(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	now := metav1.Now().Rfc3339Copy()
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.UID(uid)
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("v1")
 				d.Kind("Secret")
 				d.Name(secretName)
 			})
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
 			})
 		})
 
-	workloadMapping := dieservicebindingv1beta1.ClusterWorkloadResourceMappingBlank.
+	workloadMapping := dieservicebindingv1.ClusterWorkloadResourceMappingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Name("deployments.apps")
 		})
@@ -164,20 +164,20 @@ func TestServiceBindingReconciler(t *testing.T) {
 		"in sync": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -191,7 +191,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 		"newly created, resolves secret": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding,
@@ -213,13 +213,13 @@ func TestServiceBindingReconciler(t *testing.T) {
 			},
 			ExpectStatusUpdates: []client.Object{
 				serviceBinding.
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.Unknown().Reason("Initializing"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.Unknown().Reason("Initializing"),
+							dieservicebindingv1.ServiceBindingConditionReady.Unknown().Reason("Initializing"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.Unknown().Reason("Initializing"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -228,15 +228,15 @@ func TestServiceBindingReconciler(t *testing.T) {
 		"has resolved secret, project into workload": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -255,13 +255,13 @@ func TestServiceBindingReconciler(t *testing.T) {
 			},
 			ExpectStatusUpdates: []client.Object{
 				serviceBinding.
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -270,25 +270,25 @@ func TestServiceBindingReconciler(t *testing.T) {
 		"switch bound workload": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
 					MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 						d.Finalizers("servicebinding.io/finalizer")
 					}).
-					SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-						d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+					SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+						d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 							d.Name("new-workload")
 						})
 					}).
-					StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+					StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 						d.ConditionsDie(
-							dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-							dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-							dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+							dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+							dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+							dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 						)
-						d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+						d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 							d.Name(secretName)
 						})
 					}),
@@ -323,7 +323,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 		"terminating": {
 			Request: request,
 			StatusSubResourceTypes: []client.Object{
-				&servicebindingv1beta1.ServiceBinding{},
+				&servicebindingv1.ServiceBinding{},
 			},
 			GivenObjects: []client.Object{
 				serviceBinding.
@@ -370,20 +370,20 @@ func TestResolveBindingSecret(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 		})
 
 	secretName := "my-secret"
-	directSecretRef := dieservicebindingv1beta1.ServiceBindingServiceReferenceBlank.
+	directSecretRef := dieservicebindingv1.ServiceBindingServiceReferenceBlank.
 		APIVersion("v1").
 		Kind("Secret").
 		Name(secretName)
-	serviceRef := dieservicebindingv1beta1.ServiceBindingServiceReferenceBlank.
+	serviceRef := dieservicebindingv1.ServiceBindingServiceReferenceBlank.
 		APIVersion("example/v1").
 		Kind("MyProvisionedService").
 		Name("my-service")
@@ -400,18 +400,18 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 	}
 
-	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1.ServiceBinding]{
 		"in sync": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(directSecretRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-					d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+					d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 						d.Name(secretName)
 					})
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
 				}).
@@ -419,20 +419,20 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"resolve direct secret": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(directSecretRef.DieRelease())
 				}).
 				DieReleasePtr(),
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(directSecretRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-					d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+					d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 						d.Name(secretName)
 					})
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
 				}).
@@ -446,7 +446,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"service is a provisioned service": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
 				DieReleasePtr(),
@@ -454,15 +454,15 @@ func TestResolveBindingSecret(t *testing.T) {
 				provisionedService,
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-					d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+					d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 						d.Name(secretName)
 					})
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							True().Reason("ResolvedBindingSecret"),
 					)
 				}).
@@ -479,7 +479,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"service is not a provisioned service": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
 				DieReleasePtr(),
@@ -487,15 +487,15 @@ func TestResolveBindingSecret(t *testing.T) {
 				notProvisionedService,
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							Reason("ServiceMissingBinding").
 							Message("the service was found, but did not contain a binding secret"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							Reason("ServiceMissingBinding").
 							Message("the service was found, but did not contain a binding secret"),
 					)
@@ -507,7 +507,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"service not found": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
 				DieReleasePtr(),
@@ -517,15 +517,15 @@ func TestResolveBindingSecret(t *testing.T) {
 				}),
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							Reason("ServiceNotFound").
 							Message("the service was not found"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							Reason("ServiceNotFound").
 							Message("the service was not found"),
 					)
@@ -537,7 +537,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"service forbidden": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
 				DieReleasePtr(),
@@ -547,16 +547,16 @@ func TestResolveBindingSecret(t *testing.T) {
 				}),
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							False().
 							Reason("ServiceForbidden").
 							Message("the controller does not have permission to get the service"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							False().
 							Reason("ServiceForbidden").
 							Message("the controller does not have permission to get the service"),
@@ -569,7 +569,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 		"service generic get error": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 					d.Service(serviceRef.DieRelease())
 				}).
 				DieReleasePtr(),
@@ -583,7 +583,7 @@ func TestResolveBindingSecret(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
 		return controllers.ResolveBindingSecret(lifecycle.ServiceBindingHooks{})
 	})
 }
@@ -594,9 +594,9 @@ func TestResolveWorkload(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
@@ -624,11 +624,11 @@ func TestResolveWorkload(t *testing.T) {
 			d.AddLabel("app", "not")
 		})
 
-	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1.ServiceBinding]{
 		"resolve named workload": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
@@ -651,8 +651,8 @@ func TestResolveWorkload(t *testing.T) {
 		},
 		"resolve named workload not found": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
@@ -660,18 +660,18 @@ func TestResolveWorkload(t *testing.T) {
 				}).
 				DieReleasePtr(),
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							Reason("WorkloadNotFound").Message("the workload was not found"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.
 							Reason("WorkloadNotFound").Message("the workload was not found"),
 					)
 				}).
@@ -682,8 +682,8 @@ func TestResolveWorkload(t *testing.T) {
 		},
 		"resolve named workload forbidden": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
@@ -701,20 +701,20 @@ func TestResolveWorkload(t *testing.T) {
 				}),
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name("my-workload-1")
 					})
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to get the workload"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to get the workload"),
@@ -727,8 +727,8 @@ func TestResolveWorkload(t *testing.T) {
 		},
 		"resolve selected workload": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
@@ -765,8 +765,8 @@ func TestResolveWorkload(t *testing.T) {
 		"resolve selected workload not found": {
 			GivenObjects: []client.Object{},
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
@@ -794,8 +794,8 @@ func TestResolveWorkload(t *testing.T) {
 		},
 		"resolve selected workload forbidden": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
@@ -815,8 +815,8 @@ func TestResolveWorkload(t *testing.T) {
 				}),
 			},
 			ExpectResource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
@@ -824,13 +824,13 @@ func TestResolveWorkload(t *testing.T) {
 						})
 					})
 				}).
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to list the workloads"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to list the workloads"),
@@ -853,7 +853,7 @@ func TestResolveWorkload(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
 		return controllers.ResolveWorkloads(lifecycle.ServiceBindingHooks{})
 	})
 }
@@ -868,31 +868,31 @@ func TestProjectBinding(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
 	now := metav1.Now().Rfc3339Copy()
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.UID(uid)
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
 			d.Name(name)
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name("my-workload")
 			})
 		}).
-		StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-			d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+		StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+			d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 				d.Name(secretName)
 			})
 		})
 
-	workloadMapping := dieservicebindingv1beta1.ClusterWorkloadResourceMappingBlank.
+	workloadMapping := dieservicebindingv1.ClusterWorkloadResourceMappingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Name("deployments.apps")
 		})
@@ -967,11 +967,11 @@ func TestProjectBinding(t *testing.T) {
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), containers, "spec", "template", "spec", "containers")
 	unstructured.SetNestedSlice(unprojectedWorkload.UnstructuredContent(), []interface{}{}, "spec", "template", "spec", "volumes")
 
-	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1.ServiceBinding]{
 		"project workload": {
 			Resource: serviceBinding.
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name(workload.GetName())
@@ -998,8 +998,8 @@ func TestProjectBinding(t *testing.T) {
 					d.DeletionTimestamp(&now)
 					d.Finalizers("servicebinding.io/finalizer")
 				}).
-				SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-					d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+				SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+					d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 						d.APIVersion("apps/v1")
 						d.Kind("Deployment")
 						d.Name(workload.GetName())
@@ -1022,7 +1022,7 @@ func TestProjectBinding(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
 		restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 		restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
 		return controllers.ProjectBinding(lifecycle.ServiceBindingHooks{})
@@ -1037,18 +1037,18 @@ func TestPatchWorkloads(t *testing.T) {
 	now := metav1.Now().Rfc3339Copy()
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 		}).
-		StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+		StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 			d.ConditionsDie(
-				dieservicebindingv1beta1.ServiceBindingConditionReady,
-				dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-				dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected,
+				dieservicebindingv1.ServiceBindingConditionReady,
+				dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+				dieservicebindingv1.ServiceBindingConditionWorkloadProjected,
 			)
 		})
 
@@ -1073,14 +1073,14 @@ func TestPatchWorkloads(t *testing.T) {
 			})
 		})
 
-	rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
+	rts := rtesting.SubReconcilerTests[*servicebindingv1.ServiceBinding]{
 		"in sync": {
 			Resource: serviceBinding.
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+						dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
 				}).
 				DieReleasePtr(),
@@ -1115,11 +1115,11 @@ func TestPatchWorkloads(t *testing.T) {
 				},
 			},
 			ExpectResource: serviceBinding.
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+						dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
 				}).
 				DieReleasePtr(),
@@ -1150,11 +1150,11 @@ func TestPatchWorkloads(t *testing.T) {
 				},
 			},
 			ExpectResource: serviceBinding.
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
+						dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("WorkloadProjected"),
 					)
 				}).
 				DieReleasePtr(),
@@ -1193,16 +1193,16 @@ func TestPatchWorkloads(t *testing.T) {
 				}),
 			},
 			ExpectResource: serviceBinding.
-				StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
+				StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
 					d.ConditionsDie(
-						dieservicebindingv1beta1.ServiceBindingConditionReady.
+						dieservicebindingv1.ServiceBindingConditionReady.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to update the workloads"),
-						dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.
+						dieservicebindingv1.ServiceBindingConditionServiceAvailable.
 							True().
 							Reason("ResolvedBindingSecret"),
-						dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.
+						dieservicebindingv1.ServiceBindingConditionWorkloadProjected.
 							False().
 							Reason("WorkloadForbidden").
 							Message("the controller does not have permission to update the workloads"),
@@ -1275,7 +1275,7 @@ func TestPatchWorkloads(t *testing.T) {
 		},
 	}
 
-	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+	rts.Run(t, scheme, func(t *testing.T, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
 		return controllers.PatchWorkloads()
 	})
 }

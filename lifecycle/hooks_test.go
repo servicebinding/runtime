@@ -42,9 +42,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 	"github.com/servicebinding/runtime/controllers"
-	dieservicebindingv1beta1 "github.com/servicebinding/runtime/dies/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/projector"
 	"github.com/servicebinding/runtime/resolver"
@@ -57,43 +57,43 @@ func TestServiceBindingHooks(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(servicebindingv1beta1.AddToScheme(scheme))
+	utilruntime.Must(servicebindingv1.AddToScheme(scheme))
 
-	serviceBinding := dieservicebindingv1beta1.ServiceBindingBlank.
+	serviceBinding := dieservicebindingv1.ServiceBindingBlank.
 		MetadataDie(func(d *diemetav1.ObjectMetaDie) {
 			d.Namespace(namespace)
 			d.Name(name)
 			d.Finalizers("servicebinding.io/finalizer")
 			d.UID(uuid.NewUUID())
 		}).
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.ServiceDie(func(d *dieservicebindingv1beta1.ServiceBindingServiceReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.ServiceDie(func(d *dieservicebindingv1.ServiceBindingServiceReferenceDie) {
 				d.APIVersion("v1")
 				d.Kind("Secret")
 				d.Name(secretName)
 			})
 		}).
-		StatusDie(func(d *dieservicebindingv1beta1.ServiceBindingStatusDie) {
-			d.BindingDie(func(d *dieservicebindingv1beta1.ServiceBindingSecretReferenceDie) {
+		StatusDie(func(d *dieservicebindingv1.ServiceBindingStatusDie) {
+			d.BindingDie(func(d *dieservicebindingv1.ServiceBindingSecretReferenceDie) {
 				d.Name(secretName)
 			})
 			d.ConditionsDie(
-				dieservicebindingv1beta1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
-				dieservicebindingv1beta1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
-				dieservicebindingv1beta1.ServiceBindingConditionWorkloadProjected.True().Reason("ResolvedBindingSecret"),
+				dieservicebindingv1.ServiceBindingConditionReady.True().Reason("ServiceBound"),
+				dieservicebindingv1.ServiceBindingConditionServiceAvailable.True().Reason("ResolvedBindingSecret"),
+				dieservicebindingv1.ServiceBindingConditionWorkloadProjected.True().Reason("ResolvedBindingSecret"),
 			)
 		})
 	serviceBindingByName := serviceBinding.
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.Name(name)
 			})
 		})
 	serviceBindingBySelector := serviceBinding.
-		SpecDie(func(d *dieservicebindingv1beta1.ServiceBindingSpecDie) {
-			d.WorkloadDie(func(d *dieservicebindingv1beta1.ServiceBindingWorkloadReferenceDie) {
+		SpecDie(func(d *dieservicebindingv1.ServiceBindingSpecDie) {
+			d.WorkloadDie(func(d *dieservicebindingv1.ServiceBindingWorkloadReferenceDie) {
 				d.APIVersion("apps/v1")
 				d.Kind("Deployment")
 				d.SelectorDie(func(d *diemetav1.LabelSelectorDie) {
@@ -149,7 +149,7 @@ func TestServiceBindingHooks(t *testing.T) {
 				d.AddLabel("test.servicebinding.io", "workload")
 			})
 
-		rts := rtesting.SubReconcilerTests[*servicebindingv1beta1.ServiceBinding]{
+		rts := rtesting.SubReconcilerTests[*servicebindingv1.ServiceBinding]{
 			"controller binding by name": {
 				Metadata: map[string]interface{}{
 					"HooksExpectations": func(m *mock.Mock) {
@@ -160,7 +160,7 @@ func TestServiceBindingHooks(t *testing.T) {
 						m.On("ServiceBindingPostProjection", 5, anyContext, matchObj(serviceBinding.DieReleasePtr())).Return(nil).Once()
 					},
 				},
-				CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding]) error {
+				CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding]) error {
 					m := tc.Metadata["HooksMock"].(*mock.Mock)
 					m.AssertExpectations(t)
 					return nil
@@ -186,7 +186,7 @@ func TestServiceBindingHooks(t *testing.T) {
 						m.On("ServiceBindingPostProjection", 8, anyContext, matchObj(serviceBinding.DieReleasePtr())).Return(nil).Once()
 					},
 				},
-				CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding]) error {
+				CleanUp: func(t *testing.T, ctx context.Context, tc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding]) error {
 					m := tc.Metadata["HooksMock"].(*mock.Mock)
 					m.AssertExpectations(t)
 					return nil
@@ -212,7 +212,7 @@ func TestServiceBindingHooks(t *testing.T) {
 			},
 		}
 
-		rts.Run(t, scheme, func(t *testing.T, rtc *rtesting.SubReconcilerTestCase[*servicebindingv1beta1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1beta1.ServiceBinding] {
+		rts.Run(t, scheme, func(t *testing.T, rtc *rtesting.SubReconcilerTestCase[*servicebindingv1.ServiceBinding], c reconcilers.Config) reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
 			restMapper := c.RESTMapper().(*meta.DefaultRESTMapper)
 			restMapper.Add(schema.GroupVersionKind{Group: "apps", Version: "v1", Kind: "Deployment"}, meta.RESTScopeNamespace)
 			hooks, m := makeHooks()
@@ -235,7 +235,7 @@ func TestServiceBindingHooks(t *testing.T) {
 			})
 
 		addWorkloadRefIndex := func(cb *fake.ClientBuilder) *fake.ClientBuilder {
-			return cb.WithIndex(&servicebindingv1beta1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
+			return cb.WithIndex(&servicebindingv1.ServiceBinding{}, controllers.WorkloadRefIndexKey, controllers.WorkloadRefIndexFunc)
 		}
 
 		rts := rtesting.SubReconcilerTests[*unstructured.Unstructured]{
@@ -282,17 +282,17 @@ type mockProjector struct {
 	i *int
 }
 
-func (p *mockProjector) Project(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error {
+func (p *mockProjector) Project(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error {
 	*p.i = *p.i + 1
 	return p.m.MethodCalled("Projector.Project", *p.i, ctx, binding, workload).Error(0)
 }
 
-func (p *mockProjector) Unproject(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error {
+func (p *mockProjector) Unproject(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error {
 	*p.i = *p.i + 1
 	return p.m.MethodCalled("Projector.Unproject", *p.i, ctx, binding, workload).Error(0)
 }
 
-func (p *mockProjector) IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool {
+func (p *mockProjector) IsProjected(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) bool {
 	annotations := workload.(metav1.Object).GetAnnotations()
 	if len(annotations) == 0 {
 		return false
@@ -311,11 +311,11 @@ func makeHooks() (lifecycle.ServiceBindingHooks, *mock.Mock) {
 		ProjectorFactory: func(ms projector.MappingSource) projector.ServiceBindingProjector {
 			return &mockProjector{m: m, i: i}
 		},
-		ServiceBindingPreProjection: func(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error {
+		ServiceBindingPreProjection: func(ctx context.Context, binding *servicebindingv1.ServiceBinding) error {
 			*i = *i + 1
 			return m.MethodCalled("ServiceBindingPreProjection", *i, ctx, binding).Error(0)
 		},
-		ServiceBindingPostProjection: func(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding) error {
+		ServiceBindingPostProjection: func(ctx context.Context, binding *servicebindingv1.ServiceBinding) error {
 			*i = *i + 1
 			return m.MethodCalled("ServiceBindingPostProjection", *i, ctx, binding).Error(0)
 		},

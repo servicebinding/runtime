@@ -23,16 +23,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 type ServiceBindingProjector interface {
 	// Project the service into the workload as defined by the ServiceBinding.
-	Project(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error
+	Project(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error
 	// Unproject the service from the workload as defined by the ServiceBinding.
-	Unproject(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) error
+	Unproject(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) error
 	// IsProjected returns true when the workload has been projected into by the binding
-	IsProjected(ctx context.Context, binding *servicebindingv1beta1.ServiceBinding, workload runtime.Object) bool
+	IsProjected(ctx context.Context, binding *servicebindingv1.ServiceBinding, workload runtime.Object) bool
 }
 
 type MappingSource interface {
@@ -42,5 +42,5 @@ type MappingSource interface {
 
 	// LookupWorkloadMapping the mapping template for the workload. Typically a ClusterWorkloadResourceMapping is defined for the
 	//  workload's fully qualified resource `{resource}.{group}`.
-	LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1beta1.ClusterWorkloadResourceMappingSpec, error)
+	LookupWorkloadMapping(ctx context.Context, gvr schema.GroupVersionResource) (*servicebindingv1.ClusterWorkloadResourceMappingSpec, error)
 }

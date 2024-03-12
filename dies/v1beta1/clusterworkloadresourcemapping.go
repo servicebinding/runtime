@@ -17,43 +17,21 @@ limitations under the License.
 package v1beta1
 
 import (
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 )
 
-// +die:object=true
-type _ = servicebindingv1beta1.ClusterWorkloadResourceMapping
+var ClusterWorkloadResourceMappingBlank = dieservicebindingv1.ClusterWorkloadResourceMappingBlank
 
-// +die
-type _ = servicebindingv1beta1.ClusterWorkloadResourceMappingSpec
+type ClusterWorkloadResourceMappingDie = dieservicebindingv1.ClusterWorkloadResourceMappingDie
 
-func (d *ClusterWorkloadResourceMappingSpecDie) VersionsDie(version string, fn func(d *ClusterWorkloadResourceMappingTemplateDie)) *ClusterWorkloadResourceMappingSpecDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ClusterWorkloadResourceMappingSpec) {
-		for i := range r.Versions {
-			if version == r.Versions[i].Version {
-				d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(r.Versions[i])
-				fn(d)
-				r.Versions[i] = d.DieRelease()
-				return
-			}
-		}
+var ClusterWorkloadResourceMappingSpecBlank = dieservicebindingv1.ClusterWorkloadResourceMappingSpecBlank
 
-		d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate{Version: version})
-		fn(d)
-		r.Versions = append(r.Versions, d.DieRelease())
-	})
-}
+type ClusterWorkloadResourceMappingSpecDie = dieservicebindingv1.ClusterWorkloadResourceMappingSpecDie
 
-// +die
-type _ = servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate
+var ClusterWorkloadResourceMappingTemplateBlank = dieservicebindingv1.ClusterWorkloadResourceMappingTemplateBlank
 
-func (d *ClusterWorkloadResourceMappingTemplateDie) ContainersDie(containers ...*ClusterWorkloadResourceMappingContainerDie) *ClusterWorkloadResourceMappingTemplateDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ClusterWorkloadResourceMappingTemplate) {
-		r.Containers = make([]servicebindingv1beta1.ClusterWorkloadResourceMappingContainer, len(containers))
-		for i := range containers {
-			r.Containers[i] = containers[i].DieRelease()
-		}
-	})
-}
+type ClusterWorkloadResourceMappingTemplateDie = dieservicebindingv1.ClusterWorkloadResourceMappingTemplateDie
 
-// +die
-type _ = servicebindingv1beta1.ClusterWorkloadResourceMappingContainer
+var ClusterWorkloadResourceMappingContainerBlank = dieservicebindingv1.ClusterWorkloadResourceMappingContainerBlank
+
+type ClusterWorkloadResourceMappingContainerDie = dieservicebindingv1.ClusterWorkloadResourceMappingContainerDie

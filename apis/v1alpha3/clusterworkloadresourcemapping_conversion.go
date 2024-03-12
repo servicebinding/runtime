@@ -19,13 +19,13 @@ package v1alpha3
 import (
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
 
 var _ conversion.Convertible = (*ClusterWorkloadResourceMapping)(nil)
 
 func (src *ClusterWorkloadResourceMapping) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*servicebindingv1beta1.ClusterWorkloadResourceMapping)
+	dst := dstRaw.(*servicebindingv1.ClusterWorkloadResourceMapping)
 
 	dst.ObjectMeta = src.ObjectMeta
 	dst.Spec = src.Spec
@@ -34,7 +34,7 @@ func (src *ClusterWorkloadResourceMapping) ConvertTo(dstRaw conversion.Hub) erro
 }
 
 func (dst *ClusterWorkloadResourceMapping) ConvertFrom(srcRaw conversion.Hub) error {
-	src := srcRaw.(*servicebindingv1beta1.ClusterWorkloadResourceMapping)
+	src := srcRaw.(*servicebindingv1.ClusterWorkloadResourceMapping)
 
 	dst.ObjectMeta = src.ObjectMeta
 	dst.Spec = src.Spec

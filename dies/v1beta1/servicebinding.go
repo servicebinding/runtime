@@ -17,91 +17,37 @@ limitations under the License.
 package v1beta1
 
 import (
-	diemetav1 "dies.dev/apis/meta/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	servicebindingv1beta1 "github.com/servicebinding/runtime/apis/v1beta1"
+	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 )
 
-// +die:object=true
-type _ = servicebindingv1beta1.ServiceBinding
+var ServiceBindingBlank = dieservicebindingv1.ServiceBindingBlank
 
-// +die
-type _ = servicebindingv1beta1.ServiceBindingSpec
+type ServiceBindingDie = dieservicebindingv1.ServiceBindingDie
 
-func (d *ServiceBindingSpecDie) WorkloadDie(fn func(d *ServiceBindingWorkloadReferenceDie)) *ServiceBindingSpecDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingSpec) {
-		d := ServiceBindingWorkloadReferenceBlank.DieImmutable(false).DieFeed(r.Workload)
-		fn(d)
-		r.Workload = d.DieRelease()
-	})
-}
+var ServiceBindingSpecBlank = dieservicebindingv1.ServiceBindingSpecBlank
 
-func (d *ServiceBindingSpecDie) ServiceDie(fn func(d *ServiceBindingServiceReferenceDie)) *ServiceBindingSpecDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingSpec) {
-		d := ServiceBindingServiceReferenceBlank.DieImmutable(false).DieFeed(r.Service)
-		fn(d)
-		r.Service = d.DieRelease()
-	})
-}
+type ServiceBindingSpecDie = dieservicebindingv1.ServiceBindingSpecDie
 
-func (d *ServiceBindingSpecDie) EnvDie(name string, fn func(d *EnvMappingDie)) *ServiceBindingSpecDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingSpec) {
-		for i := range r.Env {
-			if name == r.Env[i].Name {
-				d := EnvMappingBlank.DieImmutable(false).DieFeed(r.Env[i])
-				fn(d)
-				r.Env[i] = d.DieRelease()
-				return
-			}
-		}
+var ServiceBindingWorkloadReferenceBlank = dieservicebindingv1.ServiceBindingWorkloadReferenceBlank
 
-		d := EnvMappingBlank.DieImmutable(false).DieFeed(servicebindingv1beta1.EnvMapping{Name: name})
-		fn(d)
-		r.Env = append(r.Env, d.DieRelease())
-	})
-}
+type ServiceBindingWorkloadReferenceDie = dieservicebindingv1.ServiceBindingWorkloadReferenceDie
 
-// +die
-type _ = servicebindingv1beta1.ServiceBindingWorkloadReference
+var ServiceBindingServiceReferenceBlank = dieservicebindingv1.ServiceBindingServiceReferenceBlank
 
-func (d *ServiceBindingWorkloadReferenceDie) SelectorDie(fn func(d *diemetav1.LabelSelectorDie)) *ServiceBindingWorkloadReferenceDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingWorkloadReference) {
-		d := diemetav1.LabelSelectorBlank.DieImmutable(false).DieFeedPtr(r.Selector)
-		fn(d)
-		r.Selector = d.DieReleasePtr()
-	})
-}
+type ServiceBindingServiceReferenceDie = dieservicebindingv1.ServiceBindingServiceReferenceDie
 
-// +die
-type _ = servicebindingv1beta1.ServiceBindingServiceReference
+var EnvMappingBlank = dieservicebindingv1.EnvMappingBlank
 
-// +die
-type _ = servicebindingv1beta1.EnvMapping
+type EnvMappingDie = dieservicebindingv1.EnvMappingDie
 
-// +die
-type _ = servicebindingv1beta1.ServiceBindingStatus
+var ServiceBindingStatusBlank = dieservicebindingv1.ServiceBindingStatusBlank
 
-func (d *ServiceBindingStatusDie) ConditionsDie(conditions ...*diemetav1.ConditionDie) *ServiceBindingStatusDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingStatus) {
-		r.Conditions = make([]metav1.Condition, len(conditions))
-		for i := range conditions {
-			r.Conditions[i] = conditions[i].DieRelease()
-		}
-	})
-}
+type ServiceBindingStatusDie = dieservicebindingv1.ServiceBindingStatusDie
 
-var ServiceBindingConditionReady = diemetav1.ConditionBlank.Type(servicebindingv1beta1.ServiceBindingConditionReady).Unknown().Reason("Initializing")
-var ServiceBindingConditionServiceAvailable = diemetav1.ConditionBlank.Type(servicebindingv1beta1.ServiceBindingConditionServiceAvailable).Unknown().Reason("Initializing")
-var ServiceBindingConditionWorkloadProjected = diemetav1.ConditionBlank.Type(servicebindingv1beta1.ServiceBindingConditionWorkloadProjected).Unknown().Reason("Initializing")
+var ServiceBindingConditionReady = dieservicebindingv1.ServiceBindingConditionReady
+var ServiceBindingConditionServiceAvailable = dieservicebindingv1.ServiceBindingConditionServiceAvailable
+var ServiceBindingConditionWorkloadProjected = dieservicebindingv1.ServiceBindingConditionWorkloadProjected
 
-func (d *ServiceBindingStatusDie) BindingDie(fn func(d *ServiceBindingSecretReferenceDie)) *ServiceBindingStatusDie {
-	return d.DieStamp(func(r *servicebindingv1beta1.ServiceBindingStatus) {
-		d := ServiceBindingSecretReferenceBlank.DieImmutable(false).DieFeedPtr(r.Binding)
-		fn(d)
-		r.Binding = d.DieReleasePtr()
-	})
-}
+var ServiceBindingSecretReferenceBlank = dieservicebindingv1.ServiceBindingSecretReferenceBlank
 
-// +die
-type _ = servicebindingv1beta1.ServiceBindingSecretReference
+type ServiceBindingSecretReferenceDie = dieservicebindingv1.ServiceBindingSecretReferenceDie

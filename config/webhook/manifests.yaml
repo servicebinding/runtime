@@ -11,14 +11,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-servicebinding-io-v1beta1-clusterworkloadresourcemapping
+      path: /validate-servicebinding-io-v1-clusterworkloadresourcemapping
   failurePolicy: Fail
-  name: v1beta1.clusterworkloadresourcemappings.servicebinding.io
+  name: v1.clusterworkloadresourcemappings.servicebinding.io
   rules:
   - apiGroups:
     - servicebinding.io
     apiVersions:
-    - v1beta1
+    - v1
     operations:
     - CREATE
     - UPDATE
@@ -32,14 +32,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-servicebinding-io-v1beta1-servicebinding
+      path: /validate-servicebinding-io-v1-servicebinding
   failurePolicy: Fail
-  name: v1beta1.servicebindings.servicebinding.io
+  name: v1.servicebindings.servicebinding.io
   rules:
   - apiGroups:
     - servicebinding.io
     apiVersions:
-    - v1beta1
+    - v1
     operations:
     - CREATE
     - UPDATE
@@ -82,6 +82,48 @@ webhooks:
     - servicebinding.io
     apiVersions:
     - v1alpha3
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - servicebindings
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-servicebinding-io-v1beta1-clusterworkloadresourcemapping
+  failurePolicy: Fail
+  name: v1beta1.clusterworkloadresourcemappings.servicebinding.io
+  rules:
+  - apiGroups:
+    - servicebinding.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusterworkloadresourcemappings
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-servicebinding-io-v1beta1-servicebinding
+  failurePolicy: Fail
+  name: v1beta1.servicebindings.servicebinding.io
+  rules:
+  - apiGroups:
+    - servicebinding.io
+    apiVersions:
+    - v1beta1
     operations:
     - CREATE
     - UPDATE

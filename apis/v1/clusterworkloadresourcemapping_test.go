@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1
 
 import (
 	"testing"
@@ -121,7 +121,7 @@ func TestClusterWorkloadResourceMappingDefault(t *testing.T) {
 				Spec: ClusterWorkloadResourceMappingSpec{
 					Versions: []ClusterWorkloadResourceMappingTemplate{
 						{
-							Version:     "v1beta1",
+							Version:     "v1",
 							Annotations: ".metadata.annotations",
 							Containers: []ClusterWorkloadResourceMappingContainer{
 								{
@@ -145,7 +145,7 @@ func TestClusterWorkloadResourceMappingDefault(t *testing.T) {
 				Spec: ClusterWorkloadResourceMappingSpec{
 					Versions: []ClusterWorkloadResourceMappingTemplate{
 						{
-							Version:     "v1beta1",
+							Version:     "v1",
 							Annotations: ".metadata.annotations",
 							Containers: []ClusterWorkloadResourceMappingContainer{
 								{
