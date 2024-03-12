@@ -160,26 +160,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - node: kindest/node:v1.21.14@sha256:220cfafdf6e3915fbce50e13d1655425558cb98872c53f802605aa2fb2d569cf
-          version: v1.21.14
-          os: ubuntu-latest
-        - node: kindest/node:v1.22.17@sha256:9af784f45a584f6b28bce2af84c494d947a05bd709151466489008f80a9ce9d5
-          version: v1.22.17
-          os: ubuntu-latest
-        - node: kindest/node:v1.23.17@sha256:f77f8cf0b30430ca4128cc7cfafece0c274a118cd0cdb251049664ace0dee4ff
+        - node: kindest/node:v1.23.17@sha256:14d0a9a892b943866d7e6be119a06871291c517d279aedb816a4b4bc0ec0a5b3
           version: v1.23.17
           os: ubuntu-latest
-        - node: kindest/node:v1.24.13@sha256:cea86276e698af043af20143f4bf0509e730ec34ed3b7fa790cc0bea091bc5dd
-          version: v1.24.13
+        - node: kindest/node:v1.24.17@sha256:bad10f9b98d54586cba05a7eaa1b61c6b90bfc4ee174fdc43a7b75ca75c95e51
+          version: v1.24.17
           os: ubuntu-latest
-        - node: kindest/node:v1.25.9@sha256:c08d6c52820aa42e533b70bce0c2901183326d86dcdcbedecc9343681db45161
-          version: v1.25.9
+        - node: kindest/node:v1.25.16@sha256:e8b50f8e06b44bb65a93678a65a26248fae585b3d3c2a669e5ca6c90c69dc519
+          version: v1.25.16
           os: ubuntu-latest
-        - node: kindest/node:v1.26.4@sha256:f4c0d87be03d6bea69f5e5dc0adb678bb498a190ee5c38422bf751541cebe92e
-          version: v1.26.4
+        - node: kindest/node:v1.26.14@sha256:5d548739ddef37b9318c70cb977f57bf3e5015e4552be4e27e57280a8cbb8e4f
+          version: v1.26.14
           os: ubuntu-latest
-        - node: kindest/node:v1.27.1@sha256:b7d12ed662b873bd8510879c1846e87c7e676a79fefc93e17b2a52989d3ff42b
-          version: v1.27.1
+        - node: kindest/node:v1.27.11@sha256:681253009e68069b8e01aad36a1e0fa8cf18bb0ab3e5c4069b2e65cafdd70843
+          version: v1.27.11
+          os: ubuntu-latest
+        - node: kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58
+          version: v1.28.7
+          os: ubuntu-latest
+        - node: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+          version: v1.29.2
           os: ubuntu-latest
     env:
       REGISTRY_NAME: registry.local
@@ -195,7 +195,7 @@ jobs:
     - name: Install kind
       run: |
         cd $(mktemp -d -t kind.XXXX)
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.19.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin
         cd -
