@@ -22,14 +22,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmware-labs/reconciler-runtime/reconcilers"
-	rtesting "github.com/vmware-labs/reconciler-runtime/testing"
 	appsv1 "k8s.io/api/apps/v1"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"reconciler.io/runtime/reconcilers"
+	rtesting "reconciler.io/runtime/testing"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 

@@ -7,12 +7,12 @@ require (
 	github.com/go-logr/logr v1.4.1
 	github.com/google/go-cmp v0.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/vmware-labs/reconciler-runtime v0.19.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
+	reconciler.io/runtime v0.20.0
 	sigs.k8s.io/controller-runtime v0.17.2
 	sigs.k8s.io/yaml v1.4.0
 )

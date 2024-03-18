@@ -23,7 +23,6 @@ import (
 	"regexp"
 
 	"github.com/go-logr/logr"
-	"github.com/vmware-labs/reconciler-runtime/reconcilers"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -31,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"reconciler.io/runtime/reconcilers"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/servicebinding/runtime/apis/duck"

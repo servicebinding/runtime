@@ -20,8 +20,8 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/vmware-labs/reconciler-runtime/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reconciler.io/runtime/apis"
 )
 
 // These are valid conditions of ServiceBinding.
