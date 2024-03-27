@@ -1,5 +1,3 @@
-dies.dev/diegen v0.10.1 h1:bUjO7L3ALdyT6nRuntcCAfy4Vx4ny4cC8kemT/GY240=
-dies.dev/diegen v0.10.1/go.mod h1:08auIh8JtE32P7wVv7IC1EmAxSRoziWLwbOiMfk8cNI=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
@@ -39,5 +37,7 @@ gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 k8s.io/apimachinery v0.29.0 h1:+ACVktwyicPz0oc6MTMLwa2Pw3ouLAfAon1wPLtG48o=
 k8s.io/apimachinery v0.29.0/go.mod h1:eVBxQ/cwiJxH58eK/jd/vAk4mrxmVlnpBH5J2GbMeis=
+reconciler.io/dies/diegen v0.11.0 h1:mB9Z7lVqrG5Ld+9sqgpRtGEnvL86BLWxfdvcioDAFWQ=
+reconciler.io/dies/diegen v0.11.0/go.mod h1:K2Y514FWyBp3R7VQk7zq8zFA6fGK2QsOBRnaShMAj4Q=
 sigs.k8s.io/controller-tools v0.14.0 h1:rnNoCC5wSXlrNoBKKzL70LNJKIQKEzT6lloG6/LF73A=
 sigs.k8s.io/controller-tools v0.14.0/go.mod h1:TV7uOtNNnnR72SpzhStvPkoS/U5ir0nMudrkrC4M9Sc=

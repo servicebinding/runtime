@@ -24,7 +24,7 @@ package v1
 import (
 	testingx "testing"
 
-	testing "dies.dev/testing"
+	testing "reconciler.io/dies/testing"
 )
 
 func TestClusterWorkloadResourceMappingDie_MissingMethods(t *testingx.T) {

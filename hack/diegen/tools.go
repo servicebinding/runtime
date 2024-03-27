@@ -21,5 +21,5 @@ limitations under the License.
 package tools
 
 import (
-	_ "dies.dev/diegen"
+	_ "reconciler.io/dies/diegen"
 )
