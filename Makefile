@@ -7,7 +7,7 @@ endif
 
 # Tools
 CONTROLLER_GEN ?= go run -modfile hack/controller-gen/go.mod sigs.k8s.io/controller-tools/cmd/controller-gen
-DIEGEN ?= go run -modfile hack/diegen/go.mod dies.dev/diegen
+DIEGEN ?= go run -modfile hack/diegen/go.mod reconciler.io/dies/diegen
 GOIMPORTS ?= go run -modfile hack/goimports/go.mod golang.org/x/tools/cmd/goimports
 KAPP ?= go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko

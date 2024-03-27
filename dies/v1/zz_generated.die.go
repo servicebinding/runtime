@@ -27,12 +27,12 @@ import (
 	osx "os"
 	reflectx "reflect"
 
-	metav1 "dies.dev/apis/meta/v1"
 	apismetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	jsonpath "k8s.io/client-go/util/jsonpath"
+	metav1 "reconciler.io/dies/apis/meta/v1"
 	yaml "sigs.k8s.io/yaml"
 
 	apisv1 "github.com/servicebinding/runtime/apis/v1"

@@ -209,6 +209,8 @@ k8s.io/kube-openapi v0.0.0-20240126223410-2919ad4fcfec h1:iGTel2aR8vCZdxJDgmbeY0
 k8s.io/kube-openapi v0.0.0-20240126223410-2919ad4fcfec/go.mod h1:Pa1PvrP7ACSkuX6I7KYomY6cmMA0Tx86waBhDUgoKPw=
 k8s.io/utils v0.0.0-20240102154912-e7106e64919e h1:eQ/4ljkx21sObifjzXwlPKpdGLrCfRziVtos3ofG/sQ=
 k8s.io/utils v0.0.0-20240102154912-e7106e64919e/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
+reconciler.io/dies v0.11.0 h1:gfhOPxB/+V1Pqwr94krtAcQTksnYl8G4YAwDtElSzz4=
+reconciler.io/dies v0.11.0/go.mod h1:jL6xrLwWP/BZm17LIH5WPnYq+//ZD/7srVBnPVHqM4Q=
 reconciler.io/runtime v0.20.0 h1:b2RQTYRrnEDTZQHH6h57SIR373vzKPRyfTKtRyO2cpw=
 reconciler.io/runtime v0.20.0/go.mod h1:rDD6qZcijjw+7JIkfOOnLM9uMOH+Robq24fbihD5ZRc=
 sigs.k8s.io/controller-runtime v0.17.2 h1:FwHwD1CTUemg0pW2otk7/U5/i5m2ymzvOXdbeGOUvw0=
