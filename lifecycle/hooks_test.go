@@ -32,7 +32,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	dieappsv1 "reconciler.io/dies/apis/apps/v1"
 	diecorev1 "reconciler.io/dies/apis/core/v1"
 	diemetav1 "reconciler.io/dies/apis/meta/v1"
@@ -303,7 +303,7 @@ func (p *mockProjector) IsProjected(ctx context.Context, binding *servicebinding
 
 func makeHooks() (lifecycle.ServiceBindingHooks, *mock.Mock) {
 	m := &mock.Mock{}
-	i := pointer.Int(0)
+	i := ptr.To(0)
 	hooks := lifecycle.ServiceBindingHooks{
 		ResolverFactory: func(c client.Client) resolver.Resolver {
 			return resolver.New(c)

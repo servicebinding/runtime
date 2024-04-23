@@ -33,6 +33,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	dieadmissionv1 "reconciler.io/dies/apis/admission/v1"
 	dieappsv1 "reconciler.io/dies/apis/apps/v1"
 	diecorev1 "reconciler.io/dies/apis/core/v1"
@@ -49,6 +50,7 @@ import (
 	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
 	"github.com/servicebinding/runtime/lifecycle/vmware"
+	"github.com/servicebinding/runtime/projector"
 )
 
 func TestMigrationHooks_Controller(t *testing.T) {
@@ -129,6 +131,7 @@ func TestMigrationHooks_Controller(t *testing.T) {
 					})
 					d.VolumeDie(fmt.Sprintf("servicebinding-%s", uid), func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {
@@ -197,6 +200,7 @@ func TestMigrationHooks_Controller(t *testing.T) {
 					})
 					d.VolumeDie("binding-4b2c350fb984fc36b6cf39515a2efced0fcb5053", func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {
@@ -363,6 +367,7 @@ func TestMigrationHooks_Controller(t *testing.T) {
 								})
 								d.VolumeDie("binding-4b2c350fb984fc36b6cf39515a2efced0fcb5053", func(d *diecorev1.VolumeDie) {
 									d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+										d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 										d.Sources(append(
 											d.DieRelease().Sources,
 											corev1.VolumeProjection{
@@ -452,6 +457,7 @@ func TestMigrationHooks_Controller(t *testing.T) {
 								})
 								d.VolumeDie("servicebinding-dde10100-d7b3-4cba-9430-51d60a8612a6", func(d *diecorev1.VolumeDie) {
 									d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+										d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 										d.Sources(append(
 											d.DieRelease().Sources,
 											corev1.VolumeProjection{
@@ -587,6 +593,7 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 					})
 					d.VolumeDie(fmt.Sprintf("servicebinding-%s", uid), func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {
@@ -655,6 +662,7 @@ func TestMigrationHooks_Webhook(t *testing.T) {
 					})
 					d.VolumeDie("binding-4b2c350fb984fc36b6cf39515a2efced0fcb5053", func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {
