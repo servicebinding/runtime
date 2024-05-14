@@ -34,6 +34,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/ptr"
 	dieappsv1 "reconciler.io/dies/apis/apps/v1"
 	diecorev1 "reconciler.io/dies/apis/core/v1"
 	diemetav1 "reconciler.io/dies/apis/meta/v1"
@@ -48,6 +49,7 @@ import (
 	"github.com/servicebinding/runtime/controllers"
 	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
+	"github.com/servicebinding/runtime/projector"
 )
 
 func TestServiceBindingReconciler(t *testing.T) {
@@ -127,6 +129,7 @@ func TestServiceBindingReconciler(t *testing.T) {
 					})
 					d.VolumeDie(fmt.Sprintf("servicebinding-%s", uid), func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {
@@ -936,6 +939,7 @@ func TestProjectBinding(t *testing.T) {
 					})
 					d.VolumeDie(fmt.Sprintf("servicebinding-%s", uid), func(d *diecorev1.VolumeDie) {
 						d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+							d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 							d.SourcesDie(
 								diecorev1.VolumeProjectionBlank.
 									SecretDie(func(d *diecorev1.SecretProjectionDie) {

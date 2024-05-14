@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/ptr"
 
 	servicebindingv1 "github.com/servicebinding/runtime/apis/v1"
 )
@@ -42,6 +43,7 @@ const (
 	TypeAnnotationPrefix     = Group + "/type-"
 	ProviderAnnotationPrefix = Group + "/provider-"
 	MappingAnnotationPrefix  = Group + "/mapping-"
+	VolumeDefaultMode        = int32(0644)
 )
 
 var _ ServiceBindingProjector = (*serviceBindingProjector)(nil)
@@ -205,6 +207,7 @@ func (p *serviceBindingProjector) projectVolume(binding *servicebindingv1.Servic
 		Name: p.volumeName(binding),
 		VolumeSource: corev1.VolumeSource{
 			Projected: &corev1.ProjectedVolumeSource{
+				DefaultMode: ptr.To(VolumeDefaultMode),
 				Sources: []corev1.VolumeProjection{
 					{
 						Secret: &corev1.SecretProjection{

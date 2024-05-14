@@ -36,6 +36,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/ptr"
 	dieadmissionv1 "reconciler.io/dies/apis/admission/v1"
 	dieadmissionregistrationv1 "reconciler.io/dies/apis/admissionregistration/v1"
 	dieappsv1 "reconciler.io/dies/apis/apps/v1"
@@ -54,6 +55,7 @@ import (
 	"github.com/servicebinding/runtime/controllers"
 	dieservicebindingv1 "github.com/servicebinding/runtime/dies/v1"
 	"github.com/servicebinding/runtime/lifecycle"
+	"github.com/servicebinding/runtime/projector"
 	"github.com/servicebinding/runtime/rbac"
 )
 
@@ -298,6 +300,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 										})
 										d.VolumeDie(fmt.Sprintf("servicebinding-%s", bindingUID), func(d *diecorev1.VolumeDie) {
 											d.ProjectedDie(func(d *diecorev1.ProjectedVolumeSourceDie) {
+												d.DefaultMode(ptr.To(projector.VolumeDefaultMode))
 												d.SourcesDie(
 													diecorev1.VolumeProjectionBlank.SecretDie(func(d *diecorev1.SecretProjectionDie) {
 														d.LocalObjectReference(corev1.LocalObjectReference{
@@ -379,6 +382,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 							map[string]interface{}{
 								"name": fmt.Sprintf("servicebinding-%s", bindingUID),
 								"projected": map[string]interface{}{
+									"defaultMode": float64(projector.VolumeDefaultMode),
 									"sources": []interface{}{
 										map[string]interface{}{
 											"secret": map[string]interface{}{
@@ -454,6 +458,7 @@ func TestAdmissionProjectorWebhook(t *testing.T) {
 							map[string]interface{}{
 								"name": fmt.Sprintf("servicebinding-%s", bindingUID),
 								"projected": map[string]interface{}{
+									"defaultMode": float64(projector.VolumeDefaultMode),
 									"sources": []interface{}{
 										map[string]interface{}{
 											"secret": map[string]interface{}{
