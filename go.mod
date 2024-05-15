@@ -7,9 +7,9 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/stretchr/testify v1.9.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
-	k8s.io/api v0.30.0
-	k8s.io/apimachinery v0.30.0
-	k8s.io/client-go v0.30.0
+	k8s.io/api v0.30.1
+	k8s.io/apimachinery v0.30.1
+	k8s.io/client-go v0.30.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	reconciler.io/dies v0.12.0
 	reconciler.io/runtime v0.20.0
