@@ -3,7 +3,7 @@ module github.com/servicebinding/runtime
 go 1.22.0
 
 require (
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/google/go-cmp v0.6.0
 	github.com/stretchr/testify v1.9.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0
