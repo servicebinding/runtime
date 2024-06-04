@@ -1,0 +1,7 @@
+builds:
+- id: controller
+  dir: .
+  main: .
+- id: kube-rbac-proxy
+  dir: ./hack/kube-rbac-proxy
+  main: .
