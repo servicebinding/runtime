@@ -68,6 +68,13 @@ updates:
   reviewers:
   - servicebinding/reference-implementation
 - package-ecosystem: gomod
+  directory: "/hack/kube-rbac-proxy"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation
+- package-ecosystem: gomod
   directory: "/hack/kustomize"
   schedule:
     interval: daily
