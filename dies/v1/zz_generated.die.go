@@ -599,6 +599,26 @@ func (d *ClusterWorkloadResourceMappingSpecDie) DiePatch(patchType types.PatchTy
 	return patch.Create(d.seal, d.r, patchType)
 }
 
+// VersionDie mutates a single item in Versions matched by the nested field Version, appending a new item if no match is found.
+//
+// Versions is the collection of versions for a given resource, with mappings.
+func (d *ClusterWorkloadResourceMappingSpecDie) VersionDie(v string, fn func(d *ClusterWorkloadResourceMappingTemplateDie)) *ClusterWorkloadResourceMappingSpecDie {
+	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMappingSpec) {
+		for i := range r.Versions {
+			if v == r.Versions[i].Version {
+				d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(r.Versions[i])
+				fn(d)
+				r.Versions[i] = d.DieRelease()
+				return
+			}
+		}
+
+		d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(apisv1.ClusterWorkloadResourceMappingTemplate{Version: v})
+		fn(d)
+		r.Versions = append(r.Versions, d.DieRelease())
+	})
+}
+
 // Versions is the collection of versions for a given resource, with mappings.
 func (d *ClusterWorkloadResourceMappingSpecDie) Versions(v ...apisv1.ClusterWorkloadResourceMappingTemplate) *ClusterWorkloadResourceMappingSpecDie {
 	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMappingSpec) {
@@ -832,6 +852,20 @@ func (d *ClusterWorkloadResourceMappingTemplateDie) DieDiff(opts ...cmp.Option) 
 // DiePatch generates a patch between the current value of the die and the sealed value.
 func (d *ClusterWorkloadResourceMappingTemplateDie) DiePatch(patchType types.PatchType) ([]byte, error) {
 	return patch.Create(d.seal, d.r, patchType)
+}
+
+// ContainersDie replaces Containers by collecting the released value from each die passed.
+//
+// Containers is the collection of mappings to container-like fragments of the workload resource. Defaults to
+//
+// mappings appropriate for a PodSpecable resource.
+func (d *ClusterWorkloadResourceMappingTemplateDie) ContainersDie(v ...*ClusterWorkloadResourceMappingContainerDie) *ClusterWorkloadResourceMappingTemplateDie {
+	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMappingTemplate) {
+		r.Containers = make([]apisv1.ClusterWorkloadResourceMappingContainer, len(v))
+		for i := range v {
+			r.Containers[i] = v[i].DieRelease()
+		}
+	})
 }
 
 // Version is the version of the workload resource that this mapping is for.
@@ -1709,6 +1743,48 @@ func (d *ServiceBindingSpecDie) DiePatch(patchType types.PatchType) ([]byte, err
 	return patch.Create(d.seal, d.r, patchType)
 }
 
+// WorkloadDie mutates Workload as a die.
+//
+// Workload is a reference to an object
+func (d *ServiceBindingSpecDie) WorkloadDie(fn func(d *ServiceBindingWorkloadReferenceDie)) *ServiceBindingSpecDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingSpec) {
+		d := ServiceBindingWorkloadReferenceBlank.DieImmutable(false).DieFeed(r.Workload)
+		fn(d)
+		r.Workload = d.DieRelease()
+	})
+}
+
+// ServiceDie mutates Service as a die.
+//
+// Service is a reference to an object that fulfills the ProvisionedService duck type
+func (d *ServiceBindingSpecDie) ServiceDie(fn func(d *ServiceBindingServiceReferenceDie)) *ServiceBindingSpecDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingSpec) {
+		d := ServiceBindingServiceReferenceBlank.DieImmutable(false).DieFeed(r.Service)
+		fn(d)
+		r.Service = d.DieRelease()
+	})
+}
+
+// EnvDie mutates a single item in Env matched by the nested field Name, appending a new item if no match is found.
+//
+// Env is the collection of mappings from Secret entries to environment variables
+func (d *ServiceBindingSpecDie) EnvDie(v string, fn func(d *EnvMappingDie)) *ServiceBindingSpecDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingSpec) {
+		for i := range r.Env {
+			if v == r.Env[i].Name {
+				d := EnvMappingBlank.DieImmutable(false).DieFeed(r.Env[i])
+				fn(d)
+				r.Env[i] = d.DieRelease()
+				return
+			}
+		}
+
+		d := EnvMappingBlank.DieImmutable(false).DieFeed(apisv1.EnvMapping{Name: v})
+		fn(d)
+		r.Env = append(r.Env, d.DieRelease())
+	})
+}
+
 // Name is the name of the service as projected into the workload container.  Defaults to .metadata.name.
 func (d *ServiceBindingSpecDie) Name(v string) *ServiceBindingSpecDie {
 	return d.DieStamp(func(r *apisv1.ServiceBindingSpec) {
@@ -1977,6 +2053,17 @@ func (d *ServiceBindingWorkloadReferenceDie) DieDiff(opts ...cmp.Option) string 
 // DiePatch generates a patch between the current value of the die and the sealed value.
 func (d *ServiceBindingWorkloadReferenceDie) DiePatch(patchType types.PatchType) ([]byte, error) {
 	return patch.Create(d.seal, d.r, patchType)
+}
+
+// SelectorDie mutates Selector as a die.
+//
+// Selector is a query that selects the workload or workloads to bind the service to
+func (d *ServiceBindingWorkloadReferenceDie) SelectorDie(fn func(d *metav1.LabelSelectorDie)) *ServiceBindingWorkloadReferenceDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingWorkloadReference) {
+		d := metav1.LabelSelectorBlank.DieImmutable(false).DieFeedPtr(r.Selector)
+		fn(d)
+		r.Selector = d.DieReleasePtr()
+	})
 }
 
 // API version of the referent.
@@ -2739,6 +2826,29 @@ func (d *ServiceBindingStatusDie) DieDiff(opts ...cmp.Option) string {
 // DiePatch generates a patch between the current value of the die and the sealed value.
 func (d *ServiceBindingStatusDie) DiePatch(patchType types.PatchType) ([]byte, error) {
 	return patch.Create(d.seal, d.r, patchType)
+}
+
+// ConditionsDie replaces Conditions by collecting the released value from each die passed.
+//
+// Conditions are the conditions of this ServiceBinding
+func (d *ServiceBindingStatusDie) ConditionsDie(v ...*metav1.ConditionDie) *ServiceBindingStatusDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingStatus) {
+		r.Conditions = make([]apismetav1.Condition, len(v))
+		for i := range v {
+			r.Conditions[i] = v[i].DieRelease()
+		}
+	})
+}
+
+// BindingDie mutates Binding as a die.
+//
+// Binding exposes the projected secret for this ServiceBinding
+func (d *ServiceBindingStatusDie) BindingDie(fn func(d *ServiceBindingSecretReferenceDie)) *ServiceBindingStatusDie {
+	return d.DieStamp(func(r *apisv1.ServiceBindingStatus) {
+		d := ServiceBindingSecretReferenceBlank.DieImmutable(false).DieFeedPtr(r.Binding)
+		fn(d)
+		r.Binding = d.DieReleasePtr()
+	})
 }
 
 // ObservedGeneration is the 'Generation' of the ServiceBinding that
