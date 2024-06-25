@@ -22,17 +22,20 @@ limitations under the License.
 package v1
 
 import (
-	json "encoding/json"
 	fmtx "fmt"
 	osx "os"
 	reflectx "reflect"
 
+	cmp "github.com/google/go-cmp/cmp"
 	apismetav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
+	json "k8s.io/apimachinery/pkg/util/json"
 	jsonpath "k8s.io/client-go/util/jsonpath"
 	metav1 "reconciler.io/dies/apis/meta/v1"
+	patch "reconciler.io/dies/patch"
 	yaml "sigs.k8s.io/yaml"
 
 	apisv1 "github.com/servicebinding/runtime/apis/v1"
@@ -44,6 +47,7 @@ type ClusterWorkloadResourceMappingDie struct {
 	metav1.FrozenObjectMeta
 	mutable bool
 	r       apisv1.ClusterWorkloadResourceMapping
+	seal    apisv1.ClusterWorkloadResourceMapping
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -67,6 +71,7 @@ func (d *ClusterWorkloadResourceMappingDie) DieFeed(r apisv1.ClusterWorkloadReso
 		FrozenObjectMeta: metav1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
+		seal:             d.seal,
 	}
 }
 
@@ -233,7 +238,51 @@ func (d *ClusterWorkloadResourceMappingDie) DeepCopy() *ClusterWorkloadResourceM
 		FrozenObjectMeta: metav1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
+		seal:             d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingDie) DieSeal() *ClusterWorkloadResourceMappingDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingDie) DieSealFeed(r apisv1.ClusterWorkloadResourceMapping) *ClusterWorkloadResourceMappingDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ClusterWorkloadResourceMappingDie) DieSealFeedPtr(r *apisv1.ClusterWorkloadResourceMapping) *ClusterWorkloadResourceMappingDie {
+	if r == nil {
+		r = &apisv1.ClusterWorkloadResourceMapping{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ClusterWorkloadResourceMappingDie) DieSealRelease() apisv1.ClusterWorkloadResourceMapping {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ClusterWorkloadResourceMappingDie) DieSealReleasePtr() *apisv1.ClusterWorkloadResourceMapping {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ClusterWorkloadResourceMappingDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ClusterWorkloadResourceMappingDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 var _ runtime.Object = (*ClusterWorkloadResourceMappingDie)(nil)
@@ -252,15 +301,12 @@ func (d *ClusterWorkloadResourceMappingDie) MarshalJSON() ([]byte, error) {
 }
 
 func (d *ClusterWorkloadResourceMappingDie) UnmarshalJSON(b []byte) error {
-	if d == ClusterWorkloadResourceMappingBlank {
-		return fmtx.Errorf("cannot unmarshal into the blank die, create a copy first")
-	}
 	if !d.mutable {
 		return fmtx.Errorf("cannot unmarshal into immutable dies, create a mutable version first")
 	}
-	r := &apisv1.ClusterWorkloadResourceMapping{}
-	err := json.Unmarshal(b, r)
-	*d = *d.DieFeed(*r)
+	resource := &apisv1.ClusterWorkloadResourceMapping{}
+	err := json.Unmarshal(b, resource)
+	*d = *d.DieFeed(*resource)
 	return err
 }
 
@@ -275,6 +321,29 @@ func (d *ClusterWorkloadResourceMappingDie) APIVersion(v string) *ClusterWorkloa
 func (d *ClusterWorkloadResourceMappingDie) Kind(v string) *ClusterWorkloadResourceMappingDie {
 	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMapping) {
 		r.Kind = v
+	})
+}
+
+// TypeMetadata standard object's type metadata.
+func (d *ClusterWorkloadResourceMappingDie) TypeMetadata(v apismetav1.TypeMeta) *ClusterWorkloadResourceMappingDie {
+	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMapping) {
+		r.TypeMeta = v
+	})
+}
+
+// TypeMetadataDie stamps the resource's TypeMeta field with a mutable die.
+func (d *ClusterWorkloadResourceMappingDie) TypeMetadataDie(fn func(d *metav1.TypeMetaDie)) *ClusterWorkloadResourceMappingDie {
+	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMapping) {
+		d := metav1.TypeMetaBlank.DieImmutable(false).DieFeed(r.TypeMeta)
+		fn(d)
+		r.TypeMeta = d.DieRelease()
+	})
+}
+
+// Metadata standard object's metadata.
+func (d *ClusterWorkloadResourceMappingDie) Metadata(v apismetav1.ObjectMeta) *ClusterWorkloadResourceMappingDie {
+	return d.DieStamp(func(r *apisv1.ClusterWorkloadResourceMapping) {
+		r.ObjectMeta = v
 	})
 }
 
@@ -307,6 +376,7 @@ var ClusterWorkloadResourceMappingSpecBlank = (&ClusterWorkloadResourceMappingSp
 type ClusterWorkloadResourceMappingSpecDie struct {
 	mutable bool
 	r       apisv1.ClusterWorkloadResourceMappingSpec
+	seal    apisv1.ClusterWorkloadResourceMappingSpec
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -328,6 +398,7 @@ func (d *ClusterWorkloadResourceMappingSpecDie) DieFeed(r apisv1.ClusterWorkload
 	return &ClusterWorkloadResourceMappingSpecDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -481,7 +552,51 @@ func (d *ClusterWorkloadResourceMappingSpecDie) DeepCopy() *ClusterWorkloadResou
 	return &ClusterWorkloadResourceMappingSpecDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieSeal() *ClusterWorkloadResourceMappingSpecDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieSealFeed(r apisv1.ClusterWorkloadResourceMappingSpec) *ClusterWorkloadResourceMappingSpecDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieSealFeedPtr(r *apisv1.ClusterWorkloadResourceMappingSpec) *ClusterWorkloadResourceMappingSpecDie {
+	if r == nil {
+		r = &apisv1.ClusterWorkloadResourceMappingSpec{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieSealRelease() apisv1.ClusterWorkloadResourceMappingSpec {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieSealReleasePtr() *apisv1.ClusterWorkloadResourceMappingSpec {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ClusterWorkloadResourceMappingSpecDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ClusterWorkloadResourceMappingSpecDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Versions is the collection of versions for a given resource, with mappings.
@@ -496,6 +611,7 @@ var ClusterWorkloadResourceMappingTemplateBlank = (&ClusterWorkloadResourceMappi
 type ClusterWorkloadResourceMappingTemplateDie struct {
 	mutable bool
 	r       apisv1.ClusterWorkloadResourceMappingTemplate
+	seal    apisv1.ClusterWorkloadResourceMappingTemplate
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -517,6 +633,7 @@ func (d *ClusterWorkloadResourceMappingTemplateDie) DieFeed(r apisv1.ClusterWork
 	return &ClusterWorkloadResourceMappingTemplateDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -670,7 +787,51 @@ func (d *ClusterWorkloadResourceMappingTemplateDie) DeepCopy() *ClusterWorkloadR
 	return &ClusterWorkloadResourceMappingTemplateDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieSeal() *ClusterWorkloadResourceMappingTemplateDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieSealFeed(r apisv1.ClusterWorkloadResourceMappingTemplate) *ClusterWorkloadResourceMappingTemplateDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieSealFeedPtr(r *apisv1.ClusterWorkloadResourceMappingTemplate) *ClusterWorkloadResourceMappingTemplateDie {
+	if r == nil {
+		r = &apisv1.ClusterWorkloadResourceMappingTemplate{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieSealRelease() apisv1.ClusterWorkloadResourceMappingTemplate {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieSealReleasePtr() *apisv1.ClusterWorkloadResourceMappingTemplate {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ClusterWorkloadResourceMappingTemplateDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Version is the version of the workload resource that this mapping is for.
@@ -714,6 +875,7 @@ var ClusterWorkloadResourceMappingContainerBlank = (&ClusterWorkloadResourceMapp
 type ClusterWorkloadResourceMappingContainerDie struct {
 	mutable bool
 	r       apisv1.ClusterWorkloadResourceMappingContainer
+	seal    apisv1.ClusterWorkloadResourceMappingContainer
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -735,6 +897,7 @@ func (d *ClusterWorkloadResourceMappingContainerDie) DieFeed(r apisv1.ClusterWor
 	return &ClusterWorkloadResourceMappingContainerDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -888,7 +1051,51 @@ func (d *ClusterWorkloadResourceMappingContainerDie) DeepCopy() *ClusterWorkload
 	return &ClusterWorkloadResourceMappingContainerDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieSeal() *ClusterWorkloadResourceMappingContainerDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieSealFeed(r apisv1.ClusterWorkloadResourceMappingContainer) *ClusterWorkloadResourceMappingContainerDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieSealFeedPtr(r *apisv1.ClusterWorkloadResourceMappingContainer) *ClusterWorkloadResourceMappingContainerDie {
+	if r == nil {
+		r = &apisv1.ClusterWorkloadResourceMappingContainer{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieSealRelease() apisv1.ClusterWorkloadResourceMappingContainer {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieSealReleasePtr() *apisv1.ClusterWorkloadResourceMappingContainer {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ClusterWorkloadResourceMappingContainerDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ClusterWorkloadResourceMappingContainerDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Path is the JSONPath within the workload resource that matches an existing fragment that is container-like.
@@ -935,6 +1142,7 @@ type ServiceBindingDie struct {
 	metav1.FrozenObjectMeta
 	mutable bool
 	r       apisv1.ServiceBinding
+	seal    apisv1.ServiceBinding
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -958,6 +1166,7 @@ func (d *ServiceBindingDie) DieFeed(r apisv1.ServiceBinding) *ServiceBindingDie 
 		FrozenObjectMeta: metav1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
+		seal:             d.seal,
 	}
 }
 
@@ -1124,7 +1333,51 @@ func (d *ServiceBindingDie) DeepCopy() *ServiceBindingDie {
 		FrozenObjectMeta: metav1.FreezeObjectMeta(r.ObjectMeta),
 		mutable:          d.mutable,
 		r:                r,
+		seal:             d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingDie) DieSeal() *ServiceBindingDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingDie) DieSealFeed(r apisv1.ServiceBinding) *ServiceBindingDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingDie) DieSealFeedPtr(r *apisv1.ServiceBinding) *ServiceBindingDie {
+	if r == nil {
+		r = &apisv1.ServiceBinding{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingDie) DieSealRelease() apisv1.ServiceBinding {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingDie) DieSealReleasePtr() *apisv1.ServiceBinding {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 var _ runtime.Object = (*ServiceBindingDie)(nil)
@@ -1143,15 +1396,12 @@ func (d *ServiceBindingDie) MarshalJSON() ([]byte, error) {
 }
 
 func (d *ServiceBindingDie) UnmarshalJSON(b []byte) error {
-	if d == ServiceBindingBlank {
-		return fmtx.Errorf("cannot unmarshal into the blank die, create a copy first")
-	}
 	if !d.mutable {
 		return fmtx.Errorf("cannot unmarshal into immutable dies, create a mutable version first")
 	}
-	r := &apisv1.ServiceBinding{}
-	err := json.Unmarshal(b, r)
-	*d = *d.DieFeed(*r)
+	resource := &apisv1.ServiceBinding{}
+	err := json.Unmarshal(b, resource)
+	*d = *d.DieFeed(*resource)
 	return err
 }
 
@@ -1166,6 +1416,29 @@ func (d *ServiceBindingDie) APIVersion(v string) *ServiceBindingDie {
 func (d *ServiceBindingDie) Kind(v string) *ServiceBindingDie {
 	return d.DieStamp(func(r *apisv1.ServiceBinding) {
 		r.Kind = v
+	})
+}
+
+// TypeMetadata standard object's type metadata.
+func (d *ServiceBindingDie) TypeMetadata(v apismetav1.TypeMeta) *ServiceBindingDie {
+	return d.DieStamp(func(r *apisv1.ServiceBinding) {
+		r.TypeMeta = v
+	})
+}
+
+// TypeMetadataDie stamps the resource's TypeMeta field with a mutable die.
+func (d *ServiceBindingDie) TypeMetadataDie(fn func(d *metav1.TypeMetaDie)) *ServiceBindingDie {
+	return d.DieStamp(func(r *apisv1.ServiceBinding) {
+		d := metav1.TypeMetaBlank.DieImmutable(false).DieFeed(r.TypeMeta)
+		fn(d)
+		r.TypeMeta = d.DieRelease()
+	})
+}
+
+// Metadata standard object's metadata.
+func (d *ServiceBindingDie) Metadata(v apismetav1.ObjectMeta) *ServiceBindingDie {
+	return d.DieStamp(func(r *apisv1.ServiceBinding) {
+		r.ObjectMeta = v
 	})
 }
 
@@ -1213,6 +1486,7 @@ var ServiceBindingSpecBlank = (&ServiceBindingSpecDie{}).DieFeed(apisv1.ServiceB
 type ServiceBindingSpecDie struct {
 	mutable bool
 	r       apisv1.ServiceBindingSpec
+	seal    apisv1.ServiceBindingSpec
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -1234,6 +1508,7 @@ func (d *ServiceBindingSpecDie) DieFeed(r apisv1.ServiceBindingSpec) *ServiceBin
 	return &ServiceBindingSpecDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -1387,7 +1662,51 @@ func (d *ServiceBindingSpecDie) DeepCopy() *ServiceBindingSpecDie {
 	return &ServiceBindingSpecDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingSpecDie) DieSeal() *ServiceBindingSpecDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingSpecDie) DieSealFeed(r apisv1.ServiceBindingSpec) *ServiceBindingSpecDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingSpecDie) DieSealFeedPtr(r *apisv1.ServiceBindingSpec) *ServiceBindingSpecDie {
+	if r == nil {
+		r = &apisv1.ServiceBindingSpec{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingSpecDie) DieSealRelease() apisv1.ServiceBindingSpec {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingSpecDie) DieSealReleasePtr() *apisv1.ServiceBindingSpec {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingSpecDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingSpecDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Name is the name of the service as projected into the workload container.  Defaults to .metadata.name.
@@ -1437,6 +1756,7 @@ var ServiceBindingWorkloadReferenceBlank = (&ServiceBindingWorkloadReferenceDie{
 type ServiceBindingWorkloadReferenceDie struct {
 	mutable bool
 	r       apisv1.ServiceBindingWorkloadReference
+	seal    apisv1.ServiceBindingWorkloadReference
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -1458,6 +1778,7 @@ func (d *ServiceBindingWorkloadReferenceDie) DieFeed(r apisv1.ServiceBindingWork
 	return &ServiceBindingWorkloadReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -1611,7 +1932,51 @@ func (d *ServiceBindingWorkloadReferenceDie) DeepCopy() *ServiceBindingWorkloadR
 	return &ServiceBindingWorkloadReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingWorkloadReferenceDie) DieSeal() *ServiceBindingWorkloadReferenceDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingWorkloadReferenceDie) DieSealFeed(r apisv1.ServiceBindingWorkloadReference) *ServiceBindingWorkloadReferenceDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingWorkloadReferenceDie) DieSealFeedPtr(r *apisv1.ServiceBindingWorkloadReference) *ServiceBindingWorkloadReferenceDie {
+	if r == nil {
+		r = &apisv1.ServiceBindingWorkloadReference{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingWorkloadReferenceDie) DieSealRelease() apisv1.ServiceBindingWorkloadReference {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingWorkloadReferenceDie) DieSealReleasePtr() *apisv1.ServiceBindingWorkloadReference {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingWorkloadReferenceDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingWorkloadReferenceDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // API version of the referent.
@@ -1658,6 +2023,7 @@ var ServiceBindingServiceReferenceBlank = (&ServiceBindingServiceReferenceDie{})
 type ServiceBindingServiceReferenceDie struct {
 	mutable bool
 	r       apisv1.ServiceBindingServiceReference
+	seal    apisv1.ServiceBindingServiceReference
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -1679,6 +2045,7 @@ func (d *ServiceBindingServiceReferenceDie) DieFeed(r apisv1.ServiceBindingServi
 	return &ServiceBindingServiceReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -1832,7 +2199,51 @@ func (d *ServiceBindingServiceReferenceDie) DeepCopy() *ServiceBindingServiceRef
 	return &ServiceBindingServiceReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingServiceReferenceDie) DieSeal() *ServiceBindingServiceReferenceDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingServiceReferenceDie) DieSealFeed(r apisv1.ServiceBindingServiceReference) *ServiceBindingServiceReferenceDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingServiceReferenceDie) DieSealFeedPtr(r *apisv1.ServiceBindingServiceReference) *ServiceBindingServiceReferenceDie {
+	if r == nil {
+		r = &apisv1.ServiceBindingServiceReference{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingServiceReferenceDie) DieSealRelease() apisv1.ServiceBindingServiceReference {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingServiceReferenceDie) DieSealReleasePtr() *apisv1.ServiceBindingServiceReference {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingServiceReferenceDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingServiceReferenceDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // API version of the referent.
@@ -1865,6 +2276,7 @@ var EnvMappingBlank = (&EnvMappingDie{}).DieFeed(apisv1.EnvMapping{})
 type EnvMappingDie struct {
 	mutable bool
 	r       apisv1.EnvMapping
+	seal    apisv1.EnvMapping
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -1886,6 +2298,7 @@ func (d *EnvMappingDie) DieFeed(r apisv1.EnvMapping) *EnvMappingDie {
 	return &EnvMappingDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -2039,7 +2452,51 @@ func (d *EnvMappingDie) DeepCopy() *EnvMappingDie {
 	return &EnvMappingDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *EnvMappingDie) DieSeal() *EnvMappingDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *EnvMappingDie) DieSealFeed(r apisv1.EnvMapping) *EnvMappingDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *EnvMappingDie) DieSealFeedPtr(r *apisv1.EnvMapping) *EnvMappingDie {
+	if r == nil {
+		r = &apisv1.EnvMapping{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *EnvMappingDie) DieSealRelease() apisv1.EnvMapping {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *EnvMappingDie) DieSealReleasePtr() *apisv1.EnvMapping {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *EnvMappingDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *EnvMappingDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Name is the name of the environment variable
@@ -2061,6 +2518,7 @@ var ServiceBindingStatusBlank = (&ServiceBindingStatusDie{}).DieFeed(apisv1.Serv
 type ServiceBindingStatusDie struct {
 	mutable bool
 	r       apisv1.ServiceBindingStatus
+	seal    apisv1.ServiceBindingStatus
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -2082,6 +2540,7 @@ func (d *ServiceBindingStatusDie) DieFeed(r apisv1.ServiceBindingStatus) *Servic
 	return &ServiceBindingStatusDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -2235,7 +2694,51 @@ func (d *ServiceBindingStatusDie) DeepCopy() *ServiceBindingStatusDie {
 	return &ServiceBindingStatusDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingStatusDie) DieSeal() *ServiceBindingStatusDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingStatusDie) DieSealFeed(r apisv1.ServiceBindingStatus) *ServiceBindingStatusDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingStatusDie) DieSealFeedPtr(r *apisv1.ServiceBindingStatus) *ServiceBindingStatusDie {
+	if r == nil {
+		r = &apisv1.ServiceBindingStatus{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingStatusDie) DieSealRelease() apisv1.ServiceBindingStatus {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingStatusDie) DieSealReleasePtr() *apisv1.ServiceBindingStatus {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingStatusDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingStatusDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // ObservedGeneration is the 'Generation' of the ServiceBinding that
@@ -2266,6 +2769,7 @@ var ServiceBindingSecretReferenceBlank = (&ServiceBindingSecretReferenceDie{}).D
 type ServiceBindingSecretReferenceDie struct {
 	mutable bool
 	r       apisv1.ServiceBindingSecretReference
+	seal    apisv1.ServiceBindingSecretReference
 }
 
 // DieImmutable returns a new die for the current die's state that is either mutable (`false`) or immutable (`true`).
@@ -2287,6 +2791,7 @@ func (d *ServiceBindingSecretReferenceDie) DieFeed(r apisv1.ServiceBindingSecret
 	return &ServiceBindingSecretReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
 }
 
@@ -2440,7 +2945,51 @@ func (d *ServiceBindingSecretReferenceDie) DeepCopy() *ServiceBindingSecretRefer
 	return &ServiceBindingSecretReferenceDie{
 		mutable: d.mutable,
 		r:       r,
+		seal:    d.seal,
 	}
+}
+
+// DieSeal returns a new die for the current die's state that is sealed for comparison in future diff and patch operations.
+func (d *ServiceBindingSecretReferenceDie) DieSeal() *ServiceBindingSecretReferenceDie {
+	return d.DieSealFeed(d.r)
+}
+
+// DieSealFeed returns a new die for the current die's state that uses a specific resource for comparison in future diff and patch operations.
+func (d *ServiceBindingSecretReferenceDie) DieSealFeed(r apisv1.ServiceBindingSecretReference) *ServiceBindingSecretReferenceDie {
+	if !d.mutable {
+		d = d.DeepCopy()
+	}
+	d.seal = *r.DeepCopy()
+	return d
+}
+
+// DieSealFeedPtr returns a new die for the current die's state that uses a specific resource pointer for comparison in future diff and patch operations. If the resource is nil, the empty value is used instead.
+func (d *ServiceBindingSecretReferenceDie) DieSealFeedPtr(r *apisv1.ServiceBindingSecretReference) *ServiceBindingSecretReferenceDie {
+	if r == nil {
+		r = &apisv1.ServiceBindingSecretReference{}
+	}
+	return d.DieSealFeed(*r)
+}
+
+// DieSealRelease returns the sealed resource managed by the die.
+func (d *ServiceBindingSecretReferenceDie) DieSealRelease() apisv1.ServiceBindingSecretReference {
+	return *d.seal.DeepCopy()
+}
+
+// DieSealReleasePtr returns the sealed resource pointer managed by the die.
+func (d *ServiceBindingSecretReferenceDie) DieSealReleasePtr() *apisv1.ServiceBindingSecretReference {
+	r := d.DieSealRelease()
+	return &r
+}
+
+// DieDiff uses cmp.Diff to compare the current value of the die with the sealed value.
+func (d *ServiceBindingSecretReferenceDie) DieDiff(opts ...cmp.Option) string {
+	return cmp.Diff(d.seal, d.r, opts...)
+}
+
+// DiePatch generates a patch between the current value of the die and the sealed value.
+func (d *ServiceBindingSecretReferenceDie) DiePatch(patchType types.PatchType) ([]byte, error) {
+	return patch.Create(d.seal, d.r, patchType)
 }
 
 // Name of the referent secret.
