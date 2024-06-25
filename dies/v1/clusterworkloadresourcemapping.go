@@ -24,36 +24,17 @@ import (
 type _ = servicebindingv1.ClusterWorkloadResourceMapping
 
 // +die
+// +die:field:name=Versions,die=ClusterWorkloadResourceMappingTemplateDie,listMapKey=Version
 type _ = servicebindingv1.ClusterWorkloadResourceMappingSpec
 
+// deprecated use VersionDie
 func (d *ClusterWorkloadResourceMappingSpecDie) VersionsDie(version string, fn func(d *ClusterWorkloadResourceMappingTemplateDie)) *ClusterWorkloadResourceMappingSpecDie {
-	return d.DieStamp(func(r *servicebindingv1.ClusterWorkloadResourceMappingSpec) {
-		for i := range r.Versions {
-			if version == r.Versions[i].Version {
-				d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(r.Versions[i])
-				fn(d)
-				r.Versions[i] = d.DieRelease()
-				return
-			}
-		}
-
-		d := ClusterWorkloadResourceMappingTemplateBlank.DieImmutable(false).DieFeed(servicebindingv1.ClusterWorkloadResourceMappingTemplate{Version: version})
-		fn(d)
-		r.Versions = append(r.Versions, d.DieRelease())
-	})
+	return d.VersionDie(version, fn)
 }
 
 // +die
+// +die:field:name=Containers,die=ClusterWorkloadResourceMappingContainerDie,listType=atomic
 type _ = servicebindingv1.ClusterWorkloadResourceMappingTemplate
-
-func (d *ClusterWorkloadResourceMappingTemplateDie) ContainersDie(containers ...*ClusterWorkloadResourceMappingContainerDie) *ClusterWorkloadResourceMappingTemplateDie {
-	return d.DieStamp(func(r *servicebindingv1.ClusterWorkloadResourceMappingTemplate) {
-		r.Containers = make([]servicebindingv1.ClusterWorkloadResourceMappingContainer, len(containers))
-		for i := range containers {
-			r.Containers[i] = containers[i].DieRelease()
-		}
-	})
-}
 
 // +die
 type _ = servicebindingv1.ClusterWorkloadResourceMappingContainer
