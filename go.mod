@@ -13,7 +13,7 @@ require (
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	reconciler.io/dies v0.13.0
 	reconciler.io/runtime v0.20.0
-	sigs.k8s.io/controller-runtime v0.18.4
+	sigs.k8s.io/controller-runtime v0.18.5
 	sigs.k8s.io/yaml v1.4.0
 )
 
