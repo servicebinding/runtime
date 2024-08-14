@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: clusterworkloadresourcemappings.servicebinding.io
 spec:
   group: servicebinding.io
@@ -67,7 +67,6 @@ spec:
                         description: |-
                           ClusterWorkloadResourceMappingContainer defines the mapping for a specific fragment of an workload resource
                           to a Container-like structure.
-
 
                           Each mapping defines exactly one path that may match multiple container-like fragments within the workload
                           resource. For each object matching the path the name, env and volumeMounts expressions are resolved to find those
@@ -173,7 +172,6 @@ spec:
                           ClusterWorkloadResourceMappingContainer defines the mapping for a specific fragment of an workload resource
                           to a Container-like structure.
 
-
                           Each mapping defines exactly one path that may match multiple container-like fragments within the workload
                           resource. For each object matching the path the name, env and volumeMounts expressions are resolved to find those
                           structures.
@@ -274,7 +272,6 @@ spec:
                         description: |-
                           ClusterWorkloadResourceMappingContainer defines the mapping for a specific fragment of an workload resource
                           to a Container-like structure.
-
 
                           Each mapping defines exactly one path that may match multiple container-like fragments within the workload
                           resource. For each object matching the path the name, env and volumeMounts expressions are resolved to find those
