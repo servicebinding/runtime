@@ -748,14 +748,14 @@ func TestTriggerWebhook(t *testing.T) {
 			tc.Metadata = map[string]interface{}{}
 		}
 		tc.CleanUp = func(t *testing.T, ctx context.Context, tc *rtesting.AdmissionWebhookTestCase) error {
-			queue, ok := tc.Metadata["queue"].(workqueue.Interface)
+			queue, ok := tc.Metadata["queue"].(workqueue.TypedInterface[reconcile.Request])
 			if !ok {
 				return nil
 			}
 			actualRequests := []reconcile.Request{}
 			for len(actualRequests) < queue.Len() {
 				request, _ := queue.Get()
-				actualRequests = append(actualRequests, request.(reconcile.Request))
+				actualRequests = append(actualRequests, request)
 			}
 			expectedRequests := tc.Metadata["expectedRequests"].([]reconcile.Request)
 			if diff := cmp.Diff(expectedRequests, actualRequests); diff != "" {
@@ -764,7 +764,7 @@ func TestTriggerWebhook(t *testing.T) {
 			return nil
 		}
 
-		queue, _ := tc.Metadata["queue"].(workqueue.Interface)
+		queue, _ := tc.Metadata["queue"].(workqueue.TypedInterface[reconcile.Request])
 		ctrl := &mockController{
 			Queue: queue,
 		}
@@ -1201,7 +1201,7 @@ func allowSelfSubjectAccessReviewFor(group, resource, verb string) rtesting.Reac
 var _ controller.Controller = (*mockController)(nil)
 
 type mockController struct {
-	Queue workqueue.Interface
+	Queue workqueue.TypedInterface[reconcile.Request]
 }
 
 func (c *mockController) Reconcile(context.Context, reconcile.Request) (reconcile.Result, error) {
