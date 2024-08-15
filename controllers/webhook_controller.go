@@ -240,7 +240,7 @@ func TriggerWebhook(c reconcilers.Config, serviceBindingController controller.Co
 					// queue is not populated yet
 					return nil
 				}
-				queue := queueValue.Interface().(workqueue.Interface)
+				queue := queueValue.Interface().(workqueue.TypedInterface[reconcile.Request])
 
 				obs, err := c.Tracker.GetObservers(trigger)
 				if err != nil {
