@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/controller-gen
 
 go 1.22.0
 
-require sigs.k8s.io/controller-tools v0.16.1
+require sigs.k8s.io/controller-tools v0.16.2
 
 require (
 	github.com/fatih/color v1.17.0 // indirect
