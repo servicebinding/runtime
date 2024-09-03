@@ -1,7 +1,6 @@
 module github.com/servicebinding/runtime/hack/kube-rbac-proxy
 
-go 1.22.0
-toolchain go1.23.0
+go 1.23
 
 require (
 	github.com/brancz/kube-rbac-proxy v0.18.1
