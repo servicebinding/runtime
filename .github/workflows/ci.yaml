@@ -63,8 +63,8 @@ jobs:
         echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
 
         echo "##[group]Install cfssl"
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl_1.6.1_linux_amd64 -o cfssl
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssljson_1.6.1_linux_amd64 -o cfssljson
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -o cfssl
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -o cfssljson
           chmod +x cfssl*
           sudo mv cfssl* /usr/local/bin
         echo "##[endgroup]"
@@ -172,17 +172,20 @@ jobs:
         - node: kindest/node:v1.26.15@sha256:84333e26cae1d70361bb7339efb568df1871419f2019c80f9a12b7e2d485fe19
           version: v1.26.15
           os: ubuntu-latest
-        - node: kindest/node:v1.27.13@sha256:17439fa5b32290e3ead39ead1250dca1d822d94a10d26f1981756cd51b24b9d8
-          version: v1.27.13
+        - node: kindest/node:v1.27.16@sha256:3fd82731af34efe19cd54ea5c25e882985bafa2c9baefe14f8deab1737d9fabe
+          version: v1.27.16
           os: ubuntu-latest
-        - node: kindest/node:v1.28.9@sha256:dca54bc6a6079dd34699d53d7d4ffa2e853e46a20cd12d619a09207e35300bd0
-          version: v1.28.9
+        - node: kindest/node:v1.28.13@sha256:45d319897776e11167e4698f6b14938eb4d52eb381d9e3d7a9086c16c69a8110
+          version: v1.28.13
           os: ubuntu-latest
-        - node: kindest/node:v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8
-          version: v1.29.4
+        - node: kindest/node:v1.29.7@sha256:f70ab5d833fca132a100c1f95490be25d76188b053f49a3c0047ff8812360baf
+          version: v1.29.7
           os: ubuntu-latest
-        - node: kindest/node:v1.30.0@sha256:047357ac0cfea04663786a612ba1eaba9702bef25227a794b52890dd8bcd692e
-          version: v1.30.0
+        - node: kindest/node:v1.30.3@sha256:bf91e1ef2f7d92bb7734b2b896b3dddea98f0496b34d96e37dd5d7df331b7e56
+          version: v1.30.3
+          os: ubuntu-latest
+        - node: kindest/node:v1.31.0@sha256:53df588e04085fd41ae12de0c3fe4c72f7013bba32a20e7325357a1ac94ba865
+          version: v1.31.0
           os: ubuntu-latest
     env:
       REGISTRY_NAME: registry.local
@@ -198,7 +201,7 @@ jobs:
     - name: Install kind
       run: |
         cd $(mktemp -d -t kind.XXXX)
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.24.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin
         cd -
@@ -212,8 +215,8 @@ jobs:
         echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
 
         echo "##[group]Install cfssl"
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl_1.6.1_linux_amd64 -o cfssl
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssljson_1.6.1_linux_amd64 -o cfssljson
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -o cfssl
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -o cfssljson
           chmod +x cfssl*
           sudo mv cfssl* /usr/local/bin
         echo "##[endgroup]"
