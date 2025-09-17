@@ -73,18 +73,20 @@ func AdmissionProjectorReconciler(c reconcilers.Config, name string, accessCheck
 			resource.Webhooks[0].Rules = rules
 			return resource, nil
 		},
-		MergeBeforeUpdate: func(current, desired *admissionregistrationv1.MutatingWebhookConfiguration) {
-			if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {
-				// the webhook config isn't in a form that we expect, ignore it
-				return
-			}
-			current.Webhooks[0].Rules = desired.Webhooks[0].Rules
-		},
-		Sanitize: func(resource *admissionregistrationv1.MutatingWebhookConfiguration) interface{} {
-			if resource == nil || len(resource.Webhooks) == 0 {
-				return nil
-			}
-			return resource.Webhooks[0].Rules
+		AggregateObjectManager: &reconcilers.UpdatingObjectManager[*admissionregistrationv1.MutatingWebhookConfiguration]{
+			MergeBeforeUpdate: func(current, desired *admissionregistrationv1.MutatingWebhookConfiguration) {
+				if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {
+					// the webhook config isn't in a form that we expect, ignore it
+					return
+				}
+				current.Webhooks[0].Rules = desired.Webhooks[0].Rules
+			},
+			Sanitize: func(resource *admissionregistrationv1.MutatingWebhookConfiguration) interface{} {
+				if resource == nil || len(resource.Webhooks) == 0 {
+					return nil
+				}
+				return resource.Webhooks[0].Rules
+			},
 		},
 
 		Setup: func(ctx context.Context, mgr controllerruntime.Manager, bldr *builder.Builder) error {
@@ -148,7 +150,7 @@ func AdmissionProjectorWebhook(c reconcilers.Config, hooks lifecycle.ServiceBind
 				}
 				for i := range activeServiceBindings {
 					sb := activeServiceBindings[i].DeepCopy()
-					sb.Default()
+					(&servicebindingv1.ServiceBinding{}).Default(ctx, sb)
 					if f := hooks.ServiceBindingPreProjection; f != nil {
 						if err := f(ctx, sb); err != nil {
 							return err
@@ -207,18 +209,20 @@ func TriggerReconciler(c reconcilers.Config, name string, accessChecker rbac.Acc
 			resource.Webhooks[0].Rules = rules
 			return resource, nil
 		},
-		MergeBeforeUpdate: func(current, desired *admissionregistrationv1.ValidatingWebhookConfiguration) {
-			if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {
-				// the webhook config isn't in a form that we expect, ignore it
-				return
-			}
-			current.Webhooks[0].Rules = desired.Webhooks[0].Rules
-		},
-		Sanitize: func(resource *admissionregistrationv1.ValidatingWebhookConfiguration) interface{} {
-			if resource == nil || len(resource.Webhooks) == 0 {
-				return nil
-			}
-			return resource.Webhooks[0].Rules
+		AggregateObjectManager: &reconcilers.UpdatingObjectManager[*admissionregistrationv1.ValidatingWebhookConfiguration]{
+			MergeBeforeUpdate: func(current, desired *admissionregistrationv1.ValidatingWebhookConfiguration) {
+				if current == nil || len(current.Webhooks) != 1 || desired == nil || len(desired.Webhooks) != 1 {
+					// the webhook config isn't in a form that we expect, ignore it
+					return
+				}
+				current.Webhooks[0].Rules = desired.Webhooks[0].Rules
+			},
+			Sanitize: func(resource *admissionregistrationv1.ValidatingWebhookConfiguration) interface{} {
+				if resource == nil || len(resource.Webhooks) == 0 {
+					return nil
+				}
+				return resource.Webhooks[0].Rules
+			},
 		},
 
 		Config: c,

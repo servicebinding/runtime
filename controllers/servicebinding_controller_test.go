@@ -442,7 +442,7 @@ func TestResolveBindingSecret(t *testing.T) {
 				DieReleasePtr(),
 			ShouldErr: true,
 			Verify: func(t *testing.T, result ctrl.Result, err error) {
-				if !errors.Is(err, reconcilers.HaltSubReconcilers) {
+				if !errors.Is(err, reconcilers.ErrHaltSubReconcilers) {
 					t.Errorf("expected err to be of type reconcilers.HaltSubReconcilers")
 				}
 			},
@@ -475,7 +475,7 @@ func TestResolveBindingSecret(t *testing.T) {
 			},
 			ShouldErr: true,
 			Verify: func(t *testing.T, result ctrl.Result, err error) {
-				if !errors.Is(err, reconcilers.HaltSubReconcilers) {
+				if !errors.Is(err, reconcilers.ErrHaltSubReconcilers) {
 					t.Errorf("expected err to be of type reconcilers.HaltSubReconcilers")
 				}
 			},

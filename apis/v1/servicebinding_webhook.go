@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,29 +35,36 @@ func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-var _ webhook.Defaulter = &ServiceBinding{}
+var _ webhook.CustomDefaulter = &ServiceBinding{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *ServiceBinding) Default() {
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type
+func (r *ServiceBinding) Default(ctx context.Context, obj runtime.Object) error {
+	r = obj.(*ServiceBinding)
+
 	if r.Spec.Name == "" {
 		r.Spec.Name = r.Name
 	}
+
+	return nil
 }
 
 //+kubebuilder:webhook:path=/validate-servicebinding-io-v1-servicebinding,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=servicebindings,verbs=create;update,versions=v1,name=v1.servicebindings.servicebinding.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &ServiceBinding{}
+var _ webhook.CustomValidator = &ServiceBinding{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateCreate() (admission.Warnings, error) {
-	r.Default()
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ServiceBinding)
+
+	(&ServiceBinding{}).Default(ctx, r)
 	return nil, r.validate().ToAggregate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	r.Default()
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ServiceBinding)
 
+	(&ServiceBinding{}).Default(ctx, r)
 	errs := field.ErrorList{}
 
 	// check immutable fields
@@ -92,8 +100,8 @@ func (r *ServiceBinding) ValidateUpdate(old runtime.Object) (admission.Warnings,
 	return nil, errs.ToAggregate()
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
