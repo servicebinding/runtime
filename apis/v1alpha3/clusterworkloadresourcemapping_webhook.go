@@ -30,6 +30,8 @@ import (
 func (r *ClusterWorkloadResourceMapping) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -40,7 +42,7 @@ func (r *ClusterWorkloadResourceMapping) Default(ctx context.Context, obj runtim
 	r = obj.(*ClusterWorkloadResourceMapping)
 	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
 	r.ConvertTo(r1)
-	if err := r1.Default(ctx, r1); err != nil {
+	if err := (&servicebindingv1.ClusterWorkloadResourceMapping{}).Default(ctx, r1); err != nil {
 		return err
 	}
 	r.ConvertFrom(r1)

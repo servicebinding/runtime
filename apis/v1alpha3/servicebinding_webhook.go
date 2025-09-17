@@ -30,6 +30,8 @@ import (
 func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -38,11 +40,11 @@ var _ webhook.CustomDefaulter = &ServiceBinding{}
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the type
 func (r *ServiceBinding) Default(ctx context.Context, obj runtime.Object) error {
 	r = obj.(*ServiceBinding)
-	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
+	r1 := &servicebindingv1.ServiceBinding{}
 	if err := r.ConvertTo(r1); err != nil {
 		return err
 	}
-	if err := r1.Default(ctx, r1); err != nil {
+	if err := (&servicebindingv1.ServiceBinding{}).Default(ctx, r1); err != nil {
 		return err
 	}
 	if err := r.ConvertFrom(r1); err != nil {
@@ -63,7 +65,7 @@ func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object)
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return (&servicebindingv1.ServiceBinding{}).ValidateCreate(ctx, r)
+	return (&servicebindingv1.ServiceBinding{}).ValidateCreate(ctx, r1)
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
@@ -74,7 +76,7 @@ func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Ob
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return (&servicebindingv1.ServiceBinding{}).ValidateUpdate(ctx, old, r)
+	return (&servicebindingv1.ServiceBinding{}).ValidateUpdate(ctx, old, r1)
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
@@ -85,5 +87,5 @@ func (r *ServiceBinding) ValidateDelete(ctx context.Context, obj runtime.Object)
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return (&servicebindingv1.ServiceBinding{}).ValidateDelete(ctx, obj)
+	return (&servicebindingv1.ServiceBinding{}).ValidateDelete(ctx, r1)
 }
