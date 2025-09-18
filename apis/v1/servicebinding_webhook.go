@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -56,6 +57,9 @@ var _ webhook.CustomValidator = &ServiceBinding{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Create")
+
 	r = obj.(*ServiceBinding)
 
 	(&ServiceBinding{}).Default(ctx, r)
@@ -64,6 +68,9 @@ func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object)
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Update")
+
 	r = obj.(*ServiceBinding)
 
 	(&ServiceBinding{}).Default(ctx, r)
@@ -104,6 +111,9 @@ func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Ob
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ServiceBinding) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Delete")
+
 	return nil, nil
 }
 
