@@ -141,24 +141,8 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1")
 		os.Exit(1)
 	}
-	if err = (&servicebindingv1beta1.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1beta1")
-		os.Exit(1)
-	}
-	if err = (&servicebindingv1alpha3.ServiceBinding{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ServiceBinding v1alpha3")
-		os.Exit(1)
-	}
 	if err = (&servicebindingv1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping v1")
-		os.Exit(1)
-	}
-	if err = (&servicebindingv1beta1.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping v1beta1")
-		os.Exit(1)
-	}
-	if err = (&servicebindingv1alpha3.ClusterWorkloadResourceMapping{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterWorkloadResourceMapping v1alpha3")
 		os.Exit(1)
 	}
 
