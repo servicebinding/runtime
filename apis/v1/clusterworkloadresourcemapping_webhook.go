@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	"context"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,16 +31,22 @@ import (
 func (r *ClusterWorkloadResourceMapping) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
-var _ webhook.Defaulter = &ClusterWorkloadResourceMapping{}
+var _ webhook.CustomDefaulter = &ClusterWorkloadResourceMapping{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) Default() {
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type
+func (r *ClusterWorkloadResourceMapping) Default(ctx context.Context, obj runtime.Object) error {
+	r = obj.(*ClusterWorkloadResourceMapping)
+
 	for i := range r.Spec.Versions {
 		r.Spec.Versions[i].Default()
 	}
+
+	return nil
 }
 
 // Default applies values that are appropriate for a PodSpecable resource
@@ -75,23 +82,27 @@ func (r *ClusterWorkloadResourceMappingTemplate) Default() {
 
 //+kubebuilder:webhook:path=/validate-servicebinding-io-v1-clusterworkloadresourcemapping,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=clusterworkloadresourcemappings,verbs=create;update,versions=v1,name=v1.clusterworkloadresourcemappings.servicebinding.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &ClusterWorkloadResourceMapping{}
+var _ webhook.CustomValidator = &ClusterWorkloadResourceMapping{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateCreate() (admission.Warnings, error) {
-	r.Default()
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ClusterWorkloadResourceMapping) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ClusterWorkloadResourceMapping)
+
+	(&ClusterWorkloadResourceMapping{}).Default(ctx, r)
 	return nil, r.validate().ToAggregate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	r.Default()
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ClusterWorkloadResourceMapping) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ClusterWorkloadResourceMapping)
+
+	(&ClusterWorkloadResourceMapping{}).Default(ctx, r)
 	// TODO(user): check for immutable fields, if any
 	return nil, r.validate().ToAggregate()
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *ClusterWorkloadResourceMapping) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ClusterWorkloadResourceMapping) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 

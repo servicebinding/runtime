@@ -216,13 +216,14 @@ func TestClusterWorkloadResourceMappingDefault(t *testing.T) {
 	for _, c := range tests {
 		t.Run(c.name, func(t *testing.T) {
 			actual := c.seed.DeepCopy()
-			actual.Default()
+			(&ClusterWorkloadResourceMapping{}).Default(t.Context(), actual)
 			if diff := cmp.Diff(c.expected, actual); diff != "" {
 				t.Errorf("(-expected, +actual): %s", diff)
 			}
 		})
 	}
 }
+
 func TestClusterWorkloadResourceMappingValidate(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -420,17 +421,17 @@ func TestClusterWorkloadResourceMappingValidate(t *testing.T) {
 
 			expectedErr := c.expected.ToAggregate()
 
-			_, actualCreateErr := c.seed.ValidateCreate()
+			_, actualCreateErr := (&ClusterWorkloadResourceMapping{}).ValidateCreate(t.Context(), c.seed.DeepCopy())
 			if diff := cmp.Diff(expectedErr, actualCreateErr); diff != "" {
 				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
 			}
 
-			_, actualUpdateErr := c.seed.ValidateUpdate(c.seed.DeepCopy())
+			_, actualUpdateErr := (&ClusterWorkloadResourceMapping{}).ValidateUpdate(t.Context(), c.seed.DeepCopy(), c.seed.DeepCopy())
 			if diff := cmp.Diff(expectedErr, actualUpdateErr); diff != "" {
-				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
+				t.Errorf("ValidateUpdate (-expected, +actual): %s", diff)
 			}
 
-			_, actualDeleteErr := c.seed.ValidateDelete()
+			_, actualDeleteErr := (&ClusterWorkloadResourceMapping{}).ValidateDelete(t.Context(), c.seed.DeepCopy())
 			if diff := cmp.Diff(nil, actualDeleteErr); diff != "" {
 				t.Errorf("ValidateDelete (-expected, +actual): %s", diff)
 			}

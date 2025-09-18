@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha3
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -28,46 +30,62 @@ import (
 func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
-var _ webhook.Defaulter = &ServiceBinding{}
+var _ webhook.CustomDefaulter = &ServiceBinding{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *ServiceBinding) Default() {
-	r1 := &servicebindingv1.ClusterWorkloadResourceMapping{}
-	r.ConvertTo(r1)
-	r1.Default()
-	r.ConvertFrom(r1)
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type
+func (r *ServiceBinding) Default(ctx context.Context, obj runtime.Object) error {
+	r = obj.(*ServiceBinding)
+	r1 := &servicebindingv1.ServiceBinding{}
+	if err := r.ConvertTo(r1); err != nil {
+		return err
+	}
+	if err := (&servicebindingv1.ServiceBinding{}).Default(ctx, r1); err != nil {
+		return err
+	}
+	if err := r.ConvertFrom(r1); err != nil {
+		return err
+	}
+	return nil
 }
 
 //+kubebuilder:webhook:path=/validate-servicebinding-io-v1alpha3-servicebinding,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=servicebindings,verbs=create;update,versions=v1alpha3,name=v1alpha3.servicebindings.servicebinding.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &ServiceBinding{}
+var _ webhook.CustomValidator = &ServiceBinding{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ServiceBinding)
+
 	r1 := &servicebindingv1.ServiceBinding{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return r1.ValidateCreate()
+	return (&servicebindingv1.ServiceBinding{}).ValidateCreate(ctx, r1)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ServiceBinding)
+
 	r1 := &servicebindingv1.ServiceBinding{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return r1.ValidateUpdate(old)
+	return (&servicebindingv1.ServiceBinding{}).ValidateUpdate(ctx, old, r1)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *ServiceBinding) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r = obj.(*ServiceBinding)
+
 	r1 := &servicebindingv1.ServiceBinding{}
 	if err := r.ConvertTo(r1); err != nil {
 		return nil, err
 	}
-	return r1.ValidateDelete()
+	return (&servicebindingv1.ServiceBinding{}).ValidateDelete(ctx, r1)
 }

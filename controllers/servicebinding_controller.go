@@ -97,7 +97,7 @@ func ResolveBindingSecret(hooks lifecycle.ServiceBindingHooks) reconcilers.SubRe
 					// this resource is automatically triggered by the change of status. We do not
 					// want to requeue as that may cause the resource to be re-reconciled before
 					// the informer cache is updated.
-					return reconcilers.HaltSubReconcilers
+					return reconcilers.ErrHaltSubReconcilers
 				}
 			} else {
 				// leave Unknown, not success but also not an error
@@ -234,7 +234,7 @@ func ProjectBinding(hooks lifecycle.ServiceBindingHooks) reconcilers.SubReconcil
 }
 
 func PatchWorkloads() reconcilers.SubReconciler[*servicebindingv1.ServiceBinding] {
-	workloadManager := &reconcilers.ResourceManager[*unstructured.Unstructured]{
+	workloadManager := &reconcilers.UpdatingObjectManager[*unstructured.Unstructured]{
 		Name: "PatchWorkloads",
 		MergeBeforeUpdate: func(current, desired *unstructured.Unstructured) {
 			current.SetUnstructuredContent(desired.UnstructuredContent())
