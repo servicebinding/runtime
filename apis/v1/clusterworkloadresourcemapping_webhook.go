@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/util/jsonpath"
@@ -86,6 +87,9 @@ var _ webhook.CustomValidator = &ClusterWorkloadResourceMapping{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Create")
+
 	r = obj.(*ClusterWorkloadResourceMapping)
 
 	(&ClusterWorkloadResourceMapping{}).Default(ctx, r)
@@ -94,6 +98,9 @@ func (r *ClusterWorkloadResourceMapping) ValidateCreate(ctx context.Context, obj
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Update")
+
 	r = obj.(*ClusterWorkloadResourceMapping)
 
 	(&ClusterWorkloadResourceMapping{}).Default(ctx, r)
@@ -103,6 +110,9 @@ func (r *ClusterWorkloadResourceMapping) ValidateUpdate(ctx context.Context, old
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
 func (r *ClusterWorkloadResourceMapping) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	log := logr.FromContextOrDiscard(ctx)
+	log.V(1).Info("Validating Delete")
+
 	return nil, nil
 }
 
