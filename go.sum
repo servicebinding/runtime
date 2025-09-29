@@ -194,8 +194,8 @@ k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d h1:wAhiDyZ4Tdtt7e46e9M5ZSAJ/MnPG
 k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d/go.mod h1:OLgZIPagt7ERELqWJFomSt595RzquPNLL48iOWgYOg0=
 reconciler.io/dies v0.17.0 h1:obT6o6IjmtrGwu70K5b+Qm9ABWI0rzukup7dvyEonLU=
 reconciler.io/dies v0.17.0/go.mod h1:NW02qHlQNCYda9/f2EYhg/adf0F706zmzYlOO965GpY=
-reconciler.io/runtime v0.24.0 h1:lLSMBK+je8xXJ9gW3+pW+lwc0zDb99KAEwtigLW73EE=
-reconciler.io/runtime v0.24.0/go.mod h1:0gyqgJGaKFoPxUZzqYZHrmUL7PCgbtW9aEOih1aqh3U=
+reconciler.io/runtime v0.24.1 h1:wY/X1FY1Ondn8gR957nvXEABK1VzvBNJFJs1YqmvLhg=
+reconciler.io/runtime v0.24.1/go.mod h1:0gyqgJGaKFoPxUZzqYZHrmUL7PCgbtW9aEOih1aqh3U=
 sigs.k8s.io/controller-runtime v0.22.1 h1:Ah1T7I+0A7ize291nJZdS1CabF/lB4E++WizgV24Eqg=
 sigs.k8s.io/controller-runtime v0.22.1/go.mod h1:FwiwRjkRPbiN+zp2QRp7wlTCzbUXxZ/D4OzuQUDwBHY=
 sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 h1:IpInykpT6ceI+QxKBbEflcR5EXP7sU1kvOlxwZh5txg=
