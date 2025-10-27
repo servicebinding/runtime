@@ -306,7 +306,7 @@ jobs:
             help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
         EOF
     - name: Download staged bundle
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: servicebinding-runtime-bundle.tar
     - name: Relocate bundle
@@ -475,7 +475,7 @@ jobs:
         release_name: ${{ steps.get_version.outputs.VERSION }}
         draft: true
     - name: Download staged bundle
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: servicebinding-runtime-bundle.tar
     - name: Upload servicebinding-runtime-bundle.tar
