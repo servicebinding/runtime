@@ -146,7 +146,7 @@ jobs:
           ${IMGPKG} push -f "${scratch}" -b "${BUNDLE}"
           ${IMGPKG} copy -b "${BUNDLE}" --to-tar servicebinding-runtime-bundle.tar
         echo "##[endgroup]"
-    - uses: actions/upload-artifact@v5
+    - uses: actions/upload-artifact@v6
       with:
         name: servicebinding-runtime-bundle.tar
         path: servicebinding-runtime-bundle.tar
@@ -416,7 +416,7 @@ jobs:
       if: always()
       continue-on-error: true
     - name: Save test results
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       if: always()
       with:
         name: acceptance-test-results-${{ matrix.version }}
