@@ -18,34 +18,27 @@ package v1
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 func (r *ServiceBinding) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
 		WithDefaulter(r).
 		WithValidator(r).
 		Complete()
 }
 
-var _ webhook.CustomDefaulter = &ServiceBinding{}
+var _ admission.Defaulter[*ServiceBinding] = &ServiceBinding{}
 
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the type
-func (r *ServiceBinding) Default(ctx context.Context, obj runtime.Object) error {
-	r = obj.(*ServiceBinding)
-
-	if r.Spec.Name == "" {
-		r.Spec.Name = r.Name
+func (*ServiceBinding) Default(ctx context.Context, obj *ServiceBinding) error {
+	if obj.Spec.Name == "" {
+		obj.Spec.Name = obj.Name
 	}
 
 	return nil
@@ -53,64 +46,45 @@ func (r *ServiceBinding) Default(ctx context.Context, obj runtime.Object) error 
 
 //+kubebuilder:webhook:path=/validate-servicebinding-io-v1-servicebinding,mutating=false,failurePolicy=fail,sideEffects=None,groups=servicebinding.io,resources=servicebindings,verbs=create;update,versions=v1,name=v1.servicebindings.servicebinding.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.CustomValidator = &ServiceBinding{}
+var _ admission.Validator[*ServiceBinding] = &ServiceBinding{}
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (*ServiceBinding) ValidateCreate(ctx context.Context, obj *ServiceBinding) (admission.Warnings, error) {
 	log := logr.FromContextOrDiscard(ctx)
 	log.V(1).Info("Validating Create")
 
-	r = obj.(*ServiceBinding)
-
-	(&ServiceBinding{}).Default(ctx, r)
-	return nil, r.validate().ToAggregate()
+	(&ServiceBinding{}).Default(ctx, obj)
+	return nil, obj.validate().ToAggregate()
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateUpdate(ctx context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+func (*ServiceBinding) ValidateUpdate(ctx context.Context, old, obj *ServiceBinding) (admission.Warnings, error) {
 	log := logr.FromContextOrDiscard(ctx)
 	log.V(1).Info("Validating Update")
 
-	r = obj.(*ServiceBinding)
-
-	(&ServiceBinding{}).Default(ctx, r)
+	(&ServiceBinding{}).Default(ctx, obj)
 	errs := field.ErrorList{}
 
 	// check immutable fields
-	var ro *ServiceBinding
-	if o, ok := old.(*ServiceBinding); ok {
-		ro = o
-	} else if o, ok := old.(conversion.Convertible); ok {
-		ro = &ServiceBinding{}
-		if err := o.ConvertTo(ro); err != nil {
-			return nil, err
-		}
-	} else {
+	if obj.Spec.Workload.APIVersion != old.Spec.Workload.APIVersion {
 		errs = append(errs,
-			field.InternalError(nil, fmt.Errorf("old object must be of type v1.ServiceBinding")),
+			field.Forbidden(field.NewPath("spec", "workload", "apiVersion"), "Workload apiVersion is immutable. Delete and recreate the ServiceBinding to update."),
 		)
 	}
-	if len(errs) == 0 {
-		if r.Spec.Workload.APIVersion != ro.Spec.Workload.APIVersion {
-			errs = append(errs,
-				field.Forbidden(field.NewPath("spec", "workload", "apiVersion"), "Workload apiVersion is immutable. Delete and recreate the ServiceBinding to update."),
-			)
-		}
-		if r.Spec.Workload.Kind != ro.Spec.Workload.Kind {
-			errs = append(errs,
-				field.Forbidden(field.NewPath("spec", "workload", "kind"), "Workload kind is immutable. Delete and recreate the ServiceBinding to update."),
-			)
-		}
+	if obj.Spec.Workload.Kind != old.Spec.Workload.Kind {
+		errs = append(errs,
+			field.Forbidden(field.NewPath("spec", "workload", "kind"), "Workload kind is immutable. Delete and recreate the ServiceBinding to update."),
+		)
 	}
 
 	// validate new object
-	errs = append(errs, r.validate()...)
+	errs = append(errs, obj.validate()...)
 
 	return nil, errs.ToAggregate()
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
-func (r *ServiceBinding) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+func (*ServiceBinding) ValidateDelete(ctx context.Context, obj *ServiceBinding) (admission.Warnings, error) {
 	log := logr.FromContextOrDiscard(ctx)
 	log.V(1).Info("Validating Delete")
 
