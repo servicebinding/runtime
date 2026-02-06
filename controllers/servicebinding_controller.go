@@ -40,7 +40,7 @@ import (
 //+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=servicebinding.io,resources=servicebindings/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=events,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core;events.k8s.io,resources=events,verbs=get;list;watch;create;update;patch;delete
 
 // ServiceBindingReconciler reconciles a ServiceBinding object
 func ServiceBindingReconciler(c reconcilers.Config, hooks lifecycle.ServiceBindingHooks) *reconcilers.ResourceReconciler[*servicebindingv1.ServiceBinding] {

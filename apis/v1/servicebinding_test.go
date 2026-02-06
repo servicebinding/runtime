@@ -20,9 +20,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -280,7 +278,7 @@ func TestServiceBindingValidate_Immutable(t *testing.T) {
 	tests := []struct {
 		name     string
 		seed     *ServiceBinding
-		old      runtime.Object
+		old      *ServiceBinding
 		expected field.ErrorList
 	}{
 		{
@@ -396,32 +394,6 @@ func TestServiceBindingValidate_Immutable(t *testing.T) {
 					Field:    "spec.workload.kind",
 					Detail:   "Workload kind is immutable. Delete and recreate the ServiceBinding to update.",
 					BadValue: "",
-				},
-			},
-		},
-		{
-			name: "unkonwn old object",
-			seed: &ServiceBinding{
-				Spec: ServiceBindingSpec{
-					Name: "my-binding",
-					Service: ServiceBindingServiceReference{
-						APIVersion: "v1",
-						Kind:       "Secret",
-						Name:       "my-service",
-					},
-					Workload: ServiceBindingWorkloadReference{
-						APIVersion: "apps/v1",
-						Kind:       "Deloyment",
-						Name:       "new-workload",
-					},
-				},
-			},
-			old: &corev1.Pod{},
-			expected: field.ErrorList{
-				{
-					Type:   field.ErrorTypeInternal,
-					Field:  "<nil>",
-					Detail: "old object must be of type v1.ServiceBinding",
 				},
 			},
 		},
