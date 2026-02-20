@@ -81,3 +81,10 @@ updates:
   open-pull-requests-limit: 10
   reviewers:
   - servicebinding/reference-implementation
+- package-ecosystem: gomod
+  directory: "/hack/yq"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - servicebinding/reference-implementation

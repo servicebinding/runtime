@@ -12,6 +12,7 @@ GOIMPORTS ?= go run -modfile hack/goimports/go.mod golang.org/x/tools/cmd/goimpo
 KAPP ?= go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
 KO ?= go run -modfile hack/ko/go.mod github.com/google/ko
 KUSTOMIZE ?= go run -modfile hack/kustomize/go.mod sigs.k8s.io/kustomize/kustomize/v4
+YQ ?= go run -modfile hack/yq/go.mod github.com/mikefarah/yq/v4
 
 KAPP_APP ?= servicebinding-runtime
 KAPP_APP_NAMESPACE ?= default
@@ -51,11 +52,15 @@ help: ## Display this help.
 ##@ Development
 
 .PHONY: manifests
-manifests: ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+manifests: internal-manifests ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	@rm -rf config/crd/bases/_*.yaml
+	$(foreach file,$(wildcard config/crd/bases/*.yaml),$(shell $(YQ) -i 'del(.metadata.annotations["controller-gen.kubebuilder.io/version"]) | del(.metadata.annotations | select(length==0))' ${file}))
 	cat hack/boilerplate.yaml.txt > config/servicebinding-runtime.yaml
 	$(KUSTOMIZE) build config/default >> config/servicebinding-runtime.yaml
+
+.PHONY: internal-manifests
+internal-manifests:
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 .PHONY: generate
 generate: ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
