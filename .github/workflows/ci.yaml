@@ -45,76 +45,16 @@ jobs:
     name: Stage
     runs-on: ubuntu-latest
     env:
-      REGISTRY_NAME: registry.local
-      KO_DOCKER_REPO: registry.local/servicebinding
       KO_PLATFORMS: linux/amd64,linux/arm64
-      BUNDLE: registry.local/servicebinding/bundle
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
         cache-dependency-path: '**/*.sum'
-    - name: Generate certs
-      run: |
-        set -o errexit
-        set -o nounset
-        set -o pipefail
-
-        CERT_DIR=$(mktemp -d -t certs.XXXX)
-        echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
-
-        echo "##[group]Install cfssl"
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -o cfssl
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -o cfssljson
-          chmod +x cfssl*
-          sudo mv cfssl* /usr/local/bin
-        echo "##[endgroup]"
-
-        echo "##[group]Generate CA"
-          cfssl gencert -initca .github/tls/root-csr.json \
-            | cfssljson -bare ${CERT_DIR}/root-ca
-          cfssl gencert -ca ${CERT_DIR}/root-ca.pem -ca-key ${CERT_DIR}/root-ca-key.pem \
-            -config=".github/tls/config.json" \
-            -profile="intermediate" .github/tls/intermediate-csr.json \
-            | cfssljson -bare ${CERT_DIR}/signing-ca
-          cat ${CERT_DIR}/signing-ca.pem ${CERT_DIR}/root-ca.pem > ${CERT_DIR}/ca.pem
-        echo "##[endgroup]"
-        echo "##[group]Install CA"
-          # https://ubuntu.com/server/docs/security-trust-store
-          sudo apt-get install -y ca-certificates
-          sudo cp ${CERT_DIR}/ca.pem /usr/local/share/ca-certificates/ca.crt
-          sudo update-ca-certificates
-        echo "##[endgroup]"
-
-        echo "##[group]Generate cert"
-          cfssl gencert -ca ${CERT_DIR}/signing-ca.pem -ca-key ${CERT_DIR}/signing-ca-key.pem \
-            -config=".github/tls/config.json" \
-            -profile="server" \
-            -hostname="${REGISTRY_NAME},local-registry" \
-            .github/tls/server-csr.json \
-            | cfssljson -bare ${CERT_DIR}/server
-        echo "##[endgroup]"
-
-    - name: Setup local registry
-      run: |
-        set -o errexit
-        set -o nounset
-        set -o pipefail
-
-        # Run a registry.
-        docker run -d \
-          --restart=always \
-          --name local-registry \
-          -v ${CERT_DIR}:/certs \
-          -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
-          -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem \
-          -e REGISTRY_HTTP_TLS_KEY=/certs/server-key.pem \
-          -p "443:443" \
-          registry:2
-
-        # Make the $REGISTRY_NAME -> local-registry
-        echo "$(hostname -I | cut -d' ' -f1) $REGISTRY_NAME" | sudo tee -a /etc/hosts
+    - name: Start registry
+      id: registry
+      uses: reconcilerio/registry@v1
     - name: Build all platforms for tags
       if: startsWith(github.ref, 'refs/tags/')
       run: |
@@ -145,9 +85,12 @@ jobs:
         echo "##[endgroup]"
 
         echo "##[group]Create bundle"
-          ${IMGPKG} push -f "${scratch}" -b "${BUNDLE}"
-          ${IMGPKG} copy -b "${BUNDLE}" --to-tar servicebinding-runtime-bundle.tar
+          bundle="${{ steps.registry.outputs.registry }}/servicebinding/bundle"
+          ${IMGPKG} push -f "${scratch}" -b "${bundle}"
+          ${IMGPKG} copy -b "${bundle}" --to-tar servicebinding-runtime-bundle.tar
         echo "##[endgroup]"
+      env:
+        KO_DOCKER_REPO: ${{ steps.registry.outputs.registry }}/servicebinding
     - uses: actions/upload-artifact@v7
       with:
         name: servicebinding-runtime-bundle.tar
@@ -201,9 +144,6 @@ jobs:
         - node: kindest/node:v1.35.1@sha256:05d7bcdefbda08b4e038f644c4df690cdac3fba8b06f8289f30e10026720a1ab
           version: v1.35.1
           os: ubuntu-latest
-    env:
-      REGISTRY_NAME: registry.local
-      BUNDLE: registry.local/bundle
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
@@ -220,78 +160,26 @@ jobs:
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin
         cd -
-    - name: Generate certs
-      run: |
-        set -o errexit
-        set -o nounset
-        set -o pipefail
-
-        CERT_DIR=$(mktemp -d -t certs.XXXX)
-        echo "CERT_DIR=$CERT_DIR" >> $GITHUB_ENV
-
-        echo "##[group]Install cfssl"
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssl_1.6.5_linux_amd64 -o cfssl
-          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.5/cfssljson_1.6.5_linux_amd64 -o cfssljson
-          chmod +x cfssl*
-          sudo mv cfssl* /usr/local/bin
-        echo "##[endgroup]"
-
-        echo "##[group]Generate CA"
-          cfssl gencert -initca .github/tls/root-csr.json \
-            | cfssljson -bare ${CERT_DIR}/root-ca
-          cfssl gencert -ca ${CERT_DIR}/root-ca.pem -ca-key ${CERT_DIR}/root-ca-key.pem \
-            -config=".github/tls/config.json" \
-            -profile="intermediate" .github/tls/intermediate-csr.json \
-            | cfssljson -bare ${CERT_DIR}/signing-ca
-          cat ${CERT_DIR}/signing-ca.pem ${CERT_DIR}/root-ca.pem > ${CERT_DIR}/ca.pem
-        echo "##[endgroup]"
-        echo "##[group]Install CA"
-          # https://ubuntu.com/server/docs/security-trust-store
-          sudo apt-get install -y ca-certificates
-          sudo cp ${CERT_DIR}/ca.pem /usr/local/share/ca-certificates/ca.crt
-          sudo update-ca-certificates
-        echo "##[endgroup]"
-
-        echo "##[group]Generate cert"
-          cfssl gencert -ca ${CERT_DIR}/signing-ca.pem -ca-key ${CERT_DIR}/signing-ca-key.pem \
-            -config=".github/tls/config.json" \
-            -profile="server" \
-            -hostname="${REGISTRY_NAME},local-registry" \
-            .github/tls/server-csr.json \
-            | cfssljson -bare ${CERT_DIR}/server
-        echo "##[endgroup]"
-    - name: Setup local registry
-      run: |
-        set -o errexit
-        set -o nounset
-        set -o pipefail
-
-        # Run a registry.
-        docker run -d \
-          --restart=always \
-          --name local-registry \
-          -v ${CERT_DIR}:/certs \
-          -e REGISTRY_HTTP_ADDR=0.0.0.0:443 \
-          -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.pem \
-          -e REGISTRY_HTTP_TLS_KEY=/certs/server-key.pem \
-          -p "443:443" \
-          registry:2
-
-        # Make the $REGISTRY_NAME -> local-registry
-        echo "$(hostname -I | cut -d' ' -f1) $REGISTRY_NAME" | sudo tee -a /etc/hosts
+    - name: Start registry
+      id: registry
+      uses: reconcilerio/registry@v1
     - name: Create Cluster
       run: |
         set -o errexit
         set -o nounset
         set -o pipefail
 
-        # define containerd host config for registry
-        cat <<EOF > ${CERT_DIR}/hosts.toml
-        server = "https://${REGISTRY_NAME}"
+        registry="${{ steps.registry.outputs.registry }}"
+        cert_dir=$(mktemp -d -t certs.XXXX)
+        cp "${{ steps.registry.outputs.tls-ca }}" "${cert_dir}/ca.pem"
 
-        [host."https://${REGISTRY_NAME}"]
+        # define containerd host config for registry
+        cat <<EOF > ${cert_dir}/hosts.toml
+        server = "https://${registry}"
+
+        [host."https://${registry}"]
           capabilities = ["pull"]
-          ca = "/etc/containerd/certs.d/${REGISTRY_NAME}/ca.pem"
+          ca = "/etc/containerd/certs.d/${registry}/ca.pem"
         EOF
 
         # create a cluster with the local registry enabled in containerd
@@ -306,12 +194,9 @@ jobs:
         - role: control-plane
           image: ${{ matrix.node }}
           extraMounts:
-          - containerPath: /etc/containerd/certs.d/${REGISTRY_NAME}
-            hostPath: ${CERT_DIR}
+          - containerPath: /etc/containerd/certs.d/${registry}
+            hostPath: ${cert_dir}
         EOF
-
-        # connect the registry to the cluster network
-        docker network connect kind local-registry
 
         # Document the local registry
         # https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
@@ -323,7 +208,7 @@ jobs:
           namespace: kube-public
         data:
           localRegistryHosting.v1: |
-            host: "${REGISTRY_NAME}"
+            host: "${registry}"
             help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
         EOF
     - name: Download staged bundle
@@ -336,9 +221,10 @@ jobs:
         set -o nounset
         set -o pipefail
 
-        ${IMGPKG} copy --tar servicebinding-runtime-bundle.tar --to-repo "${BUNDLE}"
+        bundle="${{ steps.registry.outputs.registry }}/bundle"
+        ${IMGPKG} copy --tar servicebinding-runtime-bundle.tar --to-repo "${bundle}"
         mkdir -p bundle
-        ${IMGPKG} pull -b "${BUNDLE}" -o bundle
+        ${IMGPKG} pull -b "${bundle}" -o bundle
     - name: Deploy
       run: |
         set -o errexit
