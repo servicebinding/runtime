@@ -82,7 +82,7 @@ jobs:
       name: Install kustomize
       uses: reconcilerio/go-install-action@v1
       with:
-        package: sigs.k8s.io/kustomize/kustomize/v5
+        package: sigs.k8s.io/kustomize/kustomize/v4
         working-directory: hack/kustomize
         output-path-env: KUSTOMIZE
     - &install-yq
