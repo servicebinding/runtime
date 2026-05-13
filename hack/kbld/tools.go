@@ -21,5 +21,5 @@ limitations under the License.
 package tools
 
 import (
-	_ "github.com/vmware-tanzu/carvel-kbld/cmd/kbld"
+	_ "carvel.dev/kbld/cmd/kbld"
 )

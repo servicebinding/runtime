@@ -21,5 +21,5 @@ limitations under the License.
 package tools
 
 import (
-	_ "github.com/k14s/kapp/cmd/kapp"
+	_ "carvel.dev/kapp/cmd/kapp"
 )

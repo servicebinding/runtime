@@ -21,5 +21,5 @@ limitations under the License.
 package tools
 
 import (
-	_ "github.com/vmware-tanzu/carvel-imgpkg/cmd/imgpkg"
+	_ "carvel.dev/imgpkg/cmd/imgpkg"
 )
