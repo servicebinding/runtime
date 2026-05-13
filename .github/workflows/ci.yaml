@@ -10,13 +10,88 @@ on:
     - 'v[0-9]+\.[0-9]+\.[0-9]+-?**'
   pull_request: {}
 
-env:
-  IMGPKG: go run -modfile hack/imgpkg/go.mod github.com/vmware-tanzu/carvel-imgpkg/cmd/imgpkg
-  KAPP: go run -modfile hack/kapp/go.mod github.com/k14s/kapp/cmd/kapp
-  KBLD: go run -modfile hack/kbld/go.mod github.com/vmware-tanzu/carvel-kbld/cmd/kbld
-  KO: go run -modfile hack/ko/go.mod github.com/google/ko
-
 jobs:
+
+  tools:
+    # Synthetic job to host config anchors referenced by other jobs.
+    # Running this job does no meaningful work, but would pass.
+    name: Build and cache tools
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: go.mod
+        cache-dependency-path: '**/*.sum'
+    - &install-controller-gen
+      name: Install controller-gen
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: sigs.k8s.io/controller-tools/cmd/controller-gen
+        working-directory: hack/controller-gen
+        output-path-env: CONTROLLER_GEN
+    - &install-crane
+      name: Install crane
+      uses: reconcilerio/install-crane-action@v1
+      with:
+        version: v0.21.5
+    - &install-diegen
+      name: Install diegen
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: reconciler.io/dies/diegen
+        working-directory: hack/diegen
+        output-path-env: DIEGEN
+    - &install-goimports
+      name: Install goimports
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: golang.org/x/tools/cmd/goimports
+        working-directory: hack/goimports
+        output-path-env: GOIMPORTS
+    - &install-imgpkg
+      name: Install imgpkg
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: carvel.dev/imgpkg/cmd/imgpkg
+        working-directory: hack/imgpkg
+        output-path-env: IMGPKG
+    - &install-kapp
+      name: Install kapp
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: carvel.dev/kapp/cmd/kapp
+        working-directory: hack/kapp
+        output-path-env: KAPP
+    - &install-kbld
+      name: Install kbld
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: carvel.dev/kbld/cmd/kbld
+        working-directory: hack/kbld
+        output-path-env: KBLD
+    - &install-ko
+      name: Install ko
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: github.com/google/ko
+        working-directory: hack/ko
+        output-path-env: KO
+    - &install-kustomize
+      name: Install kustomize
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: sigs.k8s.io/kustomize/kustomize/v5
+        working-directory: hack/kustomize
+        output-path-env: KUSTOMIZE
+    - &install-yq
+      name: Install yq
+      uses: reconcilerio/go-install-action@v1
+      with:
+        package: github.com/mikefarah/yq/v4
+        working-directory: hack/yq
+        output-path-env: YQ
 
   unit:
     name: Unit Test
@@ -27,6 +102,11 @@ jobs:
       with:
         go-version-file: go.mod
         cache-dependency-path: '**/*.sum'
+    - *install-controller-gen
+    - *install-diegen
+    - *install-goimports
+    - *install-kustomize
+    - *install-yq
     - name: Test
       run: make test
     - name: Report coverage
@@ -52,7 +132,10 @@ jobs:
       with:
         go-version-file: go.mod
         cache-dependency-path: '**/*.sum'
-    - name: Start registry
+    - *install-imgpkg
+    - *install-kbld
+    - *install-ko
+    - name: OCI registry
       id: registry
       uses: reconcilerio/registry@v1
     - name: Build all platforms for tags
@@ -100,50 +183,26 @@ jobs:
   acceptance:
     name: Acceptance Test
     needs: stage
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-        - node: kindest/node:v1.23.17@sha256:14d0a9a892b943866d7e6be119a06871291c517d279aedb816a4b4bc0ec0a5b3
-          version: v1.23.17
-          os: ubuntu-latest
-        - node: kindest/node:v1.24.17@sha256:bad10f9b98d54586cba05a7eaa1b61c6b90bfc4ee174fdc43a7b75ca75c95e51
-          version: v1.24.17
-          os: ubuntu-latest
-        - node: kindest/node:v1.25.16@sha256:6110314339b3b44d10da7d27881849a87e092124afab5956f2e10ecdb463b025
-          version: v1.25.16
-          os: ubuntu-latest
-        - node: kindest/node:v1.26.15@sha256:c79602a44b4056d7e48dc20f7504350f1e87530fe953428b792def00bc1076dd
-          version: v1.26.15
-          os: ubuntu-latest
-        - node: kindest/node:v1.27.16@sha256:2d21a61643eafc439905e18705b8186f3296384750a835ad7a005dceb9546d20
-          version: v1.27.16
-          os: ubuntu-latest
-        - node: kindest/node:v1.28.15@sha256:a7c05c7ae043a0b8c818f5a06188bc2c4098f6cb59ca7d1856df00375d839251
-          version: v1.28.13
-          os: ubuntu-latest
-        - node: kindest/node:v1.29.14@sha256:8703bd94ee24e51b778d5556ae310c6c0fa67d761fae6379c8e0bb480e6fea29
-          version: v1.29.14
-          os: ubuntu-latest
-        - node: kindest/node:v1.30.13@sha256:397209b3d947d154f6641f2d0ce8d473732bd91c87d9575ade99049aa33cd648
-          version: v1.30.13
-          os: ubuntu-latest
-        - node: kindest/node:v1.31.14@sha256:6f86cf509dbb42767b6e79debc3f2c32e4ee01386f0489b3b2be24b0a55aac2b
-          version: v1.31.14
-          os: ubuntu-latest
-        - node: kindest/node:v1.32.11@sha256:5fc52d52a7b9574015299724bd68f183702956aa4a2116ae75a63cb574b35af8
-          version: v1.32.11
-          os: ubuntu-latest
-        - node: kindest/node:v1.33.7@sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040
-          version: v1.33.7
-          os: ubuntu-latest
-        - node: kindest/node:v1.34.3@sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48
-          version: v1.34.3
-          os: ubuntu-latest
-        - node: kindest/node:v1.35.1@sha256:05d7bcdefbda08b4e038f644c4df690cdac3fba8b06f8289f30e10026720a1ab
-          version: v1.35.1
-          os: ubuntu-latest
+        - kubernetes-version: v1.23
+        - kubernetes-version: v1.24
+        - kubernetes-version: v1.25
+        - kubernetes-version: v1.26
+        - kubernetes-version: v1.27
+        - kubernetes-version: v1.28
+        - kubernetes-version: v1.29
+        - kubernetes-version: v1.30
+        - kubernetes-version: v1.31
+        - kubernetes-version: v1.32
+        - kubernetes-version: v1.33
+        - kubernetes-version: v1.34
+        - kubernetes-version: v1.35
+        - kubernetes-version: v1.36
+        - kubernetes-version: v1.37
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
@@ -153,64 +212,18 @@ jobs:
     - uses: actions/setup-python@v6
       with:
         python-version: "3.10"
-    - name: Install kind
-      run: |
-        cd $(mktemp -d -t kind.XXXX)
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.31.0/kind-$(go env GOHOSTOS)-$(go env GOHOSTARCH)
-        chmod +x ./kind
-        sudo mv ./kind /usr/local/bin
-        cd -
+    - *install-imgpkg
+    - *install-kapp
+    - *install-kbld
     - name: Start registry
       id: registry
       uses: reconcilerio/registry@v1
-    - name: Create Cluster
-      run: |
-        set -o errexit
-        set -o nounset
-        set -o pipefail
-
-        registry="${{ steps.registry.outputs.registry }}"
-        cert_dir=$(mktemp -d -t certs.XXXX)
-        cp "${{ steps.registry.outputs.tls-ca }}" "${cert_dir}/ca.pem"
-
-        # define containerd host config for registry
-        cat <<EOF > ${cert_dir}/hosts.toml
-        server = "https://${registry}"
-
-        [host."https://${registry}"]
-          capabilities = ["pull"]
-          ca = "/etc/containerd/certs.d/${registry}/ca.pem"
-        EOF
-
-        # create a cluster with the local registry enabled in containerd
-        cat <<EOF | kind create cluster --config=-
-        kind: Cluster
-        apiVersion: kind.x-k8s.io/v1alpha4
-        containerdConfigPatches:
-        - |-
-          [plugins."io.containerd.grpc.v1.cri".registry]
-            config_path = "/etc/containerd/certs.d"
-        nodes:
-        - role: control-plane
-          image: ${{ matrix.node }}
-          extraMounts:
-          - containerPath: /etc/containerd/certs.d/${registry}
-            hostPath: ${cert_dir}
-        EOF
-
-        # Document the local registry
-        # https://github.com/kubernetes/enhancements/tree/master/keps/sig-cluster-lifecycle/generic/1755-communicating-a-local-registry
-        cat <<EOF | kubectl apply -f -
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: local-registry-hosting
-          namespace: kube-public
-        data:
-          localRegistryHosting.v1: |
-            host: "${registry}"
-            help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
-        EOF
+    - name: kind cluster
+      uses: reconcilerio/kind@v1
+      with:
+        kubernetes-version: "${{ matrix.kubernetes-version }}"
+        registry: "${{ steps.registry.outputs.registry }}"
+        registry-ca: "${{ steps.registry.outputs.tls-ca }}"
     - name: Download staged bundle
       uses: actions/download-artifact@v8
       with:
@@ -326,7 +339,7 @@ jobs:
       uses: actions/upload-artifact@v7
       if: always()
       with:
-        name: acceptance-test-results-${{ matrix.version }}
+        name: acceptance-test-results-${{ matrix.kubernetes-version }}
         path: conformance-tests/test-output/results
     - name: Delete Gracefully
       run: |
@@ -343,9 +356,6 @@ jobs:
         echo "##[group]Delete cert-manager"
           ${KAPP} delete -a cert-manager -n apps --wait-timeout 5m -y
         echo "##[endgroup]"
-      if: always()
-    - name: Cleanup cluster
-      run: kind delete cluster
       if: always()
 
   # aggregate the unit and acceptance results into a single job
@@ -370,6 +380,9 @@ jobs:
       with:
         go-version-file: go.mod
         cache-dependency-path: '**/*.sum'
+    - *install-crane
+    - *install-imgpkg
+    - *install-kbld
     - name: Get the version
       id: get_version
       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
@@ -395,13 +408,6 @@ jobs:
         asset_path: servicebinding-runtime-bundle.tar
         asset_name: servicebinding-runtime-bundle-${{ steps.get_version.outputs.VERSION }}.tar
         asset_content_type: application/x-tar
-    - name: Install crane
-      run: |
-        cd $(mktemp -d -t crane.XXXX)
-        curl -L https://github.com/google/go-containerregistry/releases/download/v0.9.0/go-containerregistry_Linux_x86_64.tar.gz | tar -xz
-        chmod +x ./crane
-        sudo mv ./crane /usr/local/bin
-        cd -
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v4
       with:
