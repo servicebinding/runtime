@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/controller-gen
 
 go 1.26.0
 
-require reconciler.io/dies/diegen v0.19.0
+require reconciler.io/dies/diegen v0.19.1
 
 require (
 	github.com/kr/text v0.2.0 // indirect
