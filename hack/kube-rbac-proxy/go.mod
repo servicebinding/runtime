@@ -1,9 +1,9 @@
 module github.com/servicebinding/runtime/hack/kube-rbac-proxy
 
-go 1.26.2
+go 1.26.5
 
 require (
-	github.com/brancz/kube-rbac-proxy v0.22.0
+	github.com/brancz/kube-rbac-proxy v0.22.1
 	k8s.io/component-base v0.36.2
 )
 
@@ -83,14 +83,14 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.50.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
@@ -103,10 +103,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.36.2 // indirect
 	k8s.io/apimachinery v0.36.2 // indirect
-	k8s.io/apiserver v0.36.0 // indirect
+	k8s.io/apiserver v0.36.2 // indirect
 	k8s.io/client-go v0.36.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	k8s.io/kms v0.36.0 // indirect
+	k8s.io/kms v0.36.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20260414162039-ec9c827d403f // indirect
 	k8s.io/streaming v0.36.2 // indirect
 	k8s.io/utils v0.0.0-20260319190234-28399d86e0b5 // indirect
