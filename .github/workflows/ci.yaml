@@ -19,7 +19,7 @@ jobs:
     if: false
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: "**/*.sum"
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: "**/*.sum"
@@ -148,7 +148,7 @@ jobs:
       KO_PLATFORMS: linux/amd64,linux/arm64
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: "**/*.sum"
@@ -228,7 +228,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - parallel:
-          - uses: actions/setup-go@v6
+          - uses: actions/setup-go@v7
             with:
               go-version-file: go.mod
               cache-dependency-path: "**/*.sum"
@@ -400,7 +400,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache-dependency-path: "**/*.sum"
