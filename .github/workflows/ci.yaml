@@ -232,7 +232,7 @@ jobs:
             with:
               go-version-file: go.mod
               cache-dependency-path: "**/*.sum"
-          - uses: actions/setup-python@v6
+          - uses: actions/setup-python@v7
             with:
               python-version: "3.10"
       - parallel:
