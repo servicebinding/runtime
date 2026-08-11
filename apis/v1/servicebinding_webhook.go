@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +55,7 @@ func (*ServiceBinding) ValidateCreate(ctx context.Context, obj *ServiceBinding) 
 	log.V(1).Info("Validating Create")
 
 	(&ServiceBinding{}).Default(ctx, obj)
-	return nil, obj.validate().ToAggregate()
+	return nil, obj.validate(nil).ToAggregate()
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
@@ -78,7 +79,7 @@ func (*ServiceBinding) ValidateUpdate(ctx context.Context, old, obj *ServiceBind
 	}
 
 	// validate new object
-	errs = append(errs, obj.validate()...)
+	errs = append(errs, obj.validate(old)...)
 
 	return nil, errs.ToAggregate()
 }
@@ -91,19 +92,46 @@ func (*ServiceBinding) ValidateDelete(ctx context.Context, obj *ServiceBinding) 
 	return nil, nil
 }
 
-func (r *ServiceBinding) validate() field.ErrorList {
+// validate the ServiceBinding. On update, old is the existing object; on create it is nil. Some
+// rules are ratcheted against old so that objects predating a rule are not frozen by it.
+func (r *ServiceBinding) validate(old *ServiceBinding) field.ErrorList {
 	errs := field.ErrorList{}
 
-	errs = append(errs, r.Spec.validate(field.NewPath("spec"))...)
+	var oldSpec *ServiceBindingSpec
+	if old != nil {
+		oldSpec = &old.Spec
+	}
+	errs = append(errs, r.Spec.validate(field.NewPath("spec"), oldSpec)...)
 
 	return errs
 }
 
-func (r *ServiceBindingSpec) validate(fldPath *field.Path) field.ErrorList {
+// bindingNameErrMsg describes the format the ServiceBinding specification requires of .spec.name:
+// "Binding names MUST match [a-z0-9\-\.]{1,253}".
+const bindingNameErrMsg = "must consist of lower case alphanumeric characters, '-' or '.', and must be no more than 253 characters"
+
+// bindingNameRE is the binding name pattern required by the specification, anchored.
+var bindingNameRE = regexp.MustCompile(`^[a-z0-9.-]{1,253}$`)
+
+func (r *ServiceBindingSpec) validate(fldPath *field.Path, old *ServiceBindingSpec) field.ErrorList {
 	errs := field.ErrorList{}
+
+	// the name format is ratcheted: an unchanged value is accepted even if it does not conform, so
+	// that objects created before this rule existed remain writable. Deletion clears a finalizer,
+	// which is an update, so rejecting them here would leave them stuck terminating.
+	nameRatcheted := old != nil && old.Name == r.Name
 
 	if r.Name == "" {
 		errs = append(errs, field.Required(fldPath.Child("name"), ""))
+	} else if nameRatcheted {
+		// unchanged, accept whatever is already stored
+	} else if !bindingNameRE.MatchString(r.Name) {
+		errs = append(errs, field.Invalid(fldPath.Child("name"), r.Name, bindingNameErrMsg))
+	} else if r.Name == "." || r.Name == ".." {
+		// the name is projected as a directory under $SERVICE_BINDING_ROOT. Since the pattern above
+		// admits no path separator, these are the only two values that can resolve outside that
+		// directory: "." to the binding root itself and ".." to its parent.
+		errs = append(errs, field.Invalid(fldPath.Child("name"), r.Name, `must not be "." or ".."`))
 	}
 	errs = append(errs, r.Service.validate(fldPath.Child("service"))...)
 	errs = append(errs, r.Workload.validate(fldPath.Child("workload"))...)
