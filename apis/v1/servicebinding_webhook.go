@@ -18,6 +18,7 @@ package v1
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,7 +55,11 @@ func (*ServiceBinding) ValidateCreate(ctx context.Context, obj *ServiceBinding) 
 	log.V(1).Info("Validating Create")
 
 	(&ServiceBinding{}).Default(ctx, obj)
-	return nil, obj.validate().ToAggregate()
+
+	errs := obj.Spec.validateName(field.NewPath("spec", "name"))
+	errs = append(errs, obj.validate()...)
+
+	return nil, errs.ToAggregate()
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
@@ -62,6 +67,7 @@ func (*ServiceBinding) ValidateUpdate(ctx context.Context, old, obj *ServiceBind
 	log := logr.FromContextOrDiscard(ctx)
 	log.V(1).Info("Validating Update")
 
+	(&ServiceBinding{}).Default(ctx, old)
 	(&ServiceBinding{}).Default(ctx, obj)
 	errs := field.ErrorList{}
 
@@ -75,6 +81,14 @@ func (*ServiceBinding) ValidateUpdate(ctx context.Context, old, obj *ServiceBind
 		errs = append(errs,
 			field.Forbidden(field.NewPath("spec", "workload", "kind"), "Workload kind is immutable. Delete and recreate the ServiceBinding to update."),
 		)
+	}
+
+	// the binding name is projected as a directory under $SERVICE_BINDING_ROOT, so its format is
+	// restricted. Like the immutable fields above, it is only checked when the value changes so that
+	// objects predating this rule are not frozen by it. Deleting one clears a finalizer, which is an
+	// update, so rejecting an unchanged name would leave them stuck terminating.
+	if obj.Spec.Name != old.Spec.Name {
+		errs = append(errs, obj.Spec.validateName(field.NewPath("spec", "name"))...)
 	}
 
 	// validate new object
@@ -95,6 +109,35 @@ func (r *ServiceBinding) validate() field.ErrorList {
 	errs := field.ErrorList{}
 
 	errs = append(errs, r.Spec.validate(field.NewPath("spec"))...)
+
+	return errs
+}
+
+// bindingNameErrMsg describes the format the ServiceBinding specification requires of .spec.name:
+// "Binding names MUST match [a-z0-9\-\.]{1,253}".
+const bindingNameErrMsg = "must consist of lower case alphanumeric characters, '-' or '.', and must be no more than 253 characters"
+
+// bindingNameRE is the binding name pattern required by the specification, anchored.
+var bindingNameRE = regexp.MustCompile(`^[a-z0-9.-]{1,253}$`)
+
+// validateName checks the format the specification requires of a binding name. An empty name is
+// reported as required by validate, not here. The check is applied by the webhook entry points, which
+// skip it for an unchanged value on update.
+func (r *ServiceBindingSpec) validateName(fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+
+	if r.Name == "" {
+		return errs
+	}
+
+	if !bindingNameRE.MatchString(r.Name) {
+		errs = append(errs, field.Invalid(fldPath, r.Name, bindingNameErrMsg))
+	} else if r.Name == "." || r.Name == ".." {
+		// the name is projected as a directory under $SERVICE_BINDING_ROOT. Since the pattern above
+		// admits no path separator, these are the only two values that can resolve outside that
+		// directory: "." to the binding root itself and ".." to its parent.
+		errs = append(errs, field.Invalid(fldPath, r.Name, `must not be "." or ".."`))
+	}
 
 	return errs
 }
