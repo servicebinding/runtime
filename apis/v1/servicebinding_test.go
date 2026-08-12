@@ -267,88 +267,11 @@ func TestServiceBindingValidate(t *testing.T) {
 				field.Required(field.NewPath("spec", "env[1]", "key"), ""),
 			},
 		},
-
-		// .spec.name is projected into the workload as a volume mount directory at
-		// $SERVICE_BINDING_ROOT/<name>. The spec requires binding names to match
-		// [a-z0-9\-\.]{1,253}; "." and ".." additionally escape the binding root.
-
-		{
-			name:     "name valid",
-			seed:     serviceBindingNamed("my-binding"),
-			expected: field.ErrorList{},
-		},
-		{
-			name:     "name valid leading hyphen",
-			seed:     serviceBindingNamed("-foo"),
-			expected: field.ErrorList{},
-		},
-		{
-			name:     "name valid trailing hyphen",
-			seed:     serviceBindingNamed("foo-"),
-			expected: field.ErrorList{},
-		},
-		{
-			name:     "name valid consecutive dots",
-			seed:     serviceBindingNamed("foo..bar"),
-			expected: field.ErrorList{},
-		},
-		{
-			name:     "name valid trailing dot",
-			seed:     serviceBindingNamed("foo."),
-			expected: field.ErrorList{},
-		},
-		{
-			name:     "name valid max length",
-			seed:     serviceBindingNamed(strings.Repeat("a", 253)),
-			expected: field.ErrorList{},
-		},
-		{
-			name: "name invalid parent directory",
-			seed: serviceBindingNamed(".."),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), "..", `must not be "." or ".."`),
-			},
-		},
-		{
-			name: "name invalid current directory",
-			seed: serviceBindingNamed("."),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), ".", `must not be "." or ".."`),
-			},
-		},
-		{
-			name: "name invalid path traversal",
-			seed: serviceBindingNamed("../../etc"),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), "../../etc", bindingNameErrMsg),
-			},
-		},
-		{
-			name: "name invalid uppercase",
-			seed: serviceBindingNamed("Foo"),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), "Foo", bindingNameErrMsg),
-			},
-		},
-		{
-			name: "name invalid underscore",
-			seed: serviceBindingNamed("foo_bar"),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), "foo_bar", bindingNameErrMsg),
-			},
-		},
-		{
-			name: "name invalid too long",
-			seed: serviceBindingNamed(strings.Repeat("a", 254)),
-			expected: field.ErrorList{
-				field.Invalid(field.NewPath("spec", "name"), strings.Repeat("a", 254), bindingNameErrMsg),
-			},
-		},
 	}
 
 	for _, c := range tests {
 		t.Run(c.name, func(t *testing.T) {
-			if diff := cmp.Diff(c.expected, c.seed.validate(nil)); diff != "" {
+			if diff := cmp.Diff(c.expected, c.seed.validate()); diff != "" {
 				t.Errorf("validate (-expected, +actual): %s", diff)
 			}
 
@@ -359,13 +282,7 @@ func TestServiceBindingValidate(t *testing.T) {
 				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
 			}
 
-			// the old object carries a different .spec.name so that name validation is not
-			// ratcheted, i.e. these cases assert the rules applied to a newly introduced value.
-			// Ratcheting itself is covered by TestServiceBindingValidate_RatchetName.
-			old := c.seed.DeepCopy()
-			old.Spec.Name = "previous-name"
-
-			_, actualUpdateErr := (&ServiceBinding{}).ValidateUpdate(t.Context(), old, c.seed.DeepCopy())
+			_, actualUpdateErr := (&ServiceBinding{}).ValidateUpdate(t.Context(), c.seed.DeepCopy(), c.seed.DeepCopy())
 			if diff := cmp.Diff(expectedErr, actualUpdateErr); diff != "" {
 				t.Errorf("ValidateUpdate (-expected, +actual): %s", diff)
 			}
@@ -378,10 +295,120 @@ func TestServiceBindingValidate(t *testing.T) {
 	}
 }
 
-// A ServiceBinding that omits .spec.name is valid: the webhook defaults the field from
-// .metadata.name before validating it. Kubernetes constrains .metadata.name to a DNS-1123
-// subdomain, which the binding name pattern always admits, so a defaulted name cannot escape the
-// binding root. This is why validating .spec.name at admission is sufficient.
+// .spec.name is projected into the workload as a volume mount directory at
+// $SERVICE_BINDING_ROOT/<name>. The spec requires binding names to match [a-z0-9\-\.]{1,253}; "." and
+// ".." additionally escape the binding root. The rule is applied by the webhook entry points rather
+// than by validate, so both are exercised here: on update the name is changed, since an unchanged
+// name is not revalidated.
+func TestServiceBindingValidateName(t *testing.T) {
+	tests := []struct {
+		name        string
+		bindingName string
+		expected    field.ErrorList
+	}{
+		{
+			name:        "valid",
+			bindingName: "my-binding",
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "valid leading hyphen",
+			bindingName: "-foo",
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "valid trailing hyphen",
+			bindingName: "foo-",
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "valid consecutive dots",
+			bindingName: "foo..bar",
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "valid trailing dot",
+			bindingName: "foo.",
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "valid max length",
+			bindingName: strings.Repeat("a", 253),
+			expected:    field.ErrorList{},
+		},
+		{
+			name:        "invalid parent directory",
+			bindingName: "..",
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), "..", `must not be "." or ".."`),
+			},
+		},
+		{
+			name:        "invalid current directory",
+			bindingName: ".",
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), ".", `must not be "." or ".."`),
+			},
+		},
+		{
+			name:        "invalid path traversal",
+			bindingName: "../../etc",
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), "../../etc", bindingNameErrMsg),
+			},
+		},
+		{
+			name:        "invalid uppercase",
+			bindingName: "Foo",
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), "Foo", bindingNameErrMsg),
+			},
+		},
+		{
+			name:        "invalid underscore",
+			bindingName: "foo_bar",
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), "foo_bar", bindingNameErrMsg),
+			},
+		},
+		{
+			name:        "invalid too long",
+			bindingName: strings.Repeat("a", 254),
+			expected: field.ErrorList{
+				field.Invalid(field.NewPath("spec", "name"), strings.Repeat("a", 254), bindingNameErrMsg),
+			},
+		},
+	}
+
+	for _, c := range tests {
+		t.Run(c.name, func(t *testing.T) {
+			seed := serviceBindingNamed(c.bindingName)
+
+			if diff := cmp.Diff(c.expected, seed.Spec.validateName(field.NewPath("spec", "name"))); diff != "" {
+				t.Errorf("validateName (-expected, +actual): %s", diff)
+			}
+
+			expectedErr := c.expected.ToAggregate()
+
+			_, actualCreateErr := (&ServiceBinding{}).ValidateCreate(t.Context(), seed.DeepCopy())
+			if diff := cmp.Diff(expectedErr, actualCreateErr); diff != "" {
+				t.Errorf("ValidateCreate (-expected, +actual): %s", diff)
+			}
+
+			// the old object carries a different .spec.name so that the name is revalidated
+			old := seed.DeepCopy()
+			old.Spec.Name = "previous-name"
+
+			_, actualUpdateErr := (&ServiceBinding{}).ValidateUpdate(t.Context(), old, seed.DeepCopy())
+			if diff := cmp.Diff(expectedErr, actualUpdateErr); diff != "" {
+				t.Errorf("ValidateUpdate (-expected, +actual): %s", diff)
+			}
+		})
+	}
+}
+
+// A ServiceBinding that omits .spec.name is valid: the webhook defaults the field from .metadata.name
+// before validating it, so a defaulted value is validated exactly like an explicit one.
 func TestServiceBindingValidate_DefaultedName(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -418,17 +445,18 @@ func TestServiceBindingValidate_DefaultedName(t *testing.T) {
 // validation stuck terminating. Introducing or changing to an invalid name is still rejected.
 func TestServiceBindingValidate_RatchetName(t *testing.T) {
 	tests := []struct {
-		name      string
-		oldName   string
-		newName   string
-		expectErr bool
+		name            string
+		oldName         string
+		newName         string
+		expectUpdateErr bool
+		expectCreateErr bool
 	}{
-		{name: "unchanged invalid name is allowed", oldName: "Legacy_Name", newName: "Legacy_Name", expectErr: false},
-		{name: "unchanged traversal name is allowed, so it can be deleted", oldName: "..", newName: "..", expectErr: false},
-		{name: "changed to another invalid name is rejected", oldName: "Legacy_Name", newName: "Other_Bad", expectErr: true},
-		{name: "changed to a valid name is allowed", oldName: "Legacy_Name", newName: "legacy-name", expectErr: false},
-		{name: "newly introduced traversal is rejected", oldName: "good-name", newName: "../../etc", expectErr: true},
-		{name: "valid name unchanged is allowed", oldName: "good-name", newName: "good-name", expectErr: false},
+		{name: "unchanged invalid name is allowed", oldName: "Legacy_Name", newName: "Legacy_Name", expectUpdateErr: false, expectCreateErr: true},
+		{name: "unchanged traversal name is allowed, so it can be deleted", oldName: "..", newName: "..", expectUpdateErr: false, expectCreateErr: true},
+		{name: "changed to another invalid name is rejected", oldName: "Legacy_Name", newName: "Other_Bad", expectUpdateErr: true, expectCreateErr: true},
+		{name: "changed to a valid name is allowed", oldName: "Legacy_Name", newName: "legacy-name", expectUpdateErr: false, expectCreateErr: false},
+		{name: "newly introduced traversal is rejected", oldName: "good-name", newName: "../../etc", expectUpdateErr: true, expectCreateErr: true},
+		{name: "valid name unchanged is allowed", oldName: "good-name", newName: "good-name", expectUpdateErr: false, expectCreateErr: false},
 	}
 
 	for _, c := range tests {
@@ -437,16 +465,20 @@ func TestServiceBindingValidate_RatchetName(t *testing.T) {
 			obj := serviceBindingNamed(c.newName)
 
 			_, err := (&ServiceBinding{}).ValidateUpdate(t.Context(), old, obj)
-			if c.expectErr && err == nil {
+			if c.expectUpdateErr && err == nil {
 				t.Errorf("ValidateUpdate: expected an error, got none")
 			}
-			if !c.expectErr && err != nil {
+			if !c.expectUpdateErr && err != nil {
 				t.Errorf("ValidateUpdate: unexpected error: %s", err)
 			}
 
 			// creating the same object outright is always validated, never ratcheted
-			if _, err := (&ServiceBinding{}).ValidateCreate(t.Context(), serviceBindingNamed(c.newName)); err == nil && c.newName != "legacy-name" && c.newName != "good-name" {
+			_, err = (&ServiceBinding{}).ValidateCreate(t.Context(), serviceBindingNamed(c.newName))
+			if c.expectCreateErr && err == nil {
 				t.Errorf("ValidateCreate(%q): expected an error, got none", c.newName)
+			}
+			if !c.expectCreateErr && err != nil {
+				t.Errorf("ValidateCreate(%q): unexpected error: %s", c.newName, err)
 			}
 		})
 	}
