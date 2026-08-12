@@ -67,6 +67,7 @@ func (*ServiceBinding) ValidateUpdate(ctx context.Context, old, obj *ServiceBind
 	log := logr.FromContextOrDiscard(ctx)
 	log.V(1).Info("Validating Update")
 
+	(&ServiceBinding{}).Default(ctx, old)
 	(&ServiceBinding{}).Default(ctx, obj)
 	errs := field.ErrorList{}
 
