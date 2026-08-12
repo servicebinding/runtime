@@ -225,6 +225,7 @@ jobs:
           - kubernetes-version: v1.35
           - kubernetes-version: v1.36
           - kubernetes-version: v1.37
+          - kubernetes-version: v1.38
     steps:
       - uses: actions/checkout@v7
       - parallel:
