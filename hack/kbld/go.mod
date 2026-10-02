@@ -2,7 +2,7 @@ module github.com/servicebinding/runtime/hack/kbld
 
 go 1.26.3
 
-require carvel.dev/kbld v0.49.1
+require carvel.dev/kbld v0.49.2
 
 require (
 	carvel.dev/imgpkg v0.48.1 // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/vito/go-interact v1.0.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
