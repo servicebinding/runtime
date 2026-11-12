@@ -46,8 +46,8 @@ github.com/mattn/go-colorable v0.1.14 h1:9A9LHSqF/7dyVVX6g0U9cwm9pG3kP9gSzcuIPHP
 github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stgPZH1UqBm1s8=
 github.com/mattn/go-isatty v0.0.24 h1:tGZZoVgT/KiqK1c8ocVLeDS8BSWMRd47J3Lbz7vsReI=
 github.com/mattn/go-isatty v0.0.24/go.mod h1:nMCL3Zebbrt45jsMDgnfIwz6ydEQApk5oEI3HqDio6A=
-github.com/mikefarah/yq/v4 v4.54.2 h1:b9g8xQc/1v8T7FZhBtPlsAynEkI8FvRfGTS0FGACgto=
-github.com/mikefarah/yq/v4 v4.54.2/go.mod h1:VACEZ0pKWDOY355sL8xOpOE+lNZZbVMpVJ6YMsCHVRo=
+github.com/mikefarah/yq/v4 v4.54.3 h1:1SnmdehRmL1Z56SuPH8IQUW3D73Q74F3mpGWW0jAb3E=
+github.com/mikefarah/yq/v4 v4.54.3/go.mod h1:sp5Vt/XocWgI8kulOlHFIevBmubienfQUBd39KiyHXg=
 github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQflz0v0=
 github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=
 github.com/pelletier/go-toml/v2 v2.4.3 h1:GTRvJQutkOSftxIFD5xw9aepkYNuPWmVJpffdDPYVpY=
